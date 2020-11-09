@@ -4,11 +4,11 @@ import os
 from shutil import copyfile, rmtree
 
 #TODO:
+# Test safety quips
 # Test adding and deleting specific content (Probably not gonna work right now)
-# View your custom content
-# Save your custom content as a .JSON to then import
-# Test prompt creation for Quiplash 3
-# Adding safety quips to Quiplash 3
+# Test editing custom content
+# Add other people's custom content with import
+# Add Talking Points Content (Pictures, Prompts, Slide Transitions)
 
 def id_gen(custom_values): #custom_values should be a dict that passes on any other identifying information for the user
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
@@ -27,8 +27,9 @@ def id_gen(custom_values): #custom_values should be a dict that passes on any ot
         _id = str(100000 + len(id_dict.keys()))
     custom_values.update({"id": _id}) #Need to store the id twice so that things can work. The .jet files need a reference to the id.
     id_dict[_id] = {"id": _id, "values": custom_values}
-    ids.truncate(0)
-    ids.write(json.dumps(id_dict))
+    ids.truncate()
+    new_json = json.dumps(id_dict)
+    ids.write(new_json)
     ids.close()
     return _id
 
@@ -54,6 +55,8 @@ class CustomContent(object):
             if delete == True:
                 json_file["content"].remove(self.values)
             else:
+                if self.values in json_file["content"]:
+                    json_file["content"].remove(self.values)
                 json_file["content"].append(self.values)
             jf.close()
             #Close and reopen to write, because writing with utf-8 encoding gets... weird.
@@ -70,7 +73,7 @@ class CustomContent(object):
         ids = open("./custom_content.json", "r+")
         content = json.load(ids)
         content[self.id].update({"id": self.id, "values": self.values})
-        ids.truncate(0)
+        ids.truncate()
         ids.write(json.dumps(content))
         ids.close()
 
@@ -90,9 +93,11 @@ class CustomContent(object):
                         copyfile(file['path'], path + file['name']) #From shutil
                 else: #If we're going to be writing a custom file from like a .JSON or whatever.
                     if isinstance(file, CustomContent):
+                        if os.path.exists(path + "data.jet"):
+                            os.remove(path + "data.jet")
                         file.write_to_json(path + "data.jet")
                     elif 'str' in file: #Just making sure there are no files that have an empty path. "str" is if a file has specific data that we're writing.
-                        f = open(path + file['name'], "w")
+                        f = open(path + file['name'], "w+")
                         f.write(file['str'])
                         f.close()
 
@@ -128,13 +133,13 @@ class SelectionWindow():
                 break
             if event == "Ok":
                 window.close()
-                window = None
                 func = self.selector.get(values[self.list_key][0])
                 func(values[self.list_key][0]) #What we need the "inputs" argument for. 
+                break
             if event == "Go Back" and self.previous_window:
                 window.close()
-                window = None
                 window_mapping[self.previous_window].run()
+                break
         window.close()
         window = None
                 
@@ -163,21 +168,33 @@ def view_content(selected=None):
         sg.Popup("You have no custom content.")
         main_window.run()
 
-def select_delete_content(selected=None): #Selected goes unused because of how SelectWindow works.
+def edit_content(selected=None): #Selected goes unused because of how SelectWindow works.
     if os.path.exists("./custom_content.json"):
         ids = open("./custom_content.json", 'r+')
         content = json.load(ids)
         content_list = []
         for item in content:
             content_list.append(content[item]["id"] + ": " + content[item]["values"]["content_type"] + " - " + content[item]["values"]["descriptor_text"])
-        layout = [[sg.Text("Choose Content to Delete:")], [sg.Listbox(content_list, key="delete_content", size=(100, 5))], [sg.Button("Delete"), sg.Button("Go Back")]]
-        window = sg.Window("Choose Content to Delete", layout)
+        layout = [[sg.Text("Choose Content to Edit/Delete:")], [sg.Listbox(content_list, key="content_selection", size=(100, 5))], [sg.Button("Edit"), sg.Button("Delete"), sg.Button("Show Folder"), sg.Button("Go Back")]]
+        window = sg.Window("Choose Content to Edit/Delete", layout)
         while True:
             event, values = window.read()
             if event == sg.WIN_CLOSED:
                 break
+            if event == "Show Folder":
+                _id = values["content_selection"][0].split(":")[0]
+                existing_data = content[_id]["values"]
+                path = os.path.realpath("./" + existing_data["game"] + "/content/" + existing_data["content_type"] + "/" + existing_data["id"])
+                if (os.path.exists(path)):
+                    os.startfile(path)
+                else:
+                    sg.Window("There is no folder containing the content (If the content contains only text (like a safety quip), it's probably just stored ... not in a folder).")
+            if event == "Edit":
+                _id = values["content_selection"][0].split(":")[0]
+                existing_data = content[_id]["values"]
+                content_type_mapping[existing_data["content_type"]](selected, existing_data)
             if event == "Delete":
-                _id = values["delete_content"][0].split(":")[0]
+                _id = values["content_selection"][0].split(":")[0]
                 custom_content = CustomContent(content[_id]["values"], content[_id]["values"]["game"], content[_id]["values"]["content_type"], content[_id]["values"]["descriptor_text"], _id) #Setting None because values already has the game, type, and descriptor_text.
                 #Remove the content from the custom_content JSON file
                 content.pop(_id)
@@ -185,7 +202,7 @@ def select_delete_content(selected=None): #Selected goes unused because of how S
                 custom_content.write_to_json(None, True) #Delete the JSON file, using the pre-existing path.
                 #Remove the content's custom folder (will do nothing if one doesn't exist)
                 custom_content.add_custom_files(delete=True)
-                ids.truncate(0)
+                ids.truncate()
                 if len(content.keys()) != 0:
                     ids.write(json.dumps(content))
                     ids.close()
@@ -195,14 +212,16 @@ def select_delete_content(selected=None): #Selected goes unused because of how S
                 window.close()
                 window = None
                 sg.Popup("Content deleted!")
-                select_delete_content() #To update the list of content
+                edit_content() #To update the list of content
             if event == "Go Back":
+                window.close()
+                window = None
                 main_window.run()
         ids.close()
         window.close()
         window = None
     else:
-        sg.Popup("Sorry, no content to delete.")
+        sg.Popup("Sorry, no content to edit.")
         main_window.run()
 
 #Stuff for Quiplash 3
@@ -219,31 +238,33 @@ def create_quiplash_data_jet(prompt_content):
     data.add_data("S", prompt_content.values["safetyQuips"], "SafetyQuips")
     return data
 
-def round_prompt(selection):
-    layout = [[sg.Text("Prompt Text: "), sg.InputText("Hey, <ANYPLAYER> needs to <BLANK>.", size=(50,1), key="text")], [sg.Text("Safety Quip(s) (separate by |): "), sg.InputText("learn how the prompt system works|learn how safety quips work|eat all my garbage", size=(50,1), key="safety-quips")],
-    [sg.Checkbox("Includes Player Name", default=True, key="player-name"), sg.Checkbox("Contains Adult Content", key="x"), sg.Checkbox("Content is US specific", key="us")],
+def round_prompt(selection, existing_data=None):
+    layout = [[sg.Text("Prompt Text: "), sg.InputText("Hey, <ANYPLAYER> needs to <BLANK>." if existing_data == None else existing_data["prompt"], size=(50,1), key="text")], [sg.Text("Safety Quip(s) (separate by |): "), sg.InputText("learn how the prompt system works|learn how safety quips work|eat all my garbage" if existing_data == None else existing_data["safetyQuips"], size=(50,1), key="safety-quips")],
+    [sg.Checkbox("Includes Player Name", default=(True if existing_data == None else existing_data["includesPlayerName"]), key="player-name"), sg.Checkbox("Contains Adult Content", default=(False if existing_data == None else existing_data["x"]), key="x"), sg.Checkbox("Content is US specific", default=(False if existing_data == None else existing_data["us"]), key="us")],
     [sg.Text(".ogg files of you reading things (Optional):")], [sg.Text(".ogg of you saying the prompt: "), sg.InputText(key="prompt"), sg.FileBrowse()],
     [sg.Text("Add a response to specific text (Very optional, see Readme for information):")],
     [sg.InputText(key="response"), sg.FileBrowse()], 
     [sg.Text("What to filter (See Readme): "), sg.InputText(key="response-filter")],
     [sg.Text("Transcript of your response: "), sg.InputText(key="response-narration")],
     [sg.Button("Make a prompt"), sg.Button("Go Back")]]
-    window = sg.Window("Round " + selection[-1] + " Prompt", layout)
+    window = sg.Window(("Round " + selection[-1] + " Prompt") if existing_data == None else existing_data["content_type"], layout)
     while True:
         event, values = window.read()
         if event == sg.WIN_CLOSED:
             break
         if event == "Go Back":
             window.close()
-            quiplash_prompt.run()
+            window = None
+            if existing_data == None:
+                quiplash_prompt.run()
         if event == "Make a prompt":
             prompt = CustomContent({
                 "includesPlayerName": values["player-name"],
                 "prompt": values["text"],
-                "safetyQuips": values["safety-quips"],
+                "safetyQuips": values["safety-quips"].split("|"), #We make an array because that's how they're formatted in the master .jet file.
                 "x": values["x"],
                 "us": values["us"]
-            }, "Quiplash3", "Quiplash3Round" + selection[-1] + "Question", values["text"])
+            }, "Quiplash3", ("Quiplash3Round" + selection[-1] + "Question") if existing_data == None else existing_data["content_type"], values["text"], None if existing_data == None else existing_data["id"])
             prompt.response_filter = values["response-filter"]
             prompt.response_narration = values["response-narration"]
             prompt.write_to_json() #Get round number from the choice passed through in quiplash_prompt
@@ -254,9 +275,9 @@ def round_prompt(selection):
     window.close()
     window = None
 
-def round_prompt_final(selection): #I'm making this separate because it's just easier to do this than to explain the last round prompt syntax.
-    layout = [[sg.Text("Prompt Text: "), sg.InputText("Three things a stranger would say about <ANYPLAYER>.", key="lastround-prompt")], [sg.Text("Safety Quip(s) (separate by |): "), sg.InputText("not|funny|didn't laugh|get|out of|my face|learn|how the safety quips|work", key="lastround-safety-quips")],
-    [sg.Checkbox("Includes Player Name", default=True, key="player-name"), sg.Checkbox("Contains Adult Content", key="x"), sg.Checkbox("Content is US specific", key="us")],
+def round_prompt_final(selection, existing_data=None): #I'm making this separate because it's just easier to do this than to explain the last round prompt syntax.
+    layout = [[sg.Text("Prompt Text: "), sg.InputText("Three things a stranger would say about <ANYPLAYER>." if existing_data == None else existing_data["prompt"], key="lastround-prompt")], [sg.Text("Safety Quip(s) (separate by |): "), sg.InputText("not|funny|didn't laugh|get|out of|my face|learn|how the safety quips|work" if existing_data == None else existing_data["safetyQuips"], key="lastround-safety-quips")],
+    [sg.Checkbox("Includes Player Name", default=(True if existing_data == None else existing_data["includesPlayerName"]), key="player-name"), sg.Checkbox("Contains Adult Content", default=(False if existing_data == None else existing_data["x"]), key="x"), sg.Checkbox("Content is US specific", default=(False if existing_data == None else existing_data["us"]), key="us")],
     [sg.Text(".ogg file of you reading the prompt (Optional):")], [sg.InputText(key="prompt"), sg.FileBrowse()],
     [sg.Button("Make a prompt"), sg.Button("Go Back")]]
     window = sg.Window("Make a Quiplash 3 Final Round Prompt", layout)
@@ -266,15 +287,23 @@ def round_prompt_final(selection): #I'm making this separate because it's just e
             break
         if event == "Go Back":
             window.close()
-            quiplash_prompt.run()
+            window = None
+            if existing_data == None:
+                quiplash_prompt.run()
         if event == "Make a prompt":
+            #Safety quips for the final round are a bit weird:
+            safety_quips = values["lastround-safety-quips"].split("|")
+            formatted_quips = []
+            for i in range(len(safety_quip)):
+                if not (i + 3 > len(safety_quip)):
+                    formatted_quips.append(safety_quips[0] + "|" + safety_quips[1] + "|" + safety_quips[2])
             prompt = CustomContent({
                 "includesPlayerName": values["player-name"],
                 "prompt": values["lastround-prompt"],
-                "safetyQuips": values["lastround-safety-quips"],
+                "safetyQuips": formatted_quips,
                 "x": values["x"],
                 "us": values["us"]
-            }, "Quiplash3", "Quiplash3FinalQuestion", values["lastround-prompt"])
+            }, "Quiplash3", "Quiplash3FinalQuestion", values["lastround-prompt"], None if existing_data == None else existing_data["id"])
             prompt.write_to_json()
             prompt.response_filter = ""
             prompt.response_narration = ""
@@ -284,19 +313,20 @@ def round_prompt_final(selection): #I'm making this separate because it's just e
     window.close()
     window = None
 
-def safety_quip(selection):
-    layout = [[sg.Text("Safety Quip Text (Should be generic): "), sg.InputText(key="safety-quip")], [sg.Button("Make Quip"), sg.Button("Go Back")]]
+def safety_quip(selection, existing_data=None):
+    layout = [[sg.Text("Safety Quip Text (Should be generic): "), sg.InputText("" if existing_data == None else existing_data["value"], key="safety-quip")], [sg.Button("Make Quip"), sg.Button("Go Back")]]
     window = sg.Window("Make a Safety Quip", layout)
     while True:
         event, values = window.read()
         if event == "Make Quip":
-            quip = CustomContent({"value": values["safety-quip"]}, "Quiplash3", "Quiplash3SafetyQuips", values["safety-quip"])
+            quip = CustomContent({"value": values["safety-quip"]}, "Quiplash3", "Quiplash3SafetyQuips", values["safety-quip"], None if existing_data == None else existing_data["id"])
             quip.write_to_json()
             sg.Popup("Safety Quip Created. ID: " + quip.id)
         if event == "Go Back":
             window.close()
             window = None
-            quiplash_3.run()
+            if existing_data == None:
+                quiplash_3.run()
 
 quiplash_prompt = SelectionWindow("Choose a Round", ["Choose a round.", ("Round 1", "Round 2", "Final Round"), "round-number"], {
     "Round 1": round_prompt,
@@ -318,9 +348,10 @@ create_content = SelectionWindow("Select a game", ["Select a game.", ("Quiplash 
     "Champ'd Up": None
 }, "main_window")
 
-main_window = SelectionWindow("Select an option", ["Please select an option.", ("View My Custom Content", "Create Custom Content", "Delete Content"), "option"], {
+main_window = SelectionWindow("Select an option", ["Please select an option.", ("View My Custom Content", "Create Custom Content", "Edit Content"), "option"], {
     "Create Custom Content": create_content.run,
-    "Delete Content": select_delete_content,
+    "Edit Content": edit_content,
+    "Import Content": None,
     "View My Custom Content": view_content
 })
 window_mapping = { #Used for backing out of stuff.
@@ -328,5 +359,11 @@ window_mapping = { #Used for backing out of stuff.
     "quiplash_3": quiplash_3,
     "create_content": create_content,
     "main_window": main_window
+}
+content_type_mapping = { #Used in editing content to change data.
+    "Quiplash3Round1Question": round_prompt,
+    "Quiplash3Round2Question": round_prompt,
+    "Quiplash3FinalQuestion": round_prompt_final,
+    "Quiplash3SafetyQuips": safety_quip
 }
 main_window.run()

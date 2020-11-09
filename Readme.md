@@ -12,10 +12,16 @@ otherwise you're going to have to uninstall and reinstall your entire game if so
 - Unzip the contents of the .ZIP file into the "games" directory of your Jackbox Party Pack 7 install folder. (For steam on Windows: C:\Program Files (x86)\Steam\steamapps\common\The Jackbox Party Pack 7\games)
 - Run "Jackbox Party Pack Custom.exe".
 
+# Potential Questions
+
 ## HELP, EVERYTHING IS BROKEN
 
 If you're using Steam, go to the Jackbox Party Pack 7 in your Steam Library. Right click on the game's icon or name, click "Properties".
 In the popup window, click on "Local Files". Then click "Verify integrity of game files..." That should fix everything.
+
+### Important note if you've clicked "verify integrity of game files..."
+
+That means all your custom prompts have been removed from the game. To get your custom prompts back, use the import feature, and select the "custom_content.json" file that's in the same folder as Jackbox Party Pack Custom.exe
 
 ## EVERYTHING'S STILL BROKEN
 
@@ -25,8 +31,24 @@ Uninstall and reinstall the Jackbox Party Pack 7
 
 Delete everything from your Jackbox Party Pack 7 folder, then find the "Verify integrity of game files..." button and click it.
 
+# Why does this program sometimes use weird names for each game?
+
+I have here a handy conversion for the games and their weird names:
+`BlankyBlank - Blather 'Round
+
+Everyday - Devils and the Details
+
+JackboxTalks - Talking Points
+
+World Champions - Champ'd Up
+
+Quiplash3 - Quiplash 3`
+
+The program does this because that's what the folders Jackbox Party Pack 7 uses for each game are called.
 
 # Making custom responses to specific text for Quiplash 3:
+
+So, you may notice that in Quiplash 3 the announcer will sometimes react to a specific prompt. You can do this too!
 
 NOTE: This only works for Round 1 and 2 questions. You can't have custom responses for Final Round questions. 
 
