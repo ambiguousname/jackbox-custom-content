@@ -8,7 +8,7 @@ from shutil import copyfile, rmtree
 # Edit your custom content (Don't just delete, re-open and change it)
 # Add other people's custom content with import
 # Add Talking Points Content (Pictures, Prompts, Slide Transitions)
-# Fix safety quips (they appear separated by | in data.jet, but not in the master .jet file)
+# Test safety quips
 
 def id_gen(custom_values): #custom_values should be a dict that passes on any other identifying information for the user
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
@@ -240,7 +240,7 @@ def round_prompt(selection):
             prompt = CustomContent({
                 "includesPlayerName": values["player-name"],
                 "prompt": values["text"],
-                "safetyQuips": values["safety-quips"],
+                "safetyQuips": values["safety-quips"].split("|"), #We make an array because that's how they're formatted in the master .jet file.
                 "x": values["x"],
                 "us": values["us"]
             }, "Quiplash3", "Quiplash3Round" + selection[-1] + "Question", values["text"])
@@ -268,10 +268,16 @@ def round_prompt_final(selection): #I'm making this separate because it's just e
             window.close()
             quiplash_prompt.run()
         if event == "Make a prompt":
+            #Safety quips for the final round are a bit weird:
+            safety_quips = values["lastround-safety-quips"].split("|")
+            formatted_quips = []
+            for i in range(len(safety_quip)):
+                if not (i + 3 > len(safety_quip)):
+                    formatted_quips.append(safety_quips[0] + "|" + safety_quips[1] + "|" + safety_quips[2])
             prompt = CustomContent({
                 "includesPlayerName": values["player-name"],
                 "prompt": values["lastround-prompt"],
-                "safetyQuips": values["lastround-safety-quips"],
+                "safetyQuips": formatted_quips,
                 "x": values["x"],
                 "us": values["us"]
             }, "Quiplash3", "Quiplash3FinalQuestion", values["lastround-prompt"])
