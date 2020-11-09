@@ -1,3 +1,12 @@
+# What is this?
+
+It's a program for adding your own content (stuff like prompts, certain sound files, etc.) to the Jackbox Party Pack 7. Check the releases tab for the latest features.
+
+WARNING: I've really only tested this on Windows, it might not work on other operating systems. 
+
+You may also want to keep a backup of the Jackbox Party Pack 7's files if you're not using Steam,
+otherwise you're going to have to uninstall and reinstall your entire game if something goes wrong.
+
 # Install instructions
 
 - Unzip the contents of the .ZIP file into the "games" directory of your Jackbox Party Pack 7 install folder. (For steam on Windows: C:\Program Files (x86)\Steam\steamapps\common\The Jackbox Party Pack 7\games)
