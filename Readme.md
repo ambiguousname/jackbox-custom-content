@@ -1,6 +1,6 @@
 # What is this?
 
-It's a program for adding your own content (stuff like prompts, certain sound files, etc.) to the Jackbox Party Pack 7. Check the releases tab for the latest features.
+It's a program for adding your own content (stuff like prompts, certain sound files, etc.) to the Jackbox Party Pack 7.
 
 WARNING: I've really only tested this on Windows, it might not work on other operating systems. 
 
