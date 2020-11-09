@@ -17,6 +17,10 @@ otherwise you're going to have to uninstall and reinstall your entire game if so
 If you're using Steam, go to the Jackbox Party Pack 7 in your Steam Library. Right click on the game's icon or name, click "Properties".
 In the popup window, click on "Local Files". Then click "Verify integrity of game files..." That should fix everything.
 
+### Important note if you've clicked "verify integrity of game files..."
+
+That means all your custom prompts have been removed from the game. To get your custom prompts back, use the import feature, and select the "custom_content.json" file that's in the same folder as Jackbox Party Pack Custom.exe
+
 ## EVERYTHING'S STILL BROKEN
 
 Uninstall and reinstall the Jackbox Party Pack 7

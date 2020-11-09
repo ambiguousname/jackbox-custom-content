@@ -5,10 +5,10 @@ from shutil import copyfile, rmtree
 
 #TODO:
 # Test adding and deleting specific content (Probably not gonna work right now)
-# View your custom content
-# Save your custom content as a .JSON to then import
-# Test prompt creation for Quiplash 3
-# Adding safety quips to Quiplash 3
+# Edit your custom content (Don't just delete, re-open and change it)
+# Add other people's custom content with import
+# Add Talking Points Content (Pictures, Prompts, Slide Transitions)
+# Fix safety quips (they appear separated by | in data.jet, but not in the master .jet file)
 
 def id_gen(custom_values): #custom_values should be a dict that passes on any other identifying information for the user
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
