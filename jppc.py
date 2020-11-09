@@ -310,7 +310,7 @@ quiplash_3 = SelectionWindow("Quiplash 3 Content Selection", ["Please select the
 }, "create_content")
 
 #Main Menu stuff
-create_content = SelectionWindow("Select a game", ["Select a game.", ("Quiplash 3"), "game"],{
+create_content = SelectionWindow("Select a game", ["Select a game.", (["Quiplash 3"]), "game"],{
     "Blather Round": None,
     "Devils and the Details": None,
     "Talking Points": None,
