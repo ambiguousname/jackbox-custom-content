@@ -1,23 +1,23 @@
-#Install instructions
+# Install instructions
 
 - Unzip the contents of the .ZIP file into the "games" directory of your Jackbox Party Pack 7 install folder. (For steam on Windows: C:\Program Files (x86)\Steam\steamapps\common\The Jackbox Party Pack 7\games)
 - Run "Jackbox Party Pack Custom.exe".
 
-##HELP, EVERYTHING IS BROKEN
+## HELP, EVERYTHING IS BROKEN
 
 If you're using Steam, go to the Jackbox Party Pack 7 in your Steam Library. Right click on the game's icon or name, click "Properties".
 In the popup window, click on "Local Files". Then click "Verify integrity of game files..." That should fix everything.
 
-##EVERYTHING'S STILL BROKEN
+## EVERYTHING'S STILL BROKEN
 
 Uninstall and reinstall the Jackbox Party Pack 7
 
-##NOPE
+## NOPE
 
 Delete everything from your Jackbox Party Pack 7 folder, then find the "Verify integrity of game files..." button and click it.
 
 
-#Making custom responses to specific text for Quiplash 3:
+# Making custom responses to specific text for Quiplash 3:
 
 NOTE: This only works for Round 1 and 2 questions. You can't have custom responses for Final Round questions. 
 
