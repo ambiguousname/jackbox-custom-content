@@ -9,7 +9,7 @@ otherwise you're going to have to uninstall and reinstall your entire game if so
 
 # Install instructions
 
-## If you don't have python installed:
+## If you don't have python installed and are running on Windows:
 - Go to the releases page and download the .ZIP file: https://github.com/ambiguousname/jackbox-custom-content/releases
 - Unzip the contents of the .ZIP file into the "games" directory of your Jackbox Party Pack 7 install folder. (For steam on Windows: C:\Program Files (x86)\Steam\steamapps\common\The Jackbox Party Pack 7\games)
 - Run "Jackbox Party Pack Custom.exe".
