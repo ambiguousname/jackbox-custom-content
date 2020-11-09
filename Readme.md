@@ -34,15 +34,11 @@ Delete everything from your Jackbox Party Pack 7 folder, then find the "Verify i
 # Why does this program sometimes use weird names for each game?
 
 I have here a handy conversion for the games and their weird names:
-`BlankyBlank - Blather 'Round
-
-Everyday - Devils and the Details
-
-JackboxTalks - Talking Points
-
-World Champions - Champ'd Up
-
-Quiplash3 - Quiplash 3`
+- BlankyBlank - Blather 'Round
+- Everyday - Devils and the Details
+- JackboxTalks - Talking Points 
+- World Champions - Champ'd Up
+- Quiplash3 - Quiplash 3
 
 The program does this because that's what the folders Jackbox Party Pack 7 uses for each game are called.
 
