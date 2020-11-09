@@ -47,7 +47,7 @@ I have here a handy conversion for the games and their weird names:
 - World Champions - Champ'd Up
 - Quiplash3 - Quiplash 3
 
-The program does this because that's what the folders Jackbox Party Pack 7 uses for each game are called.
+The program does this because that's what the folders for each game are called.
 
 # Making custom responses to specific text for Quiplash 3:
 
