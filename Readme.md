@@ -12,7 +12,7 @@ In the popup window, click on "Local Files". Then click "Verify integrity of gam
 
 Uninstall and reinstall the Jackbox Party Pack 7
 
-## NOPE
+## NOPE, IT STILL DOESN'T WORK
 
 Delete everything from your Jackbox Party Pack 7 folder, then find the "Verify integrity of game files..." button and click it.
 
