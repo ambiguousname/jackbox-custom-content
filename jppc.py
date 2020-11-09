@@ -310,7 +310,7 @@ quiplash_3 = SelectionWindow("Quiplash 3 Content Selection", ["Please select the
 }, "create_content")
 
 #Main Menu stuff
-create_content = SelectionWindow("Select a game", ["Select a game.", (["Quiplash 3"]), "game"],{
+create_content = SelectionWindow("Select a game", ["Select a game.", ("Blather Round", "Devils and the Details", "Talking Points", "Quiplash 3", "Champ'd Up"), "game"],{
     "Blather Round": None,
     "Devils and the Details": None,
     "Talking Points": None,
@@ -318,9 +318,10 @@ create_content = SelectionWindow("Select a game", ["Select a game.", (["Quiplash
     "Champ'd Up": None
 }, "main_window")
 
-main_window = SelectionWindow("Select an option", ["Please select an option.", ("View My Custom Content", "Create Custom Content", "Delete Content"), "option"], {
+main_window = SelectionWindow("Select an option", ["Please select an option.", ("View My Custom Content", "Create Custom Content", "Delete Content", "Import Content"), "option"], {
     "Create Custom Content": create_content.run,
     "Delete Content": select_delete_content,
+    "Import Content": None,
     "View My Custom Content": view_content
 })
 window_mapping = { #Used for backing out of stuff.
