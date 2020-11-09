@@ -1,6 +1,6 @@
 # What is this?
 
-It's a program for adding your own content to the Jackbox Party Pack 7. Check the releases tab for the latest features.
+It's a program for adding your own content (stuff like prompts, certain sound files, etc.) to the Jackbox Party Pack 7.
 
 WARNING: I've really only tested this on Windows, it might not work on other operating systems. 
 
@@ -11,6 +11,8 @@ otherwise you're going to have to uninstall and reinstall your entire game if so
 
 - Unzip the contents of the .ZIP file into the "games" directory of your Jackbox Party Pack 7 install folder. (For steam on Windows: C:\Program Files (x86)\Steam\steamapps\common\The Jackbox Party Pack 7\games)
 - Run "Jackbox Party Pack Custom.exe".
+
+# Potential Questions
 
 ## HELP, EVERYTHING IS BROKEN
 
