@@ -5,10 +5,9 @@ from shutil import copyfile, rmtree
 
 #TODO:
 # Test safety quips
-# Test adding and deleting specific content (Probably not gonna work right now)
-# Test editing custom content
-# Add other people's custom content with import
-# Add Talking Points Content (Pictures, Prompts, Slide Transitions)
+# Test importing content
+# Add Talking Points Content (Slide Transitions)
+# Test Talking Points Content
 # Add example images in the Readme
 
 def id_gen(custom_values): #custom_values should be a dict that passes on any other identifying information for the user
@@ -359,15 +358,105 @@ def safety_quip(selection, existing_data=None):
             break
     window.close()
 
-quiplash_prompt = SelectionWindow("Choose a Round", ["Choose a round.", ("Round 1", "Round 2", "Final Round"), "round-number"], {
+quiplash_prompt = SelectionWindow("Choose a Round", ["Choose a round.", ("Round 1", "Round 2", "Final Round"), "quiplash3_round_number"], {
     "Round 1": round_prompt,
     "Round 2": round_prompt,
     "Final Round": round_prompt_final
 }, "quiplash_3")
 
-quiplash_3 = SelectionWindow("Quiplash 3 Content Selection", ["Please select the type of content", ("Prompt", "Safety Quip"), "content_type"], {
+quiplash_3 = SelectionWindow("Quiplash 3 Content Selection", ["Please select the type of content", ("Prompt", "Safety Quip"), "quiplash3_content_type"], {
     "Prompt": quiplash_prompt.run,
     "Safety Quip": safety_quip
+}, "create_content")
+
+#Stuff for Talking Points
+
+def talking_points_picture(selection=None, existing_data=None):
+    layout = [[sg.Text("Choose a .JPG file to add: "), sg.InputText("" if existing_data == None else os.getcwd() + "/JackboxTalks/content/JackboxTalksPicture/" + existing_data["id"] + ".jpg", key="photo")],
+    [sg.Text("Low Res .JPG (recommended, will use higher-res picture if not given): "), sg.InputText("" if existing_data == None else os.getcwd() + "/JackboxTalks/content/JackboxTalksPictureLow/" + existing_data["id"], key="low_res_photo"), sg.FileBrowse()], 
+    [sg.Text("Description of Picture: "), sg.InputText("" if existing_data == None else existing_data["name"], key="photo_description")], [sg.Checkbox("Picture contains adult content", default=False if existing_data == None else existing_data["x"])], [sg.Button("Add"), sg.Button("Go Back")]]
+    window = sg.Window("Add a Picture", layout)
+    while True:
+        event, values = window.read()
+        if event == sg.WIN_CLOSED:
+            break
+        if event == "Go Back":
+            window.close()
+            if existing_data == None:
+                talking_points.run()
+            break
+        if event == "Add":
+            if os.path.exists(values["photo"]) and os.path.splitext(values["photo"])[1].lower() == ".jpg":
+                picture = values["photo"]
+                low_res = values["low_res_photo"]
+                if not (os.path.exists(low_res) and os.path.splitext(low_res)[1].lower() == ".jpg"):
+                    low_res = picture
+                #Only using one content to write this, otherwise editing this file is going to get messy.
+                picture_content = CustomContent({
+                    "altText": values["photo_description"],
+                    "name": values["photo_description"],
+                    "x": values["x"]
+                }, "JackboxTalks", "JackboxTalksPicture", picture)
+                picture_content.write_to_json()
+                #Write high-res picture
+                picture_content.add_custom_files({"path": picture, "name": picture_content.id + ".jpg"})
+                #Write low_res picture in a different folder
+                picture_content.add_custom_files({"path": low_res, "name": picture_content.id + ".jpg"}, path="./JackboxTalks/content/JackboxTalksPictureLow/")
+                #Save to custom_content.json
+                picture_content.save_to_custom_content()
+                sg.Popup("Picture Added, ID: " + picture_content.id)
+            else:
+                sg.Popup("You didn't select a valid file.")
+    window.close()
+
+def talking_points_prompt(selection=None, existing_data=None):
+    slide_transitions = "m,For those of you questioning my reasons, I was motivated by this...|m,For those of you who object, here's why you're all powerless to stop me...|m,If you're concerned about permissions, I have all the power I need from this...|e,Now for the Finale: What you're about to see next will ultimately prove my superiority...|m,What I'm about to say is actually banned in about 20 countries, so pay close attention...|" +
+    "e,For those of you at home, imitate exactly what you're about to hear and see...|e,Now it's flex time, and I'm going to flex with this...|e,I have no words for what you're about to witness, only vague and confusing noises/hand movements...|" + 
+    "m,For this amazing feat, I will make use of this as a centerpiece...|m,For my performance, I will be requiring the aid of this...|m,It's nearly time, and to gauge your excitement, I will be using this..."
+    if existing_data != None:
+        transitions = existing_data["signposts"]
+        slide_transitions = ""
+        for item in transitions:
+            slide_transitions += item["position"][0] + "," + item["signpost"] + "|"
+    layout = [[sg.Text("Prompt: "), sg.InputText("I'm about to do what you're all afraid of. That's right, I'm going to: <BLANK>" if existing_data == None else existing_data["title"], key="talk_title")], [sg.Checkbox("Contains adult content", default=True if existing_data == None else existing_data["x"], key="x")],
+    [sg.Text("Safety Answers (separate by |): "), sg.Multiline(default_text="Do absolutely nothing|Eat a snake live on camera|Downvote a post on reddit" if existing_data == None else "|".join(existing_data["safetyAnswers"]), key="safety_answers")],
+    [sg.Text("Slide Transitions (separate by |, add (m,) for Middle of presentation, (e,) for End of presentation at the beginning for each transition. Slide Transitions are optional.)"),
+    sg.Multiline(default_text=slide_transitions, key="transitions")],
+    [sg.Button("Make Prompt"), sg.Button("Go Back")]]
+    window = sg.Window("Make a prompt", layout)
+    while True:
+        event, values = window.read()
+        if event == sg.WIN_CLOSED:
+            break
+        if event == "Go Back":
+            window.close()
+            if existing_data == None:
+                talking_points.run()
+            break
+        if event == "Make Prompt":
+            safety_answers = values["safety_answers"].split("|")
+            transitions = values["transitions"]
+            transitions_list = []
+            if transitions != "" and (transitions[0] == "e" or transitions[0] == "m"):
+                transitions = values["transitions"].split("|")
+                for item in transitions:
+                    if len(item) > 2 and ("e," in item or "m," in item):
+                        position = item[0]
+                        signpost = item[2:] #Ignore the m, and e,
+                        transitions_list.append({"position": position, "signpost": signpost})
+            custom_prompt = CustomData({"safetyAnswers": safety_answers, "signposts": transition_list, "title": values["talk_title"], "x": values["x"]})
+            custom_prompt.write_to_json()
+            custom_prompt.save_to_custom_content()
+            sg.Popup("Custom prompt created, ID: " + custom_prompt.id)
+    window.close()
+
+def talking_points_slide_transition(selection=None, existing_data=None):
+    
+
+talking_points = SelectionWindow("Talking Points Content Selection", ["Please select the type of content", ("Picture", "Prompt", "Slide Transition"), "talking_points_content_type"], {
+    "Picture": talking_points_picture,
+    "Prompt": talking_points_prompt,
+    "Slide Transition": talking_points_slide_transition
 }, "create_content")
 
 #Main Menu stuff
@@ -389,12 +478,16 @@ window_mapping = { #Used for backing out of stuff.
     "quiplash_prompt": quiplash_prompt,
     "quiplash_3": quiplash_3,
     "create_content": create_content,
-    "main_window": main_window
+    "main_window": main_window,
+    "talking_points": talking_points
 }
 content_type_mapping = { #Used in editing content to change data.
     "Quiplash3Round1Question": round_prompt,
     "Quiplash3Round2Question": round_prompt,
     "Quiplash3FinalQuestion": round_prompt_final,
-    "Quiplash3SafetyQuips": safety_quip
+    "Quiplash3SafetyQuips": safety_quip,
+    "JackboxTalksPicture": talking_points_picture,
+    "JackboxTalksTitle": talking_points_prompt,
+    "JackboxTalksSignpost": talking_points_slide_transition
 }
 main_window.run()
