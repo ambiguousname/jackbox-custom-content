@@ -125,7 +125,7 @@ class SelectionWindow():
         self.previous_window = previous_window
 
     def run(self, inputs=None): #Have to add inputs as an argument because the "Ok" event needs to pass a set of values for determining stuff. So the run function needs a second argument, but will never actually use it.
-        n_layout = [[sg.Text(self.layout_list[0])], [sg.Listbox(self.layout_list[1], size=(30, 10), key=self.layout_list[2])], [sg.Button('Ok'), sg.Button('Exit' if not self.previous_window != None else 'Go Back')]]
+        n_layout = [[sg.Text(self.layout_list[0])], [sg.Listbox(self.layout_list[1], size=(30, 10), select_mode="LISTBOX_SELECT_MODE_SINGLE", key=self.layout_list[2])], [sg.Button('Ok'), sg.Button('Exit' if not self.previous_window != None else 'Go Back')]]
         window = sg.Window(self.title, n_layout)
         while True:
             event, values = window.read()
@@ -173,7 +173,7 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
         content_list = []
         for item in content:
             content_list.append(content[item]["id"] + ": " + content[item]["values"]["content_type"] + " - " + content[item]["values"]["descriptor_text"])
-        layout = [[sg.Text("Choose Content to Edit/Delete:")], [sg.Listbox(content_list, key="content_selection", size=(100, 5))], [sg.Button("Edit"), sg.Button("Delete"), sg.Button("Show Folder"), sg.Button("Go Back")]]
+        layout = [[sg.Text("Choose Content to Edit/Delete:")], [sg.Listbox(content_list, key="content_selection", size=(100, 5), select_mode="LISTBOX_SELECT_MODE_SINGLE")], [sg.Button("Edit"), sg.Button("Delete"), sg.Button("Show Folder"), sg.Button("Go Back")]]
         window = sg.Window("Choose Content to Edit/Delete", layout)
         while True:
             event, values = window.read()
@@ -410,9 +410,7 @@ def talking_points_picture(selection=None, existing_data=None):
     window.close()
 
 def talking_points_prompt(selection=None, existing_data=None):
-    slide_transitions = "m,For those of you questioning my reasons, I was motivated by this...|m,For those of you who object, here's why you're all powerless to stop me...|m,If you're concerned about permissions, I have all the power I need from this...|e,Now for the Finale: What you're about to see next will ultimately prove my superiority...|m,What I'm about to say is actually banned in about 20 countries, so pay close attention...|" +
-    "e,For those of you at home, imitate exactly what you're about to hear and see...|e,Now it's flex time, and I'm going to flex with this...|e,I have no words for what you're about to witness, only vague and confusing noises/hand movements...|" + 
-    "m,For this amazing feat, I will make use of this as a centerpiece...|m,For my performance, I will be requiring the aid of this...|m,It's nearly time, and to gauge your excitement, I will be using this..."
+    slide_transitions = "m,For those of you questioning my reasons, I was motivated by this...|m,For those of you who object, here's why you're all powerless to stop me...|m,If you're concerned about permissions, I have all the power I need from this...|e,Now for the Finale: What you're about to see next will ultimately prove my superiority...|m,What I'm about to say is actually banned in about 20 countries, so pay close attention...|e,For those of you at home, imitate exactly what you're about to hear and see...|e,Now it's flex time, and I'm going to flex with this...|e,I have no words for what you're about to witness, only vague and confusing noises/hand movements...|m,For this amazing feat, I will make use of this as a centerpiece...|m,For my performance, I will be requiring the aid of this...|m,It's nearly time, and to gauge your excitement, I will be using this..."
     if existing_data != None:
         transitions = existing_data["signposts"]
         slide_transitions = ""
@@ -444,14 +442,31 @@ def talking_points_prompt(selection=None, existing_data=None):
                         position = item[0]
                         signpost = item[2:] #Ignore the m, and e,
                         transitions_list.append({"position": position, "signpost": signpost})
-            custom_prompt = CustomData({"safetyAnswers": safety_answers, "signposts": transition_list, "title": values["talk_title"], "x": values["x"]})
+            custom_prompt = CustomContent({"safetyAnswers": safety_answers, "signposts": transitions_list, "title": values["talk_title"], "x": values["x"]}, "JackboxTalks", "JackboxTalksTitle", values["talk_title"])
             custom_prompt.write_to_json()
             custom_prompt.save_to_custom_content()
             sg.Popup("Custom prompt created, ID: " + custom_prompt.id)
     window.close()
 
 def talking_points_slide_transition(selection=None, existing_data=None):
-    
+    layout=[[sg.Text("Transition Text: "), sg.InputText("" if existing_data == None else existing_data["signpost"], key="signpost")], 
+    [sg.Text("Position of transition:"), sg.Listbox(("middle", "end"), default_values="" if existing_data == None else existing_data["position"], select_mode="LISTBOX_SELECT_MODE_SINGLE", key="position")],
+    [sg.Checkbox("Contains Adult Content", key="x", default=False if existing_data == None else existing_data["x"])], [sg.Button("Make Transition"), sg.Button("Go Back")]]
+    window = sg.Window("Make a slide transition", layout)
+    while True:
+        event, values = window.read()
+        if event == sg.WIN_CLOSED:
+            break
+        if event == "Go Back":
+            window.close()
+            if existing_data == None:
+                talking_points.run()
+        if event == "Make Transition":
+            custom_transition = CustomContent({"signpost": values["signpost"], "position": values["position"][0], "x": values["x"]}, "JackboxTalks", "JackboxTalksSignpost", values["signpost"])
+            custom_transition.write_to_json()
+            custom_transition.save_to_custom_content()
+            sg.Popup("Transition created, ID: " + custom_transition.id)
+    window.close()
 
 talking_points = SelectionWindow("Talking Points Content Selection", ["Please select the type of content", ("Picture", "Prompt", "Slide Transition"), "talking_points_content_type"], {
     "Picture": talking_points_picture,

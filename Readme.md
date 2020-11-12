@@ -63,8 +63,7 @@ In the "What to filter field", you'd put:
 `<PRONOUN> Homework|<PROUNOUN> homework|hw|<PRONOUN> hw`
 
 You should already know that Jackbox uses tags like <ANYPLAYER> and <BLANK> for questions, and so for their responses to specific answers,
-they use the tags <ARTICLE> (Like "the", "a", "an") and <PRONOUN> (Like "I", "My", "His", "Hers"). Jackbox will also separate possible answers by
-a "|" sign.
+they use the tags <ARTICLE> (Like "the", "a", "an", "a massive", "a lot of", etc.), <PRONOUN> (Like "I", "My", "His", "Her", "I've got", "this", "that", etc.), and I believe <VERB> (Like "having a", "craving a", "needing a", "downing a", "guzzling") (I haven't seen a custom response that uses <VERB> yet, but the game can detect the kinds of examples I just gave, I think. You'll have to test it out for yourself.). Jackbox will also separate possible answers by a "|" sign.
 
 You should also try to anticipate alternate answers, like abbreviations or misspellings. Let's look at another example.
 
