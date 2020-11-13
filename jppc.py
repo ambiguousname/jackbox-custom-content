@@ -222,7 +222,9 @@ def import_content(selected=None):
                     content = json.load(ids.read())
                     latest_id = int(content.keys().sort()[-1])
                     for i in range(new_content.keys()):
-                        content[str(latest_id + i + 1)] = new_content[new_content.keys()[i]]
+                        n_c = new_content[new_content.keys(i)]
+                        content[str(latest_id + i + 1)] = n_c
+                        content_type_mapping[n_c["content_type"]](selected, n_c["values"]) #Requires you to manually add in each piece of content.
                     ids.seek(0)
                     ids.truncate()
                     ids.write(json.dumps(content))
@@ -261,7 +263,7 @@ def round_prompt(selection, existing_data=None):
     [sg.Text("What to filter (See Readme): "), sg.InputText(key="response-filter")],
     [sg.Text("Transcript of your response: "), sg.InputText(key="response-narration")],
     [sg.Button("Make a prompt"), sg.Button("Go Back")]]
-    window = sg.Window(("Round " + selection[-1] + " Prompt") if existing_data == None else existing_data["content_type"], layout)
+    window = sg.Window(("Round " + selection[-1] + " Prompt") if existing_data == None else existing_data["id"], layout)
     while True:
         event, values = window.read()
         if event == sg.WIN_CLOSED:
@@ -293,7 +295,7 @@ def round_prompt_final(selection, existing_data=None): #I'm making this separate
     [sg.Checkbox("Includes Player Name", default=(True if existing_data == None else existing_data["includesPlayerName"]), key="player-name"), sg.Checkbox("Contains Adult Content", default=(False if existing_data == None else existing_data["x"]), key="x"), sg.Checkbox("Content is US specific", default=(False if existing_data == None else existing_data["us"]), key="us")],
     [sg.Text(".ogg file of you reading the prompt (Optional):")], [sg.InputText(key="prompt"), sg.FileBrowse(file_types=((".OGG", "*.ogg"), ("ALL Files", "*.*")))],
     [sg.Button("Make a prompt"), sg.Button("Go Back")]]
-    window = sg.Window("Make a Quiplash 3 Final Round Prompt", layout)
+    window = sg.Window("Make a Quiplash 3 Final Round Prompt" if existing_data == None else existing_data["id"], layout)
     while True:
         event, values = window.read()
         if event == sg.WIN_CLOSED:
@@ -327,7 +329,7 @@ def round_prompt_final(selection, existing_data=None): #I'm making this separate
 
 def safety_quip(selection, existing_data=None):
     layout = [[sg.Text("Safety Quip Text (Should be generic): "), sg.InputText("" if existing_data == None else existing_data["value"], key="safety-quip")], [sg.Button("Make Quip"), sg.Button("Go Back")]]
-    window = sg.Window("Make a Safety Quip", layout)
+    window = sg.Window("Make a Safety Quip" if existing_data == None else existing_data["id"], layout)
     while True:
         event, values = window.read()
         if event == sg.WIN_CLOSED:
@@ -360,7 +362,7 @@ def talking_points_picture(selection=None, existing_data=None):
     layout = [[sg.Text("Choose a .JPG file to add: "), sg.InputText("" if existing_data == None else os.getcwd() + "/JackboxTalks/content/JackboxTalksPicture/" + existing_data["id"] + ".jpg", key="photo"), sg.FileBrowse(file_types=((".JPG", "*.jpg"), ("ALL Files", "*.*")))],
     [sg.Text("Low Res .JPG (recommended, will use higher-res picture if not given): "), sg.InputText("" if existing_data == None else os.getcwd() + "/JackboxTalks/content/JackboxTalksPictureLow/" + existing_data["id"], key="low_res_photo"), sg.FileBrowse(file_types=((".JPG", "*.jpg"), ("ALL Files", "*.*")))], 
     [sg.Text("Description of Picture: "), sg.InputText("" if existing_data == None else existing_data["name"], key="photo_description")], [sg.Checkbox("Picture contains adult content", default=False if existing_data == None else existing_data["x"], key="x")], [sg.Button("Add"), sg.Button("Go Back")]]
-    window = sg.Window("Add a Picture", layout)
+    window = sg.Window("Add a Picture" if existing_data == None else existing_data["id"], layout)
     while True:
         event, values = window.read()
         if event == sg.WIN_CLOSED:
@@ -407,7 +409,7 @@ def talking_points_prompt(selection=None, existing_data=None):
     [sg.Text("Slide Transitions (separate by |, add (m,) for Middle of presentation, (e,) for End of presentation at the beginning for each transition. Slide Transitions are optional.):")],
     [sg.Multiline(default_text=slide_transitions, key="transitions", size=(200, 5))],
     [sg.Button("Make Prompt"), sg.Button("Go Back")]]
-    window = sg.Window("Make a prompt", layout)
+    window = sg.Window("Make a prompt" if existing_data == None else existing_data["id"], layout)
     while True:
         event, values = window.read()
         if event == sg.WIN_CLOSED:
@@ -438,7 +440,7 @@ def talking_points_slide_transition(selection=None, existing_data=None):
     layout=[[sg.Text("Transition Text: "), sg.InputText("Of course, now I hear you ask \"Do you have any evidence?\". Well sure..." if existing_data == None else existing_data["signpost"], key="signpost", size=(100, 1))], 
     [sg.Text("Position of transition:"), sg.Listbox(("middle", "end"), size=(10,2), default_values="middle" if existing_data == None else existing_data["position"], select_mode="LISTBOX_SELECT_MODE_SINGLE", key="position")],
     [sg.Checkbox("Contains Adult Content", key="x", default=False if existing_data == None else existing_data["x"])], [sg.Button("Make Transition"), sg.Button("Go Back")]]
-    window = sg.Window("Make a slide transition", layout)
+    window = sg.Window("Make a slide transition" if existing_data == None else existing_data["id"], layout)
     while True:
         event, values = window.read()
         if event == sg.WIN_CLOSED:
