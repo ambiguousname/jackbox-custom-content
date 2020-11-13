@@ -49,6 +49,15 @@ I have here a handy conversion for the games and their weird names:
 
 The program does this because that's what the folders for each game are called.
 
+# Importing content
+
+As of right now, importing content requires you to manually look at each new piece of content and add it in. I have no idea when I'll change this. Alternatively, you could just copy someone else's Jackbox Party Pack 7 /game/ folder that contains the custom content.
+
+## Note on importing files
+
+The import content feature won't allow you to directly import any custom files, like .OGG files or .JPG files. To do that, you'll need to make a folder of all the custom files
+and then select them in the import dialogs that pop up.
+
 # Making custom responses to specific text for Quiplash 3:
 
 So, you may notice that in Quiplash 3 the announcer will sometimes react to a specific prompt. You can do this too!
@@ -66,8 +75,7 @@ In the "What to filter field", you'd put:
 `<PRONOUN> Homework|<PROUNOUN> homework|hw|<PRONOUN> hw`
 
 You should already know that Jackbox uses tags like <ANYPLAYER> and <BLANK> for questions, and so for their responses to specific answers,
-they use the tags <ARTICLE> (Like "the", "a", "an") and <PRONOUN> (Like "I", "My", "His", "Hers"). Jackbox will also separate possible answers by
-a "|" sign.
+they use the tags <ARTICLE> (Like "the", "a", "an", "a massive", "a lot of", etc.), <PRONOUN> (Like "I", "My", "His", "Her", "I've got", "this", "that", etc.), and I believe <VERB> (Like "having a", "craving a", "needing a", "downing a", "guzzling") (I haven't seen a custom response that uses <VERB> yet, but the game can detect the kinds of examples I just gave, I think. You'll have to test it out for yourself.). Jackbox will also separate possible answers by a "|" sign.
 
 You should also try to anticipate alternate answers, like abbreviations or misspellings. Let's look at another example.
 
