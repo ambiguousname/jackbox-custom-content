@@ -46,6 +46,15 @@ Quiplash3 - Quiplash 3`
 
 The program does this because that's what the folders Jackbox Party Pack 7 uses for each game are called.
 
+# Importing content
+
+As of right now, importing content requires you to manually look at each new piece of content and add it in. I have no idea when I'll change this. Alternatively, you could just copy someone else's Jackbox Party Pack 7 /game/ folder that contains the custom content.
+
+## Note on importing files
+
+The import content feature won't allow you to directly import any custom files, like .OGG files or .JPG files. To do that, you'll need to make a folder of all the custom files
+and then select them in the import dialogs that pop up.
+
 # Making custom responses to specific text for Quiplash 3:
 
 So, you may notice that in Quiplash 3 the announcer will sometimes react to a specific prompt. You can do this too!
