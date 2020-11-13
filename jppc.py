@@ -26,6 +26,7 @@ def id_gen(custom_values): #custom_values should be a dict that passes on any ot
         _id = str(100000 + len(id_dict.keys()))
     custom_values.update({"id": _id}) #Need to store the id twice so that things can work. The .jet files need a reference to the id.
     id_dict[_id] = {"id": _id, "values": custom_values}
+    ids.seek(0)
     ids.truncate()
     new_json = json.dumps(id_dict)
     ids.write(new_json)
@@ -72,6 +73,7 @@ class CustomContent(object):
         ids = open("./custom_content.json", "r+")
         content = json.load(ids)
         content[self.id].update({"id": self.id, "values": self.values})
+        ids.seek(0)
         ids.truncate()
         ids.write(json.dumps(content))
         ids.close()
@@ -199,6 +201,7 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
                 custom_content.write_to_json(None, True) #Delete the JSON file, using the pre-existing path.
                 #Remove the content's custom folder (will do nothing if one doesn't exist)
                 custom_content.add_custom_files(delete=True)
+                ids.seek(0)
                 ids.truncate()
                 if len(content.keys()) != 0:
                     ids.write(json.dumps(content))
@@ -221,7 +224,7 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
 
 def import_content(selected=None):
     layout = [[sg.Text("To share content for import, share custom_content.json (from the same folder as Jackbox Party Pack Custom.exe).")],
-    [sg.Text("If that file has been shared with you, select it here: "), sg.InputText(key="custom-files"), sg.FileBrowse()], [sg.Button("Import"), sg.Button("Go Back")]]
+    [sg.Text("If that file has been shared with you, select it here: "), sg.InputText(key="custom-files"), sg.FileBrowse(file_types=((".JSON", "*.json"), ("ALL Types", "*.*")))], [sg.Button("Import"), sg.Button("Go Back")]]
     window = sg.Window("Select File to Import", layout)
     while True:
         event, values = window.read()
@@ -238,6 +241,7 @@ def import_content(selected=None):
                     latest_id = int(content.keys().sort()[-1])
                     for i in range(new_content.keys()):
                         content[str(latest_id + i + 1)] = new_content[new_content.keys()[i]]
+                    ids.seek(0)
                     ids.truncate()
                     ids.write(json.dumps(content))
                     ids.close()
@@ -269,9 +273,9 @@ def create_quiplash_data_jet(prompt_content):
 def round_prompt(selection, existing_data=None):
     layout = [[sg.Text("Prompt Text: "), sg.InputText("Hey, <ANYPLAYER> needs to <BLANK>." if existing_data == None else existing_data["prompt"], size=(50,1), key="text")], [sg.Text("Safety Quip(s) (separate by |): "), sg.InputText("learn how the prompt system works|learn how safety quips work|eat all my garbage" if existing_data == None else existing_data["safetyQuips"], size=(50,1), key="safety-quips")],
     [sg.Checkbox("Includes Player Name", default=(True if existing_data == None else existing_data["includesPlayerName"]), key="player-name"), sg.Checkbox("Contains Adult Content", default=(False if existing_data == None else existing_data["x"]), key="x"), sg.Checkbox("Content is US specific", default=(False if existing_data == None else existing_data["us"]), key="us")],
-    [sg.Text(".ogg files of you reading things (Optional):")], [sg.Text(".ogg of you saying the prompt: "), sg.InputText(key="prompt"), sg.FileBrowse()],
+    [sg.Text(".ogg files of you reading things (Optional):")], [sg.Text(".ogg of you saying the prompt: "), sg.InputText(key="prompt"), sg.FileBrowse(file_types=((".OGG", "*.ogg"), ("ALL Files", "*.*")))],
     [sg.Text("Add a response to specific text (Very optional, see Readme for information):")],
-    [sg.InputText(key="response"), sg.FileBrowse()], 
+    [sg.InputText(key="response"), sg.FileBrowse(file_types=((".OGG", "*.ogg"), ("ALL Files", "*.*")))], 
     [sg.Text("What to filter (See Readme): "), sg.InputText(key="response-filter")],
     [sg.Text("Transcript of your response: "), sg.InputText(key="response-narration")],
     [sg.Button("Make a prompt"), sg.Button("Go Back")]]
@@ -305,7 +309,7 @@ def round_prompt(selection, existing_data=None):
 def round_prompt_final(selection, existing_data=None): #I'm making this separate because it's just easier to do this than to explain the last round prompt syntax.
     layout = [[sg.Text("Prompt Text: "), sg.InputText("Three things a stranger would say about <ANYPLAYER>." if existing_data == None else existing_data["prompt"], key="lastround-prompt")], [sg.Text("Safety Quip(s) (separate by |): "), sg.InputText("not|funny|didn't laugh|get|out of|my face|learn|how the safety quips|work" if existing_data == None else existing_data["safetyQuips"], key="lastround-safety-quips")],
     [sg.Checkbox("Includes Player Name", default=(True if existing_data == None else existing_data["includesPlayerName"]), key="player-name"), sg.Checkbox("Contains Adult Content", default=(False if existing_data == None else existing_data["x"]), key="x"), sg.Checkbox("Content is US specific", default=(False if existing_data == None else existing_data["us"]), key="us")],
-    [sg.Text(".ogg file of you reading the prompt (Optional):")], [sg.InputText(key="prompt"), sg.FileBrowse()],
+    [sg.Text(".ogg file of you reading the prompt (Optional):")], [sg.InputText(key="prompt"), sg.FileBrowse(file_types=((".OGG", "*.ogg"), ("ALL Files", "*.*")))],
     [sg.Button("Make a prompt"), sg.Button("Go Back")]]
     window = sg.Window("Make a Quiplash 3 Final Round Prompt", layout)
     while True:
@@ -371,9 +375,9 @@ quiplash_3 = SelectionWindow("Quiplash 3 Content Selection", ["Please select the
 #Stuff for Talking Points
 
 def talking_points_picture(selection=None, existing_data=None):
-    layout = [[sg.Text("Choose a .JPG file to add: "), sg.InputText("" if existing_data == None else os.getcwd() + "/JackboxTalks/content/JackboxTalksPicture/" + existing_data["id"] + ".jpg", key="photo"), sg.FileBrowse()],
-    [sg.Text("Low Res .JPG (recommended, will use higher-res picture if not given): "), sg.InputText("" if existing_data == None else os.getcwd() + "/JackboxTalks/content/JackboxTalksPictureLow/" + existing_data["id"], key="low_res_photo"), sg.FileBrowse()], 
-    [sg.Text("Description of Picture: "), sg.InputText("" if existing_data == None else existing_data["name"], key="photo_description")], [sg.Checkbox("Picture contains adult content", default=False if existing_data == None else existing_data["x"])], [sg.Button("Add"), sg.Button("Go Back")]]
+    layout = [[sg.Text("Choose a .JPG file to add: "), sg.InputText("" if existing_data == None else os.getcwd() + "/JackboxTalks/content/JackboxTalksPicture/" + existing_data["id"] + ".jpg", key="photo"), sg.FileBrowse(file_types=((".JPG", "*.jpg"), ("ALL Files", "*.*")))],
+    [sg.Text("Low Res .JPG (recommended, will use higher-res picture if not given): "), sg.InputText("" if existing_data == None else os.getcwd() + "/JackboxTalks/content/JackboxTalksPictureLow/" + existing_data["id"], key="low_res_photo"), sg.FileBrowse(file_types=((".JPG", "*.jpg"), ("ALL Files", "*.*")))], 
+    [sg.Text("Description of Picture: "), sg.InputText("" if existing_data == None else existing_data["name"], key="photo_description")], [sg.Checkbox("Picture contains adult content", default=False if existing_data == None else existing_data["x"], key="x")], [sg.Button("Add"), sg.Button("Go Back")]]
     window = sg.Window("Add a Picture", layout)
     while True:
         event, values = window.read()
