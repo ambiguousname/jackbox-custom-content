@@ -6,7 +6,6 @@ from shutil import copyfile, rmtree
 #TODO:
 # Test safety quips
 # Test importing content
-# Add Talking Points Content (Slide Transitions)
 # Test Talking Points Content
 # Add example images in the Readme
 
@@ -372,7 +371,7 @@ quiplash_3 = SelectionWindow("Quiplash 3 Content Selection", ["Please select the
 #Stuff for Talking Points
 
 def talking_points_picture(selection=None, existing_data=None):
-    layout = [[sg.Text("Choose a .JPG file to add: "), sg.InputText("" if existing_data == None else os.getcwd() + "/JackboxTalks/content/JackboxTalksPicture/" + existing_data["id"] + ".jpg", key="photo")],
+    layout = [[sg.Text("Choose a .JPG file to add: "), sg.InputText("" if existing_data == None else os.getcwd() + "/JackboxTalks/content/JackboxTalksPicture/" + existing_data["id"] + ".jpg", key="photo"), sg.FileBrowse()],
     [sg.Text("Low Res .JPG (recommended, will use higher-res picture if not given): "), sg.InputText("" if existing_data == None else os.getcwd() + "/JackboxTalks/content/JackboxTalksPictureLow/" + existing_data["id"], key="low_res_photo"), sg.FileBrowse()], 
     [sg.Text("Description of Picture: "), sg.InputText("" if existing_data == None else existing_data["name"], key="photo_description")], [sg.Checkbox("Picture contains adult content", default=False if existing_data == None else existing_data["x"])], [sg.Button("Add"), sg.Button("Go Back")]]
     window = sg.Window("Add a Picture", layout)
@@ -416,10 +415,10 @@ def talking_points_prompt(selection=None, existing_data=None):
         slide_transitions = ""
         for item in transitions:
             slide_transitions += item["position"][0] + "," + item["signpost"] + "|"
-    layout = [[sg.Text("Prompt: "), sg.InputText("I'm about to do what you're all afraid of. That's right, I'm going to: <BLANK>" if existing_data == None else existing_data["title"], key="talk_title")], [sg.Checkbox("Contains adult content", default=True if existing_data == None else existing_data["x"], key="x")],
+    layout = [[sg.Text("Prompt: "), sg.InputText("I'm about to do what you're all afraid of. That's right, I'm going to: <BLANK>" if existing_data == None else existing_data["title"], key="talk_title", size=(200,1))], [sg.Checkbox("Contains adult content", default=True if existing_data == None else existing_data["x"], key="x")],
     [sg.Text("Safety Answers (separate by |): "), sg.Multiline(default_text="Do absolutely nothing|Eat a snake live on camera|Downvote a post on reddit" if existing_data == None else "|".join(existing_data["safetyAnswers"]), key="safety_answers")],
-    [sg.Text("Slide Transitions (separate by |, add (m,) for Middle of presentation, (e,) for End of presentation at the beginning for each transition. Slide Transitions are optional.)"),
-    sg.Multiline(default_text=slide_transitions, key="transitions")],
+    [sg.Text("Slide Transitions (separate by |, add (m,) for Middle of presentation, (e,) for End of presentation at the beginning for each transition. Slide Transitions are optional.):")],
+    [sg.Multiline(default_text=slide_transitions, key="transitions", size=(200, 5))],
     [sg.Button("Make Prompt"), sg.Button("Go Back")]]
     window = sg.Window("Make a prompt", layout)
     while True:
@@ -449,8 +448,8 @@ def talking_points_prompt(selection=None, existing_data=None):
     window.close()
 
 def talking_points_slide_transition(selection=None, existing_data=None):
-    layout=[[sg.Text("Transition Text: "), sg.InputText("" if existing_data == None else existing_data["signpost"], key="signpost")], 
-    [sg.Text("Position of transition:"), sg.Listbox(("middle", "end"), default_values="" if existing_data == None else existing_data["position"], select_mode="LISTBOX_SELECT_MODE_SINGLE", key="position")],
+    layout=[[sg.Text("Transition Text: "), sg.InputText("Of course, now I hear you ask \"Do you have any evidence?\". Well sure..." if existing_data == None else existing_data["signpost"], key="signpost", size=(100, 1))], 
+    [sg.Text("Position of transition:"), sg.Listbox(("middle", "end"), size=(10,2), default_values="middle" if existing_data == None else existing_data["position"], select_mode="LISTBOX_SELECT_MODE_SINGLE", key="position")],
     [sg.Checkbox("Contains Adult Content", key="x", default=False if existing_data == None else existing_data["x"])], [sg.Button("Make Transition"), sg.Button("Go Back")]]
     window = sg.Window("Make a slide transition", layout)
     while True:
@@ -478,7 +477,7 @@ talking_points = SelectionWindow("Talking Points Content Selection", ["Please se
 create_content = SelectionWindow("Select a game", ["Select a game.", ("Blather Round", "Devils and the Details", "Talking Points", "Quiplash 3", "Champ'd Up"), "game"],{
     "Blather Round": None,
     "Devils and the Details": None,
-    "Talking Points": None,
+    "Talking Points": talking_points.run,
     "Quiplash 3": quiplash_3.run,
     "Champ'd Up": None
 }, "main_window")
