@@ -463,7 +463,7 @@ talking_points = SelectionWindow("Talking Points Content Selection", ["Please se
 }, "create_content")
 
 #Main Menu stuff
-create_content = SelectionWindow("Select a game", ["Select a game.", ("Blather Round", "Devils and the Details", "Talking Points", "Quiplash 3", "Champ'd Up"), "game"],{
+create_content = SelectionWindow("Select a game", ["Select a game.", ("Talking Points", "Quiplash 3"), "game"],{
     "Blather Round": None,
     "Devils and the Details": None,
     "Talking Points": talking_points.run,
