@@ -6,7 +6,7 @@ from shutil import copyfile, rmtree
 #TODO:
 # Test safety quips
 # Test importing content
-# Test Talking Points Content
+# Test Talking Points Slide transitions
 # Add example images in the Readme
 # Add feature to delete everything but custom content
 
@@ -359,7 +359,7 @@ quiplash_3 = SelectionWindow("Quiplash 3 Content Selection", ["Please select the
 #Stuff for Talking Points
 
 def talking_points_picture(selection=None, existing_data=None):
-    layout = [[sg.Text("Choose a .JPG file to add: "), sg.InputText("" if existing_data == None else os.getcwd() + "/JackboxTalks/content/JackboxTalksPicture/" + existing_data["id"] + ".jpg", key="photo"), sg.FileBrowse(file_types=((".JPG", "*.jpg"), ("ALL Files", "*.*")))],
+    layout = [[sg.Text("Choose a .JPG file to add (will not show up on phone screens as a black photo, but it'll appear on your computer): "), sg.InputText("" if existing_data == None else os.getcwd() + "/JackboxTalks/content/JackboxTalksPicture/" + existing_data["id"] + ".jpg", key="photo"), sg.FileBrowse(file_types=((".JPG", "*.jpg"), ("ALL Files", "*.*")))],
     [sg.Text("Low Res .JPG (recommended, will use higher-res picture if not given): "), sg.InputText("" if existing_data == None else os.getcwd() + "/JackboxTalks/content/JackboxTalksPictureLow/" + existing_data["id"], key="low_res_photo"), sg.FileBrowse(file_types=((".JPG", "*.jpg"), ("ALL Files", "*.*")))], 
     [sg.Text("Description of Picture: "), sg.InputText("" if existing_data == None else existing_data["name"], key="photo_description")], [sg.Checkbox("Picture contains adult content", default=False if existing_data == None else existing_data["x"], key="x")], [sg.Button("Add"), sg.Button("Go Back")]]
     window = sg.Window("Add a Picture" if existing_data == None else existing_data["id"], layout)
