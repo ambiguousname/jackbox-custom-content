@@ -26,6 +26,14 @@ otherwise you're going to have to uninstall and reinstall your entire game if so
 
 # Potential Questions
 
+## The .EXE file is way too slow
+
+If the .EXE is too slow for you, you can just follow the steps for cloning the repository and using the .PY file.
+
+## I don't have Windows, and I don't want to install python
+
+As of right now, you're just going to have to install python and install jppc.py on your OS of choice. I haven't figured out how to make distributables for other OSes yet.
+
 ## HELP, EVERYTHING IS BROKEN
 
 If you're using Steam, go to the Jackbox Party Pack 7 in your Steam Library. Right click on the game's icon or name, click "Properties".
