@@ -8,6 +8,7 @@ from shutil import copyfile, rmtree
 # Test importing content
 # Test Talking Points Content
 # Add example images in the Readme
+# Add feature to delete everything but custom content
 
 def id_gen(custom_values): #custom_values should be a dict that passes on any other identifying information for the user
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
@@ -84,10 +85,11 @@ class CustomContent(object):
             path = kwargs["path"]
         else:
             path = "./" + self.values["game"] + "/content/" + self.values["content_type"] + "/" + self.id + "/"
-        if os.path.exists(path):
+        if os.path.exists(path) and not "path" in kwargs: #If there's a folder here, but we're not selecting a custom path
             rmtree(path)
         if not ("delete" in kwargs and kwargs["delete"] == True):
-            os.mkdir(path)
+            if not (os.path.exists(path)):
+                os.mkdir(path)
             for file in args:
                 if type(file) == dict and "path" in file: #If we're just copying a file
                     if(os.path.exists(file['path'])): #Only add this if the file's path exists.
@@ -145,28 +147,6 @@ class SelectionWindow():
                 
 #Stuff for file management
 
-def view_content(selected=None):
-    if os.path.exists("./custom_content.json"):
-        ids = open("./custom_content.json", "r")
-        content = json.load(ids)
-        ids.close()
-        content_str = ""
-        for i in content:
-            item = content[i]["values"]
-            content_str += "ID: " + item["id"] + ", Game: " + item["game"] + ", Type: " + item["content_type"] + ", Description: " + item["descriptor_text"] + "; \n"
-        layout = [[sg.Text(content_str)], [sg.Button("Ok")]]
-        window = sg.Window("All Your Content", layout)
-        while True:
-            event, values = window.read()
-            if event == "Ok" or event == sg.WIN_CLOSED:
-                break
-        window.close()
-        main_window.run()
-
-    else:
-        sg.Popup("You have no custom content.")
-        main_window.run()
-
 def edit_content(selected=None): #Selected goes unused because of how SelectWindow works.
     if os.path.exists("./custom_content.json"):
         ids = open("./custom_content.json", 'r+')
@@ -174,7 +154,7 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
         content_list = []
         for item in content:
             content_list.append(content[item]["id"] + ": " + content[item]["values"]["content_type"] + " - " + content[item]["values"]["descriptor_text"])
-        layout = [[sg.Text("Choose Content to Edit/Delete:")], [sg.Listbox(content_list, key="content_selection", size=(100, 5), select_mode="LISTBOX_SELECT_MODE_SINGLE")], [sg.Button("Edit"), sg.Button("Delete"), sg.Button("Show Folder"), sg.Button("Go Back")]]
+        layout = [[sg.Text("Choose Content to Edit/Delete:")], [sg.Listbox(content_list, key="content_selection", size=(100, 25), select_mode="LISTBOX_SELECT_MODE_SINGLE")], [sg.Button("Edit"), sg.Button("Delete"), sg.Button("Show Folder"), sg.Button("Go Back")]]
         window = sg.Window("Choose Content to Edit/Delete", layout)
         while True:
             event, values = window.read()
@@ -184,6 +164,8 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
                 _id = values["content_selection"][0].split(":")[0]
                 existing_data = content[_id]["values"]
                 path = os.path.realpath("./" + existing_data["game"] + "/content/" + existing_data["content_type"] + "/" + existing_data["id"])
+                if "path" in existing_data:
+                    path = existing_data["path"]
                 if (os.path.exists(path)):
                     os.startfile(path)
                 else:
@@ -223,7 +205,7 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
         main_window.run()
 
 def import_content(selected=None):
-    layout = [[sg.Text("To share content for import, share custom_content.json (from the same folder as Jackbox Party Pack Custom.exe).")],
+    layout = [[sg.Text("To share content for import, share custom_content.json (from the same folder as Jackbox Party Pack Custom.exe). NOTE: See the readme for importing files like .OGGs or .JPGs.")],
     [sg.Text("If that file has been shared with you, select it here: "), sg.InputText(key="custom-files"), sg.FileBrowse(file_types=((".JSON", "*.json"), ("ALL Types", "*.*")))], [sg.Button("Import"), sg.Button("Go Back")]]
     window = sg.Window("Select File to Import", layout)
     while True:
@@ -399,10 +381,11 @@ def talking_points_picture(selection=None, existing_data=None):
                     "altText": values["photo_description"],
                     "name": values["photo_description"],
                     "x": values["x"]
-                }, "JackboxTalks", "JackboxTalksPicture", picture)
+                }, "JackboxTalks", "JackboxTalksPicture", values["photo_description"])
+                picture_content.values["path"] = os.getcwd() + "\JackboxTalks\content\JackboxTalksPicture"
                 picture_content.write_to_json()
                 #Write high-res picture
-                picture_content.add_custom_files({"path": picture, "name": picture_content.id + ".jpg"})
+                picture_content.add_custom_files({"path": picture, "name": picture_content.id + ".jpg"}, path="./JackboxTalks/content/JackboxTalksPicture/")
                 #Write low_res picture in a different folder
                 picture_content.add_custom_files({"path": low_res, "name": picture_content.id + ".jpg"}, path="./JackboxTalks/content/JackboxTalksPictureLow/")
                 #Save to custom_content.json
@@ -419,7 +402,7 @@ def talking_points_prompt(selection=None, existing_data=None):
         slide_transitions = ""
         for item in transitions:
             slide_transitions += item["position"][0] + "," + item["signpost"] + "|"
-    layout = [[sg.Text("Prompt: "), sg.InputText("I'm about to do what you're all afraid of. That's right, I'm going to: <BLANK>" if existing_data == None else existing_data["title"], key="talk_title", size=(200,1))], [sg.Checkbox("Contains adult content", default=True if existing_data == None else existing_data["x"], key="x")],
+    layout = [[sg.Text("Prompt: "), sg.InputText("I'm about to do what you're all afraid of. That's right, I'm going to: <BLANK>" if existing_data == None else existing_data["title"], key="talk_title", size=(200,1))], [sg.Checkbox("Contains adult content", default=False if existing_data == None else existing_data["x"], key="x")],
     [sg.Text("Safety Answers (separate by |): "), sg.Multiline(default_text="Do absolutely nothing|Eat a snake live on camera|Downvote a post on reddit" if existing_data == None else "|".join(existing_data["safetyAnswers"]), key="safety_answers")],
     [sg.Text("Slide Transitions (separate by |, add (m,) for Middle of presentation, (e,) for End of presentation at the beginning for each transition. Slide Transitions are optional.):")],
     [sg.Multiline(default_text=slide_transitions, key="transitions", size=(200, 5))],
@@ -486,11 +469,10 @@ create_content = SelectionWindow("Select a game", ["Select a game.", ("Blather R
     "Champ'd Up": None
 }, "main_window")
 
-main_window = SelectionWindow("Select an option", ["Please select an option.", ("View My Custom Content", "Create Custom Content", "Edit Content", "Import Content"), "option"], {
+main_window = SelectionWindow("Select an option", ["Please select an option.", ("Create Custom Content", "View/Edit Content", "Import Content"), "option"], {
     "Create Custom Content": create_content.run,
-    "Edit Content": edit_content,
-    "Import Content": import_content,
-    "View My Custom Content": view_content
+    "View/Edit Content": edit_content,
+    "Import Content": import_content
 })
 window_mapping = { #Used for backing out of stuff.
     "quiplash_prompt": quiplash_prompt,
