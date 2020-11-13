@@ -7,7 +7,7 @@ WARNING: I've really only tested this on Windows, it might not work on other ope
 You may also want to keep a backup of the Jackbox Party Pack 7's files if you're not using Steam,
 otherwise you're going to have to uninstall and reinstall your entire game if something goes wrong.
 
-# PROOF:
+## Some screenshots of custom content in the Jackbox Party Pack 7:
 
 ![Talking Points](https://raw.githubusercontent.com/ambiguousname/jackbox-custom-content/main/screenshots/TalkingPoints.PNG)\
 ![Quiplash3](https://raw.githubusercontent.com/ambiguousname/jackbox-custom-content/main/screenshots/Quiplash3.PNG)
