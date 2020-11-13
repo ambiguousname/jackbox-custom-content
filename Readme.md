@@ -9,8 +9,15 @@ otherwise you're going to have to uninstall and reinstall your entire game if so
 
 # Install instructions
 
+## If you don't have python installed and are running on Windows:
+- Go to the releases page and download the .ZIP file: https://github.com/ambiguousname/jackbox-custom-content/releases
 - Unzip the contents of the .ZIP file into the "games" directory of your Jackbox Party Pack 7 install folder. (For steam on Windows: C:\Program Files (x86)\Steam\steamapps\common\The Jackbox Party Pack 7\games)
 - Run "Jackbox Party Pack Custom.exe".
+
+## If you do have python installed:
+- Clone this repository
+- Move "jppc.py" to the "games" directory of your Jackbox Party Pack 7 install folder. (For steam on Windows: C:\Program Files (x86)\Steam\steamapps\common\The Jackbox Party Pack 7\games)
+- Run jppc.py in the terminal of your choice.
 
 # Potential Questions
 
@@ -34,17 +41,13 @@ Delete everything from your Jackbox Party Pack 7 folder, then find the "Verify i
 # Why does this program sometimes use weird names for each game?
 
 I have here a handy conversion for the games and their weird names:
-`BlankyBlank - Blather 'Round
+- BlankyBlank - Blather 'Round
+- Everyday - Devils and the Details
+- JackboxTalks - Talking Points 
+- World Champions - Champ'd Up
+- Quiplash3 - Quiplash 3
 
-Everyday - Devils and the Details
-
-JackboxTalks - Talking Points
-
-World Champions - Champ'd Up
-
-Quiplash3 - Quiplash 3`
-
-The program does this because that's what the folders Jackbox Party Pack 7 uses for each game are called.
+The program does this because that's what the folders for each game are called.
 
 # Importing content
 
