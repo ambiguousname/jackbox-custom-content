@@ -37,13 +37,8 @@ def id_gen(custom_values): #custom_values should be a dict that passes on any ot
 
 class CustomContent(object):
     def __init__(self, *args, **kwargs): #values, game, content_type, descriptor_text, _id=None
-        self.values = {"game": args[1], "content_type": args[2], "descriptor_text": args[3]}
-        self.values.update(args[0])
-        if not "id" in kwargs: #Are we using an existing id?
-            self.id = id_gen(self.values)
-        else:
-            self.id = kwargs["id"]
-        self.values.update({"id": self.id})
+        self.values = {"game": args[1], "content_type": args[2], "descriptor_text": args[3]} #We stores these in .values because .values is written to custom_content.json for content editing.
+        self.window_layout = args[0]
     
     def write_to_json(self, p=None, delete=False): #Right now, add_custom_files doesn't support custom file paths. Only write_to_json supports custom paths for data.jet files.
         path = "" 
@@ -71,7 +66,13 @@ class CustomContent(object):
                 jf.write(json.dumps(self.values))
             jf.close()
     
-    def save_to_custom_content(self): #Save to custom_content.json file which keeps track of everything
+    def save_to_custom_content(self, values, _id=None): #Save to custom_content.json file which keeps track of everything. Call this first, it generates an ID. We have values as an argument to pass any additional values.
+        self.values.update(values)
+        if _id == None: #Are we using an existing id?
+            self.id = id_gen(self.values)
+        else:
+            self.id = _id
+        self.values.update({"id": self.id})
         ids = open("./custom_content.json", "r+")
         content = json.load(ids)
         content[self.id].update({"id": self.id, "values": self.values})
@@ -106,8 +107,48 @@ class CustomContent(object):
                         f.close()
 
     def create_window(self, existing_data=None):
-        layout = []
-        window = sg.Window("" if existing_data == None else existing_data["id"])
+        if self.window_layout and "layout_list" in self.window_layout:
+            layout = []
+            for item in self.window_layout["layout_list"]:
+                layout_item = []
+                if "text" in item:
+                    layout_item.append(sg.Text(item["text"]))
+                if "input" in item:
+                    for input_type in item["input"]:
+                        kwargs = {}
+                        if "kwargs" in input_type:
+                            kwargs = input_type["kwargs"]
+                        new_input = input_type["type"](input_type["default_value"] if existing_data == None or type(input_type["default_value"]) != str else existing_data[input_type["param_name"]], key=input_type["param_name"], **kwargs)
+                        layout_item.append(new_input)
+                layout.append(layout_item)
+                layout.append(["Ok", "Go Back" if existing_data == None else "Exit"])
+            window = sg.Window(self.values["content_type"] if existing_data == None else existing_data["id"], layout)
+            while True:
+                event, values = window.read()
+                if event == sg.WIN_CLOSED or event == "Exit":
+                    break
+                if event == "Ok":
+                    new_values = values
+                    if "filter" in self.window_layout:
+                        new_values = self.window_layout["filter"]()
+                    self.save_to_custom_content(new_values, None if existing_data == None else existing_data["id"])
+                    for content in self.window_layout["content_list"]:
+                        if content["type"] == "json":
+                            self.write_to_json(None if not "path" in content else content["path"], False if not "delete" in content else content["delete"])
+                        if content["type"] == "files":
+                            kwargs = content["files"]["kwargs"]
+                            args = content["files"]["args"]
+                            self.add_custom_files(*args, **kwargs)
+                        if content["type"] == "CustomData":
+                            data = content["func"](self.values)
+                            kwargs = content["kwargs"]
+                            self.add_custom_files(data, **kwargs)
+                    sg.Popup("Content Created, ID: " + self.id)
+                if event == "Go Back":
+                    self.window_layout["previous_window"]()
+            window.close()
+        else:
+            raise Exception("Did not Instantiate CustomContent with 'window_layout' kwarg.")
 
 class CustomData(CustomContent):
     def __init__(self):
@@ -247,17 +288,94 @@ def import_content(selected=None):
 
 #Stuff for Quiplash 3
 
-def create_quiplash_data_jet(prompt_content):
+def create_quiplash_data_jet(values):
     data = CustomData()
-    data.add_data("B", "true" if prompt_content.response_filter != "" else "false", "HasJokeAudio") 
-    data.add_data("S", prompt_content.response_filter, "Keywords")
+    data.add_data("B", "true" if values["response_filter"] != "" else "false", "HasJokeAudio") 
+    data.add_data("S", values["response_filter"], "Keywords")
     data.add_data("A", "response", "KeywordResponseAudio") #Included even though there might not be response audio
-    data.add_data("S", prompt_content.response_narration, "KeywordResponseText")
-    data.add_data("B", "true" if prompt_content.values["prompt"] != "" else "false", "HasPromptAudio")
+    data.add_data("S", values["response_transcript"], "KeywordResponseText")
+    data.add_data("B", "true" if values["prompt"] != "" else "false", "HasPromptAudio")
     data.add_data("A", "prompt", "PromptAudio") #I think this is asking for the file name of the audio. I think I can leave this in if the audio doesn't exist, because some prompts don't have response audio, but we include the above line. 
-    data.add_data("S", prompt_content.values["prompt"], "Prompt Text")
-    data.add_data("S", prompt_content.values["safetyQuips"], "SafetyQuips")
+    data.add_data("S", values["prompt"], "Prompt Text")
+    data.add_data("S", "|".join(values["safetyQuips"]), "SafetyQuips")
     return data
+
+def round_filter(values):
+    safetyQuips = values["safetyQuips"].split("|")
+    return safetyQuips
+
+def round_prompt(selected, existing_data=None):
+    prompt = CustomContent("Quiplash3", "Quiplash3Round" + selected[-1] + "Question", {
+        "layout_list": [{"text": "Prompt Text: ", "input": [
+            {
+            "type": sg.InputText,
+            "default_value": "Hey, <ANYPLAYER> needs to <BLANK>.",
+            "param_name": "prompt",
+            "kwargs": {"size": (50, 1)}
+            }
+        ]}, {"text": "Safety Quips (seperate by |):", "input": [
+            {
+                "type": sg.InputText,
+                "default_value": "learn how the prompt system works|learn how safety quips work|eat all my garbage",
+                "param_name": "safetyQuips",
+                "kwargs": {"size": (50, 1)}
+            }
+        ]}, {"input": [
+            {
+                "type": sg.Checkbox,
+                "default_value": "Contains Adult Content",
+                "kwargs": {"default": False},
+                "param_name": "x"
+            }
+        ]}, {"text": ".ogg files of you reading the prompt (Optional):", "input": [
+            {
+                "type": sg.InputText,
+                "default_value": "",
+                "param_name": "prompt_sound"
+            }, {
+                "type": sg.FileBrowse,
+                "default_value": None,
+                "kwargs": {
+                    "file_types": [(".OGG", "*.ogg"), ("ALL Files", "*.*")]
+                },
+                "param_name": "prompt_file_browse"}
+        ]}, {"text": "Add a response to specific text (Very optional, see Readme for information):", "input": [
+            {
+                "type": sg.InputText,
+                "default_value": "",
+                "param_name": "response_sound"
+            }, {
+                "type": sg.FileBrowse,
+                "default_value": None,
+                "kwargs": {
+                    "file_types": [(".OGG", "*.ogg"), ("ALL Files", "*.*")]
+                },
+                "param_name": "response_file_browse"
+            }
+        ]}, {"text": "What to filter (See Readme): ", "input": [
+            {
+                "type": sg.InputText,
+                "default_value": "",
+                "param_name": "response_filter"
+            }
+        ]}, {"text": "Transcript of your response: ", "input": [
+            {
+                "type": sg.InputText,
+                "default_value": "",
+                "param_name": "response_transcript"
+            }
+        ]}],
+        "content_list": [
+            {"type": "json"}, #Write to master .JET file
+            {"type": "CustomData", "func": create_quiplash_data_jet, "kwargs": {}},
+            {"type": "files", "files": {
+                "args": [{"path": values["prompt"], "name": "prompt.ogg"}, {"path": values["response"], "name": "response.ogg"}],
+                "kwargs": {}
+            }}
+        ],
+        "filter": round_filter
+    })
+    prompt.create_window(existing_data)
 
 def round_prompt(selection, existing_data=None):
     layout = [[sg.Text("Prompt Text: "), sg.InputText("Hey, <ANYPLAYER> needs to <BLANK>." if existing_data == None else existing_data["prompt"], size=(50,1), key="text")], [sg.Text("Safety Quip(s) (separate by |): "), sg.InputText("learn how the prompt system works|learn how safety quips work|eat all my garbage" if existing_data == None else existing_data["safetyQuips"], size=(50,1), key="safety-quips")],
@@ -389,14 +507,14 @@ def talking_points_picture(selection=None, existing_data=None):
                     "name": values["photo_description"],
                     "x": values["x"]
                 }, "JackboxTalks", "JackboxTalksPicture", values["photo_description"])
-                picture_content.values["path"] = os.getcwd() + "\JackboxTalks\content\JackboxTalksPicture"
+                picture_content.values["path"] = os.getcwd() + "\\JackboxTalks\\content\\JackboxTalksPicture"
                 picture_content.write_to_json()
                 #Write high-res picture
                 picture_content.add_custom_files({"path": picture, "name": picture_content.id + ".jpg"}, path="./JackboxTalks/content/JackboxTalksPicture/")
                 #Write low_res picture in a different folder
                 picture_content.add_custom_files({"path": low_res, "name": picture_content.id + ".jpg"}, path="./JackboxTalks/content/JackboxTalksPictureLow/")
                 #Save to custom_content.json
-                picture_content.save_to_custom_content()
+                #picture_content.save_to_custom_content()
                 sg.Popup("Picture Added, ID: " + picture_content.id)
             else:
                 sg.Popup("You didn't select a valid file.")
@@ -437,7 +555,7 @@ def talking_points_prompt(selection=None, existing_data=None):
                         transitions_list.append({"position": position, "signpost": signpost})
             custom_prompt = CustomContent({"safetyAnswers": safety_answers, "signposts": transitions_list, "title": values["talk_title"], "x": values["x"]}, "JackboxTalks", "JackboxTalksTitle", values["talk_title"])
             custom_prompt.write_to_json()
-            custom_prompt.save_to_custom_content()
+            #custom_prompt.save_to_custom_content()
             sg.Popup("Custom prompt created, ID: " + custom_prompt.id)
     window.close()
 
@@ -457,7 +575,7 @@ def talking_points_slide_transition(selection=None, existing_data=None):
         if event == "Make Transition":
             custom_transition = CustomContent({"signpost": values["signpost"], "position": values["position"][0], "x": values["x"]}, "JackboxTalks", "JackboxTalksSignpost", values["signpost"])
             custom_transition.write_to_json()
-            custom_transition.save_to_custom_content()
+            #custom_transition.save_to_custom_content()
             sg.Popup("Transition created, ID: " + custom_transition.id)
     window.close()
 
