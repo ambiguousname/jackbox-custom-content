@@ -4,6 +4,7 @@ import os
 from shutil import copyfile, rmtree
 
 #TODO:
+# Rework game specific content to be more object oriented.
 # Test safety quips
 # Test importing content
 # Test Talking Points Slide transitions
@@ -35,13 +36,13 @@ def id_gen(custom_values): #custom_values should be a dict that passes on any ot
     return _id
 
 class CustomContent(object):
-    def __init__(self, values, game, content_type, descriptor_text, _id=None): #values, game, content_type, descriptor_text, _id=None
-        self.values = {"game": game, "content_type": content_type, "descriptor_text": descriptor_text}
-        self.values.update(values)
-        if _id == None: #Are we using an existing id?
+    def __init__(self, *args, **kwargs): #values, game, content_type, descriptor_text, _id=None
+        self.values = {"game": args[1], "content_type": args[2], "descriptor_text": args[3]}
+        self.values.update(args[0])
+        if not "id" in kwargs: #Are we using an existing id?
             self.id = id_gen(self.values)
         else:
-            self.id = _id
+            self.id = kwargs["id"]
         self.values.update({"id": self.id})
     
     def write_to_json(self, p=None, delete=False): #Right now, add_custom_files doesn't support custom file paths. Only write_to_json supports custom paths for data.jet files.
@@ -103,6 +104,10 @@ class CustomContent(object):
                         f = open(path + file['name'], "w+")
                         f.write(file['str'])
                         f.close()
+
+    def create_window(self, existing_data=None):
+        layout = []
+        window = sg.Window("" if existing_data == None else existing_data["id"])
 
 class CustomData(CustomContent):
     def __init__(self):
