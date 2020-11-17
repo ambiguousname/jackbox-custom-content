@@ -42,7 +42,7 @@ class CustomContent(object):
         self.window_layout = args[3]
         if "id" in kwargs:
             self.id = kwargs["id"]
-    
+
     def write_to_json(self, p=None, delete=False): #Right now, add_custom_files doesn't support custom file paths. Only write_to_json supports custom paths for data.jet files.
         path = "" 
         if p:
@@ -90,7 +90,7 @@ class CustomContent(object):
             path = kwargs["path"]
         else:
             path = "./" + self.values["game"] + "/content/" + self.values["content_type"] + "/" + self.id + "/"
-        if os.path.exists(path) and "edit" in kwargs and kwargs["edit"] == True: #If there's a folder here, but we're not selecting a custom path
+        if os.path.exists(path) and not ("path" in kwargs and ("keep_dir" in kwargs and kwargs["keep_dir"] == True)): #If there's a folder here, but we're not selecting a custom path
             rmtree(path)
         if not ("delete" in kwargs and kwargs["delete"] == True):
             if not (os.path.exists(path)):
@@ -304,7 +304,7 @@ def create_quiplash_data_jet(values):
     data.add_data("S", values["response_transcript"], "KeywordResponseText")
     data.add_data("B", "true" if values["prompt"] != "" else "false", "HasPromptAudio")
     data.add_data("A", "prompt", "PromptAudio") #I think this is asking for the file name of the audio. I think I can leave this in if the audio doesn't exist, because some prompts don't have response audio, but we include the above line. 
-    data.add_data("S", values["prompt"], "Prompt Text")
+    data.add_data("S", values["prompt"], "PromptText")
     data.add_data("S", "|".join(values["safetyQuips"]), "SafetyQuips")
     return data
 
@@ -385,7 +385,7 @@ def round_prompt(selected, existing_data=None):
             {"type": "CustomData", "func": create_quiplash_data_jet, "kwargs": {}},
             {"type": "files", "files": {
                 "args": [{"path": "param_name", "param_name": "prompt_file_browse", "name": "prompt.ogg"}, {"path": "param_name", "param_name": "response_file_browse", "name": "response.ogg"}],
-                "kwargs": {}
+                "kwargs": {"keep_dir": True}
             }}
         ],
         "filter": round_filter
