@@ -37,8 +37,11 @@ def id_gen(custom_values): #custom_values should be a dict that passes on any ot
 
 class CustomContent(object):
     def __init__(self, *args, **kwargs): #values, game, content_type, descriptor_text, _id=None
-        self.values = {"game": args[1], "content_type": args[2], "descriptor_text": args[3]} #We stores these in .values because .values is written to custom_content.json for content editing.
-        self.window_layout = args[0]
+        self.values = {"game": args[0], "content_type": args[1]} #We stores these in .values because .values is written to custom_content.json for content editing.
+        self.descriptor_text_name = args[2]
+        self.window_layout = args[3]
+        if "id" in kwargs:
+            self.id = kwargs["id"]
     
     def write_to_json(self, p=None, delete=False): #Right now, add_custom_files doesn't support custom file paths. Only write_to_json supports custom paths for data.jet files.
         path = "" 
@@ -68,9 +71,9 @@ class CustomContent(object):
     
     def save_to_custom_content(self, values, _id=None): #Save to custom_content.json file which keeps track of everything. Call this first, it generates an ID. We have values as an argument to pass any additional values.
         self.values.update(values)
-        if _id == None: #Are we using an existing id?
+        if _id == None and not hasattr(self, "id"): #Are we using an existing id?
             self.id = id_gen(self.values)
-        else:
+        elif _id != None:
             self.id = _id
         self.values.update({"id": self.id})
         ids = open("./custom_content.json", "r+")
@@ -94,8 +97,11 @@ class CustomContent(object):
                 os.mkdir(path)
             for file in args:
                 if type(file) == dict and "path" in file: #If we're just copying a file
-                    if(os.path.exists(file['path'])): #Only add this if the file's path exists.
-                        copyfile(file['path'], path + file['name']) #From shutil
+                    file_path = file["path"]
+                    if file_path == "param_name":
+                        file_path = file["param_name"]
+                    if(os.path.exists(file_path)): #Only add this if the file's path exists.
+                        copyfile(file_path, path + file['name']) #From shutil
                 else: #If we're going to be writing a custom file from like a .JSON or whatever.
                     if isinstance(file, CustomContent):
                         if os.path.exists(path + "data.jet"):
@@ -118,10 +124,10 @@ class CustomContent(object):
                         kwargs = {}
                         if "kwargs" in input_type:
                             kwargs = input_type["kwargs"]
-                        new_input = input_type["type"](input_type["default_value"] if existing_data == None or type(input_type["default_value"]) != str else existing_data[input_type["param_name"]], key=input_type["param_name"], **kwargs)
+                        new_input = input_type["type"](input_type["default_value"] if existing_data == None or type(input_type["default_value"]) != "Browse" else existing_data[input_type["param_name"]], key=input_type["param_name"], **kwargs)
                         layout_item.append(new_input)
                 layout.append(layout_item)
-                layout.append(["Ok", "Go Back" if existing_data == None else "Exit"])
+            layout.append([sg.Button("Ok"), sg.Button("Go Back") if existing_data == None else "Exit"])
             window = sg.Window(self.values["content_type"] if existing_data == None else existing_data["id"], layout)
             while True:
                 event, values = window.read()
@@ -131,6 +137,7 @@ class CustomContent(object):
                     new_values = values
                     if "filter" in self.window_layout:
                         new_values = self.window_layout["filter"]()
+                    self.values["descriptor_text"] = new_values[self.descriptor_text_name]
                     self.save_to_custom_content(new_values, None if existing_data == None else existing_data["id"])
                     for content in self.window_layout["content_list"]:
                         if content["type"] == "json":
@@ -305,7 +312,7 @@ def round_filter(values):
     return safetyQuips
 
 def round_prompt(selected, existing_data=None):
-    prompt = CustomContent("Quiplash3", "Quiplash3Round" + selected[-1] + "Question", {
+    prompt = CustomContent("Quiplash3", "Quiplash3Round" + selected[-1] + "Question", "prompt", {
         "layout_list": [{"text": "Prompt Text: ", "input": [
             {
             "type": sg.InputText,
@@ -313,7 +320,7 @@ def round_prompt(selected, existing_data=None):
             "param_name": "prompt",
             "kwargs": {"size": (50, 1)}
             }
-        ]}, {"text": "Safety Quips (seperate by |):", "input": [
+        ]}, {"text": "Safety Quips (separate by |):", "input": [
             {
                 "type": sg.InputText,
                 "default_value": "learn how the prompt system works|learn how safety quips work|eat all my garbage",
@@ -334,7 +341,7 @@ def round_prompt(selected, existing_data=None):
                 "param_name": "prompt_sound"
             }, {
                 "type": sg.FileBrowse,
-                "default_value": None,
+                "default_value": "Browse",
                 "kwargs": {
                     "file_types": [(".OGG", "*.ogg"), ("ALL Files", "*.*")]
                 },
@@ -346,7 +353,7 @@ def round_prompt(selected, existing_data=None):
                 "param_name": "response_sound"
             }, {
                 "type": sg.FileBrowse,
-                "default_value": None,
+                "default_value": "Browse",
                 "kwargs": {
                     "file_types": [(".OGG", "*.ogg"), ("ALL Files", "*.*")]
                 },
@@ -369,49 +376,13 @@ def round_prompt(selected, existing_data=None):
             {"type": "json"}, #Write to master .JET file
             {"type": "CustomData", "func": create_quiplash_data_jet, "kwargs": {}},
             {"type": "files", "files": {
-                "args": [{"path": values["prompt"], "name": "prompt.ogg"}, {"path": values["response"], "name": "response.ogg"}],
+                "args": [{"path": "param_name", "param_name": "prompt_file_browse", "name": "prompt.ogg"}, {"path": "param_name", "param_name": "response_file_browse", "name": "response.ogg"}],
                 "kwargs": {}
             }}
         ],
         "filter": round_filter
     })
     prompt.create_window(existing_data)
-
-def round_prompt(selection, existing_data=None):
-    layout = [[sg.Text("Prompt Text: "), sg.InputText("Hey, <ANYPLAYER> needs to <BLANK>." if existing_data == None else existing_data["prompt"], size=(50,1), key="text")], [sg.Text("Safety Quip(s) (separate by |): "), sg.InputText("learn how the prompt system works|learn how safety quips work|eat all my garbage" if existing_data == None else existing_data["safetyQuips"], size=(50,1), key="safety-quips")],
-    [sg.Checkbox("Includes Player Name", default=(True if existing_data == None else existing_data["includesPlayerName"]), key="player-name"), sg.Checkbox("Contains Adult Content", default=(False if existing_data == None else existing_data["x"]), key="x"), sg.Checkbox("Content is US specific", default=(False if existing_data == None else existing_data["us"]), key="us")],
-    [sg.Text(".ogg files of you reading things (Optional):")], [sg.Text(".ogg of you saying the prompt: "), sg.InputText(key="prompt"), sg.FileBrowse(file_types=((".OGG", "*.ogg"), ("ALL Files", "*.*")))],
-    [sg.Text("Add a response to specific text (Very optional, see Readme for information):")],
-    [sg.InputText(key="response"), sg.FileBrowse(file_types=((".OGG", "*.ogg"), ("ALL Files", "*.*")))], 
-    [sg.Text("What to filter (See Readme): "), sg.InputText(key="response-filter")],
-    [sg.Text("Transcript of your response: "), sg.InputText(key="response-narration")],
-    [sg.Button("Make a prompt"), sg.Button("Go Back")]]
-    window = sg.Window(("Round " + selection[-1] + " Prompt") if existing_data == None else existing_data["id"], layout)
-    while True:
-        event, values = window.read()
-        if event == sg.WIN_CLOSED:
-            break
-        if event == "Go Back":
-            window.close()
-            if existing_data == None:
-                quiplash_prompt.run()
-            break
-        if event == "Make a prompt":
-            prompt = CustomContent({
-                "includesPlayerName": values["player-name"],
-                "prompt": values["text"],
-                "safetyQuips": values["safety-quips"].split("|"), #We make an array because that's how they're formatted in the master .jet file.
-                "x": values["x"],
-                "us": values["us"]
-            }, "Quiplash3", ("Quiplash3Round" + selection[-1] + "Question") if existing_data == None else existing_data["content_type"], values["text"], None if existing_data == None else existing_data["id"])
-            prompt.response_filter = values["response-filter"]
-            prompt.response_narration = values["response-narration"]
-            prompt.write_to_json() #Get round number from the choice passed through in quiplash_prompt
-            #Write the data.jet file to be added:
-            data = create_quiplash_data_jet(prompt)
-            prompt.add_custom_files({"path": values["prompt"], "name": "prompt.ogg"}, {"path": values["response"], "name": "response.ogg"}, data)
-            sg.Popup("Prompt created, ID: " + prompt.id)
-    window.close()
 
 def round_prompt_final(selection, existing_data=None): #I'm making this separate because it's just easier to do this than to explain the last round prompt syntax.
     layout = [[sg.Text("Prompt Text: "), sg.InputText("Three things a stranger would say about <ANYPLAYER>." if existing_data == None else existing_data["prompt"], key="lastround-prompt")], [sg.Text("Safety Quip(s) (separate by |): "), sg.InputText("not|funny|didn't laugh|get|out of|my face|learn|how the safety quips|work" if existing_data == None else existing_data["safetyQuips"], key="lastround-safety-quips")],
