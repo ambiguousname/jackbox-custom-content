@@ -90,7 +90,7 @@ class CustomContent(object):
             path = kwargs["path"]
         else:
             path = "./" + self.values["game"] + "/content/" + self.values["content_type"] + "/" + self.id + "/"
-        if os.path.exists(path) and not "path" in kwargs: #If there's a folder here, but we're not selecting a custom path
+        if os.path.exists(path) and "edit" in kwargs and kwargs["edit"] == True: #If there's a folder here, but we're not selecting a custom path
             rmtree(path)
         if not ("delete" in kwargs and kwargs["delete"] == True):
             if not (os.path.exists(path)):
@@ -127,7 +127,7 @@ class CustomContent(object):
                         new_input = input_type["type"](input_type["default_value"] if existing_data == None or type(input_type["default_value"]) != "Browse" else existing_data[input_type["param_name"]], key=input_type["param_name"], **kwargs)
                         layout_item.append(new_input)
                 layout.append(layout_item)
-            layout.append([sg.Button("Ok"), sg.Button("Go Back") if existing_data == None else "Exit"])
+            layout.append([sg.Button("Ok"), sg.Button("Go Back") if existing_data == None else sg.Button("Exit")])
             window = sg.Window(self.values["content_type"] if existing_data == None else existing_data["id"], layout)
             while True:
                 event, values = window.read()
@@ -136,7 +136,7 @@ class CustomContent(object):
                 if event == "Ok":
                     new_values = values
                     if "filter" in self.window_layout:
-                        new_values = self.window_layout["filter"]()
+                        new_values = self.window_layout["filter"](new_values)
                     self.values["descriptor_text"] = new_values[self.descriptor_text_name]
                     self.save_to_custom_content(new_values, None if existing_data == None else existing_data["id"])
                     for content in self.window_layout["content_list"]:
@@ -152,7 +152,8 @@ class CustomContent(object):
                             self.add_custom_files(data, **kwargs)
                     sg.Popup("Content Created, ID: " + self.id)
                 if event == "Go Back":
-                    self.window_layout["previous_window"]()
+                    window.close()
+                    window_mapping[self.window_layout["previous_window"]].run()
             window.close()
         else:
             raise Exception("Did not Instantiate CustomContent with 'window_layout' kwarg.")
@@ -308,11 +309,13 @@ def create_quiplash_data_jet(values):
     return data
 
 def round_filter(values):
-    safetyQuips = values["safetyQuips"].split("|")
-    return safetyQuips
+    new_values = values
+    new_values["safetyQuips"] = values["safetyQuips"].split("|")
+    return new_values
 
 def round_prompt(selected, existing_data=None):
     prompt = CustomContent("Quiplash3", "Quiplash3Round" + selected[-1] + "Question", "prompt", {
+        "previous_window": "quiplash_prompt",
         "layout_list": [{"text": "Prompt Text: ", "input": [
             {
             "type": sg.InputText,
@@ -333,6 +336,11 @@ def round_prompt(selected, existing_data=None):
                 "default_value": "Contains Adult Content",
                 "kwargs": {"default": False},
                 "param_name": "x"
+            }, {
+                "type": sg.Checkbox,
+                "default_value": "Content is US-Specific",
+                "kwargs": {"default": False},
+                "param_name": "us"
             }
         ]}, {"text": ".ogg files of you reading the prompt (Optional):", "input": [
             {
