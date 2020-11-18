@@ -4,7 +4,7 @@ import os
 from shutil import copyfile, rmtree
 
 #TODO:
-# Rework game specific content to be more object oriented.
+# Edit all existing content to fit rework
 # Test safety quips
 # Test importing content
 # Test Talking Points Slide transitions
@@ -90,7 +90,7 @@ class CustomContent(object):
             path = kwargs["path"]
         else:
             path = "./" + self.values["game"] + "/content/" + self.values["content_type"] + "/" + self.id + "/"
-        if os.path.exists(path) and not ("path" in kwargs and ("keep_dir" in kwargs and kwargs["keep_dir"] == True)): #If there's a folder here, but we're not selecting a custom path
+        if os.path.exists(path) and not ("path" in kwargs and ("contains_custom_data" in kwargs and kwargs["contains_custom_data"] == True)): #If there's a folder here, but we're not selecting a custom path
             rmtree(path)
         if not ("delete" in kwargs and kwargs["delete"] == True):
             if not (os.path.exists(path)):
@@ -333,6 +333,12 @@ def round_prompt(selected, existing_data=None):
         ]}, {"input": [
             {
                 "type": sg.Checkbox,
+                "default_value": "Includes Player Name",
+                "kwargs": {"default": True},
+                "param_name": "includesPlayerName"
+            },
+            {
+                "type": sg.Checkbox,
                 "default_value": "Contains Adult Content",
                 "kwargs": {"default": False},
                 "param_name": "x"
@@ -384,50 +390,81 @@ def round_prompt(selected, existing_data=None):
             {"type": "json"}, #Write to master .JET file
             {"type": "CustomData", "func": create_quiplash_data_jet, "kwargs": {}},
             {"type": "files", "files": {
-                "args": [{"path": "param_name", "param_name": "prompt_file_browse", "name": "prompt.ogg"}, {"path": "param_name", "param_name": "response_file_browse", "name": "response.ogg"}],
-                "kwargs": {"keep_dir": True}
+                "args": [{"path": "param_name", "param_name": "prompt_sound", "name": "prompt.ogg"}, {"path": "param_name", "param_name": "response_sound", "name": "response.ogg"}],
+                "kwargs": {"contains_custom_data": True}
             }}
         ],
         "filter": round_filter
     })
     prompt.create_window(existing_data)
 
-def round_prompt_final(selection, existing_data=None): #I'm making this separate because it's just easier to do this than to explain the last round prompt syntax.
-    layout = [[sg.Text("Prompt Text: "), sg.InputText("Three things a stranger would say about <ANYPLAYER>." if existing_data == None else existing_data["prompt"], key="lastround-prompt")], [sg.Text("Safety Quip(s) (separate by |): "), sg.InputText("not|funny|didn't laugh|get|out of|my face|learn|how the safety quips|work" if existing_data == None else existing_data["safetyQuips"], key="lastround-safety-quips")],
-    [sg.Checkbox("Includes Player Name", default=(True if existing_data == None else existing_data["includesPlayerName"]), key="player-name"), sg.Checkbox("Contains Adult Content", default=(False if existing_data == None else existing_data["x"]), key="x"), sg.Checkbox("Content is US specific", default=(False if existing_data == None else existing_data["us"]), key="us")],
-    [sg.Text(".ogg file of you reading the prompt (Optional):")], [sg.InputText(key="prompt"), sg.FileBrowse(file_types=((".OGG", "*.ogg"), ("ALL Files", "*.*")))],
-    [sg.Button("Make a prompt"), sg.Button("Go Back")]]
-    window = sg.Window("Make a Quiplash 3 Final Round Prompt" if existing_data == None else existing_data["id"], layout)
-    while True:
-        event, values = window.read()
-        if event == sg.WIN_CLOSED:
-            break
-        if event == "Go Back":
-            window.close()
-            if existing_data == None:
-                quiplash_prompt.run()
-            break
-        if event == "Make a prompt":
-            #Safety quips for the final round are a bit weird:
-            safety_quips = values["lastround-safety-quips"].split("|")
-            formatted_quips = []
-            for i in range(len(safety_quip)):
-                if not (i + 3 > len(safety_quip)):
-                    formatted_quips.append(safety_quips[0] + "|" + safety_quips[1] + "|" + safety_quips[2])
-            prompt = CustomContent({
-                "includesPlayerName": values["player-name"],
-                "prompt": values["lastround-prompt"],
-                "safetyQuips": formatted_quips,
-                "x": values["x"],
-                "us": values["us"]
-            }, "Quiplash3", "Quiplash3FinalQuestion", values["lastround-prompt"], None if existing_data == None else existing_data["id"])
-            prompt.write_to_json()
-            prompt.response_filter = ""
-            prompt.response_narration = ""
-            data = create_quiplash_data_jet(prompt)
-            prompt.add_custom_files({"path": values["prompt"], "name": "prompt.ogg"}, data)
-            sg.Popup("Prompt created, ID: " + prompt.id)
-    window.close()
+def round_final_filter(values):
+    new_values = values
+    formatted_quips = []
+    safety_quip = new_values["safetyQuips"].split("|")
+    for i in range(len(safety_quip)):
+        if not (i + 3 > len(safety_quip)):
+            formatted_quips.append(safety_quip[0] + "|" + safety_quip[1] + "|" + safety_quip[2])
+    new_values["safetyQuips"] = formatted_quips
+    return new_values
+
+def round_prompt_final(selected, existing_data=None):
+    prompt = CustomContent("Quiplash3", "Quiplash3FinalQuestion", "prompt", {
+        "previous_window": "quiplash_prompt",
+        "layout_list": [{"text": "Prompt Text: ", "input": [
+            {
+                "type": sg.InputText,
+                "default_value": "<ANYPLAYER>'s three favorite words.",
+                "param_name": "prompt"
+            }
+        ]}, {"text": "Safety Quip(s) (separate by |):", "input": [
+            {
+                "type": sg.InputText,
+                "default_value": "learning|safety|quips|wait|sorry|what|what|is|love",
+                "param_name": "safetyQuips"
+            }
+        ]}, {"input": [
+            {
+                "type": sg.Checkbox,
+                "default_value": "Includes Player Name",
+                "kwargs": {"default": False},
+                "param_name": "includesPlayerName"
+            }, {
+                "type": sg.Checkbox,
+                "default_value": "Contains Adult Content",
+                "kwargs": {"default": False},
+                "param_name": "x"
+            }, {
+                "type": sg.Checkbox,
+                "default_value": "Content is US-Specific",
+                "kwargs": {"default": False},
+                "param_name": "us"
+            }
+        ]}, {"text": ".ogg file of you reading the prompt (Optional):", "input": [
+            {
+                "type": sg.InputText,
+                "default_value": "",
+                "param_name": "prompt_sound"
+            }, {
+                "type": sg.FileBrowse,
+                "default_value": "Browse",
+                "kwargs": {
+                    "file_types": [(".OGG", "*.ogg"), ("ALL Files", "*.*")]
+                },
+                "param_name": "prompt_file_browse"
+            }
+        ]}],
+        "content_list": [
+            {"type": "json"},
+            {"type": "CustomData", "func": create_quiplash_data_jet, "kwargs": {}},
+            {"type": "files", "files": {
+                "args": [{"path": "param_name", "param_name": "prompt_sound", "name": "prompt.ogg"}],
+                "kwargs": {"contains_custom_data": True}
+            }}
+        ],
+        "filter": round_final_filter
+    })
+    prompt.create_window(existing_data)
 
 def safety_quip(selection, existing_data=None):
     layout = [[sg.Text("Safety Quip Text (Should be generic): "), sg.InputText("" if existing_data == None else existing_data["value"], key="safety-quip")], [sg.Button("Make Quip"), sg.Button("Go Back")]]
