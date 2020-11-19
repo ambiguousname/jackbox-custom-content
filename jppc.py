@@ -4,10 +4,8 @@ import os
 from shutil import copyfile, rmtree
 
 #TODO:
-# Edit all existing content to fit rework
-# Test safety quips
+# Test if content rework works (plus editing) (Quiplash Prompts Round 1 2 3, Safety Quips, Picture, Slide Transition, Slide Prompt)
 # Test importing content
-# Test Talking Points Slide transitions
 # Add example images in the Readme
 # Add feature to delete everything but custom content
 
@@ -90,7 +88,7 @@ class CustomContent(object):
             path = kwargs["path"]
         else:
             path = "./" + self.values["game"] + "/content/" + self.values["content_type"] + "/" + self.id + "/"
-        if os.path.exists(path) and not ("path" in kwargs and ("contains_custom_data" in kwargs and kwargs["contains_custom_data"] == True)): #If there's a folder here, but we're not selecting a custom path
+        if os.path.exists(path) and not ("path" in kwargs and ("adding_other_files" in kwargs and kwargs["adding_other_files"] == True)): #If there's a folder here, but we're not selecting a custom path
             rmtree(path)
         if not ("delete" in kwargs and kwargs["delete"] == True):
             if not (os.path.exists(path)):
@@ -98,6 +96,9 @@ class CustomContent(object):
             for file in args:
                 if type(file) == dict and "path" in file: #If we're just copying a file
                     file_path = file["path"]
+                    name = file["name"]
+                    if name == "id":
+                        name = self.id
                     if file_path == "param_name":
                         file_path = file["param_name"]
                     if(os.path.exists(file_path)): #Only add this if the file's path exists.
@@ -112,7 +113,12 @@ class CustomContent(object):
                         f.write(file['str'])
                         f.close()
 
-    def create_window(self, existing_data=None):
+    def create_window(self, *args, **kwargs):
+        existing_data = None
+        if "existing_data" in kwargs:
+            existing_data = kwargs["existing_data"]
+            if "import_filter" in self.window_layout:
+                existing_data = self.window_layout["import_filter"](kwargs["existing_data"])
         if self.window_layout and "layout_list" in self.window_layout:
             layout = []
             for item in self.window_layout["layout_list"]:
@@ -124,7 +130,10 @@ class CustomContent(object):
                         kwargs = {}
                         if "kwargs" in input_type:
                             kwargs = input_type["kwargs"]
-                        new_input = input_type["type"](input_type["default_value"] if existing_data == None or type(input_type["default_value"]) != "Browse" else existing_data[input_type["param_name"]], key=input_type["param_name"], **kwargs)
+                            for item in kwargs:
+                                if kwargs[item] == "param_name":
+                                    kwargs[item] = kwargs[kwargs["param_name"]]
+                        new_input = input_type["type"](input_type["default_value"] if existing_data == None or not input_type["param_name"] in existing_data else existing_data[input_type["param_name"]], key=input_type["param_name"], **kwargs)
                         layout_item.append(new_input)
                 layout.append(layout_item)
             layout.append([sg.Button("Ok"), sg.Button("Go Back") if existing_data == None else sg.Button("Exit")])
@@ -227,7 +236,7 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
             if event == "Edit":
                 _id = values["content_selection"][0].split(":")[0]
                 existing_data = content[_id]["values"]
-                content_type_mapping[existing_data["content_type"]](selected, existing_data)
+                content_type_mapping[existing_data["content_type"]](existing_data=existing_data)
             if event == "Delete":
                 _id = values["content_selection"][0].split(":")[0]
                 custom_content = CustomContent(content[_id]["values"], content[_id]["values"]["game"], content[_id]["values"]["content_type"], content[_id]["values"]["descriptor_text"], _id) #Setting None because values already has the game, type, and descriptor_text.
@@ -278,7 +287,7 @@ def import_content(selected=None):
                     for i in range(new_content.keys()):
                         n_c = new_content[new_content.keys(i)]
                         content[str(latest_id + i + 1)] = n_c
-                        content_type_mapping[n_c["content_type"]](selected, n_c["values"]) #Requires you to manually add in each piece of content.
+                        content_type_mapping[n_c["content_type"]](existing_data=n_c["values"]) #Requires you to manually add in each piece of content.
                     ids.seek(0)
                     ids.truncate()
                     ids.write(json.dumps(content))
@@ -313,90 +322,92 @@ def round_filter(values):
     new_values["safetyQuips"] = values["safetyQuips"].split("|")
     return new_values
 
-def round_prompt(selected, existing_data=None):
-    prompt = CustomContent("Quiplash3", "Quiplash3Round" + selected[-1] + "Question", "prompt", {
-        "previous_window": "quiplash_prompt",
-        "layout_list": [{"text": "Prompt Text: ", "input": [
-            {
+round_prompt_layout = {
+    "previous_window": "quiplash_prompt",
+    "layout_list": [{"text": "Prompt Text: ", "input": [
+        {
+        "type": sg.InputText,
+        "default_value": "Hey, <ANYPLAYER> needs to <BLANK>.",
+        "param_name": "prompt",
+        "kwargs": {"size": (50, 1)}
+        }
+    ]}, {"text": "Safety Quips (separate by |):", "input": [
+        {
             "type": sg.InputText,
-            "default_value": "Hey, <ANYPLAYER> needs to <BLANK>.",
-            "param_name": "prompt",
+            "default_value": "learn how the prompt system works|learn how safety quips work|eat all my garbage",
+            "param_name": "safetyQuips",
             "kwargs": {"size": (50, 1)}
-            }
-        ]}, {"text": "Safety Quips (separate by |):", "input": [
-            {
-                "type": sg.InputText,
-                "default_value": "learn how the prompt system works|learn how safety quips work|eat all my garbage",
-                "param_name": "safetyQuips",
-                "kwargs": {"size": (50, 1)}
-            }
-        ]}, {"input": [
-            {
-                "type": sg.Checkbox,
-                "default_value": "Includes Player Name",
-                "kwargs": {"default": True},
-                "param_name": "includesPlayerName"
+        }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Includes Player Name",
+            "kwargs": {"default": True},
+            "param_name": "includesPlayerName"
+        },
+        {
+            "type": sg.Checkbox,
+            "default_value": "Contains Adult Content",
+            "kwargs": {"default": False},
+            "param_name": "x"
+        }, {
+            "type": sg.Checkbox,
+            "default_value": "Content is US-Specific",
+            "kwargs": {"default": False},
+            "param_name": "us"
+        }
+    ]}, {"text": ".ogg files of you reading the prompt (Optional):", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "",
+            "param_name": "prompt_sound"
+        }, {
+            "type": sg.FileBrowse,
+            "default_value": "Browse",
+            "kwargs": {
+                "file_types": [(".OGG", "*.ogg"), ("ALL Files", "*.*")]
             },
-            {
-                "type": sg.Checkbox,
-                "default_value": "Contains Adult Content",
-                "kwargs": {"default": False},
-                "param_name": "x"
-            }, {
-                "type": sg.Checkbox,
-                "default_value": "Content is US-Specific",
-                "kwargs": {"default": False},
-                "param_name": "us"
-            }
-        ]}, {"text": ".ogg files of you reading the prompt (Optional):", "input": [
-            {
-                "type": sg.InputText,
-                "default_value": "",
-                "param_name": "prompt_sound"
-            }, {
-                "type": sg.FileBrowse,
-                "default_value": "Browse",
-                "kwargs": {
-                    "file_types": [(".OGG", "*.ogg"), ("ALL Files", "*.*")]
-                },
-                "param_name": "prompt_file_browse"}
-        ]}, {"text": "Add a response to specific text (Very optional, see Readme for information):", "input": [
-            {
-                "type": sg.InputText,
-                "default_value": "",
-                "param_name": "response_sound"
-            }, {
-                "type": sg.FileBrowse,
-                "default_value": "Browse",
-                "kwargs": {
-                    "file_types": [(".OGG", "*.ogg"), ("ALL Files", "*.*")]
-                },
-                "param_name": "response_file_browse"
-            }
-        ]}, {"text": "What to filter (See Readme): ", "input": [
-            {
-                "type": sg.InputText,
-                "default_value": "",
-                "param_name": "response_filter"
-            }
-        ]}, {"text": "Transcript of your response: ", "input": [
-            {
-                "type": sg.InputText,
-                "default_value": "",
-                "param_name": "response_transcript"
-            }
-        ]}],
-        "content_list": [
-            {"type": "json"}, #Write to master .JET file
-            {"type": "CustomData", "func": create_quiplash_data_jet, "kwargs": {}},
-            {"type": "files", "files": {
-                "args": [{"path": "param_name", "param_name": "prompt_sound", "name": "prompt.ogg"}, {"path": "param_name", "param_name": "response_sound", "name": "response.ogg"}],
-                "kwargs": {"contains_custom_data": True}
-            }}
-        ],
-        "filter": round_filter
-    })
-    prompt.create_window(existing_data)
+            "param_name": "prompt_file_browse"}
+    ]}, {"text": "Add a response to specific text (Very optional, see Readme for information):", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "",
+            "param_name": "response_sound"
+        }, {
+            "type": sg.FileBrowse,
+            "default_value": "Browse",
+            "kwargs": {
+                "file_types": [(".OGG", "*.ogg"), ("ALL Files", "*.*")]
+            },
+            "param_name": "response_file_browse"
+        }
+    ]}, {"text": "What to filter (See Readme): ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "",
+            "param_name": "response_filter"
+        }
+    ]}, {"text": "Transcript of your response: ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "",
+            "param_name": "response_transcript"
+        }
+    ]}],
+    "content_list": [
+        {"type": "json"}, #Write to master .JET file
+        {"type": "CustomData", "func": create_quiplash_data_jet, "kwargs": {}},
+        {"type": "files", "files": {
+            "args": [{"path": "param_name", "param_name": "prompt_sound", "name": "prompt.ogg"}, {"path": "param_name", "param_name": "response_sound", "name": "response.ogg"}],
+            "kwargs": {"adding_other_files": True}
+        }}
+    ],
+    "filter": round_filter
+}
+
+round_prompt_1 = CustomContent("Quiplash3", "Quiplash3Round1Question", "prompt", round_prompt_layout)
+
+round_prompt_2 = CustomContent("Quiplash3", "Quiplash3Round2Question", "prompt", round_prompt_layout)
 
 def round_final_filter(values):
     new_values = values
@@ -408,197 +419,243 @@ def round_final_filter(values):
     new_values["safetyQuips"] = formatted_quips
     return new_values
 
-def round_prompt_final(selected, existing_data=None):
-    prompt = CustomContent("Quiplash3", "Quiplash3FinalQuestion", "prompt", {
-        "previous_window": "quiplash_prompt",
-        "layout_list": [{"text": "Prompt Text: ", "input": [
-            {
-                "type": sg.InputText,
-                "default_value": "<ANYPLAYER>'s three favorite words.",
-                "param_name": "prompt"
-            }
-        ]}, {"text": "Safety Quip(s) (separate by |):", "input": [
-            {
-                "type": sg.InputText,
-                "default_value": "learning|safety|quips|wait|sorry|what|what|is|love",
-                "param_name": "safetyQuips"
-            }
-        ]}, {"input": [
-            {
-                "type": sg.Checkbox,
-                "default_value": "Includes Player Name",
-                "kwargs": {"default": False},
-                "param_name": "includesPlayerName"
-            }, {
-                "type": sg.Checkbox,
-                "default_value": "Contains Adult Content",
-                "kwargs": {"default": False},
-                "param_name": "x"
-            }, {
-                "type": sg.Checkbox,
-                "default_value": "Content is US-Specific",
-                "kwargs": {"default": False},
-                "param_name": "us"
-            }
-        ]}, {"text": ".ogg file of you reading the prompt (Optional):", "input": [
-            {
-                "type": sg.InputText,
-                "default_value": "",
-                "param_name": "prompt_sound"
-            }, {
-                "type": sg.FileBrowse,
-                "default_value": "Browse",
-                "kwargs": {
-                    "file_types": [(".OGG", "*.ogg"), ("ALL Files", "*.*")]
-                },
-                "param_name": "prompt_file_browse"
-            }
-        ]}],
-        "content_list": [
-            {"type": "json"},
-            {"type": "CustomData", "func": create_quiplash_data_jet, "kwargs": {}},
-            {"type": "files", "files": {
-                "args": [{"path": "param_name", "param_name": "prompt_sound", "name": "prompt.ogg"}],
-                "kwargs": {"contains_custom_data": True}
-            }}
-        ],
-        "filter": round_final_filter
-    })
-    prompt.create_window(existing_data)
+round_prompt_final = CustomContent("Quiplash3", "Quiplash3FinalQuestion", "prompt", {
+    "previous_window": "quiplash_prompt",
+    "layout_list": [{"text": "Prompt Text: ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "<ANYPLAYER>'s three favorite words.",
+            "param_name": "prompt"
+        }
+    ]}, {"text": "Safety Quip(s) (separate by |):", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "learning|safety|quips|wait|sorry|what|what|is|love",
+            "param_name": "safetyQuips"
+        }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Includes Player Name",
+            "kwargs": {"default": False},
+            "param_name": "includesPlayerName"
+        }, {
+            "type": sg.Checkbox,
+            "default_value": "Contains Adult Content",
+            "kwargs": {"default": False},
+            "param_name": "x"
+        }, {
+            "type": sg.Checkbox,
+            "default_value": "Content is US-Specific",
+            "kwargs": {"default": False},
+            "param_name": "us"
+        }
+    ]}, {"text": ".ogg file of you reading the prompt (Optional):", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "",
+            "param_name": "prompt_sound"
+        }, {
+            "type": sg.FileBrowse,
+            "default_value": "Browse",
+            "kwargs": {
+                "file_types": [(".OGG", "*.ogg"), ("ALL Files", "*.*")]
+            },
+            "param_name": "prompt_file_browse"
+        }
+    ]}],
+    "content_list": [
+        {"type": "json"},
+        {"type": "CustomData", "func": create_quiplash_data_jet, "kwargs": {}},
+        {"type": "files", "files": {
+            "args": [{"path": "param_name", "param_name": "prompt_sound", "name": "prompt.ogg"}],
+            "kwargs": {"adding_other_files": True}
+        }}
+    ],
+    "filter": round_final_filter
+})
 
-def safety_quip(selection, existing_data=None):
-    layout = [[sg.Text("Safety Quip Text (Should be generic): "), sg.InputText("" if existing_data == None else existing_data["value"], key="safety-quip")], [sg.Button("Make Quip"), sg.Button("Go Back")]]
-    window = sg.Window("Make a Safety Quip" if existing_data == None else existing_data["id"], layout)
-    while True:
-        event, values = window.read()
-        if event == sg.WIN_CLOSED:
-            break
-        if event == "Make Quip":
-            quip = CustomContent({"value": values["safety-quip"]}, "Quiplash3", "Quiplash3SafetyQuips", values["safety-quip"], None if existing_data == None else existing_data["id"])
-            quip.write_to_json()
-            sg.Popup("Safety Quip Created. ID: " + quip.id)
-        if event == "Go Back":
-            window.close()
-            if existing_data == None:
-                quiplash_3.run()
-            break
-    window.close()
+safety_quip = CustomContent("Quiplash3", "Quiplash3SafetyQuips", "value", {
+    "previous_window": "quiplash_3",
+    "layout_list": [{"text": "Safety Quip Text (Should be generic): ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "",
+            "param_name": "value"
+        }
+    ]}],
+    "content_list": [{"type": "json"}]
+})
 
 quiplash_prompt = SelectionWindow("Choose a Round", ["Choose a round.", ("Round 1", "Round 2", "Final Round"), "quiplash3_round_number"], {
-    "Round 1": round_prompt,
-    "Round 2": round_prompt,
-    "Final Round": round_prompt_final
+    "Round 1": round_prompt_1.create_window,
+    "Round 2": round_prompt_2.create_window,
+    "Final Round": round_prompt_final.create_window
 }, "quiplash_3")
 
 quiplash_3 = SelectionWindow("Quiplash 3 Content Selection", ["Please select the type of content", ("Prompt", "Safety Quip"), "quiplash3_content_type"], {
     "Prompt": quiplash_prompt.run,
-    "Safety Quip": safety_quip
+    "Safety Quip": safety_quip.create_window
 }, "create_content")
 
 #Stuff for Talking Points
 
-def talking_points_picture(selection=None, existing_data=None):
-    layout = [[sg.Text("Choose a .JPG file to add (will not show up on phone screens as a black photo, but it'll appear on your computer): "), sg.InputText("" if existing_data == None else os.getcwd() + "/JackboxTalks/content/JackboxTalksPicture/" + existing_data["id"] + ".jpg", key="photo"), sg.FileBrowse(file_types=((".JPG", "*.jpg"), ("ALL Files", "*.*")))],
-    [sg.Text("Low Res .JPG (recommended, will use higher-res picture if not given): "), sg.InputText("" if existing_data == None else os.getcwd() + "/JackboxTalks/content/JackboxTalksPictureLow/" + existing_data["id"], key="low_res_photo"), sg.FileBrowse(file_types=((".JPG", "*.jpg"), ("ALL Files", "*.*")))], 
-    [sg.Text("Description of Picture: "), sg.InputText("" if existing_data == None else existing_data["name"], key="photo_description")], [sg.Checkbox("Picture contains adult content", default=False if existing_data == None else existing_data["x"], key="x")], [sg.Button("Add"), sg.Button("Go Back")]]
-    window = sg.Window("Add a Picture" if existing_data == None else existing_data["id"], layout)
-    while True:
-        event, values = window.read()
-        if event == sg.WIN_CLOSED:
-            break
-        if event == "Go Back":
-            window.close()
-            if existing_data == None:
-                talking_points.run()
-            break
-        if event == "Add":
-            if os.path.exists(values["photo"]) and os.path.splitext(values["photo"])[1].lower() == ".jpg":
-                picture = values["photo"]
-                low_res = values["low_res_photo"]
-                if not (os.path.exists(low_res) and os.path.splitext(low_res)[1].lower() == ".jpg"):
-                    low_res = picture
-                #Only using one content to write this, otherwise editing this file is going to get messy.
-                picture_content = CustomContent({
-                    "altText": values["photo_description"],
-                    "name": values["photo_description"],
-                    "x": values["x"]
-                }, "JackboxTalks", "JackboxTalksPicture", values["photo_description"])
-                picture_content.values["path"] = os.getcwd() + "\\JackboxTalks\\content\\JackboxTalksPicture"
-                picture_content.write_to_json()
-                #Write high-res picture
-                picture_content.add_custom_files({"path": picture, "name": picture_content.id + ".jpg"}, path="./JackboxTalks/content/JackboxTalksPicture/")
-                #Write low_res picture in a different folder
-                picture_content.add_custom_files({"path": low_res, "name": picture_content.id + ".jpg"}, path="./JackboxTalks/content/JackboxTalksPictureLow/")
-                #Save to custom_content.json
-                #picture_content.save_to_custom_content()
-                sg.Popup("Picture Added, ID: " + picture_content.id)
-            else:
-                sg.Popup("You didn't select a valid file.")
-    window.close()
+def talking_points_picture_filter(values):
+    new_values = values
+    if new_values["low_res_path"] == "":
+        new_values["low_res_path"] = new_values["photo_path"]
+    return new_values
 
-def talking_points_prompt(selection=None, existing_data=None):
-    slide_transitions = "m,For those of you questioning my reasons, I was motivated by this...|m,For those of you who object, here's why you're all powerless to stop me...|m,If you're concerned about permissions, I have all the power I need from this...|e,Now for the Finale: What you're about to see next will ultimately prove my superiority...|m,What I'm about to say is actually banned in about 20 countries, so pay close attention...|e,For those of you at home, imitate exactly what you're about to hear and see...|e,Now it's flex time, and I'm going to flex with this...|e,I have no words for what you're about to witness, only vague and confusing noises/hand movements...|m,For this amazing feat, I will make use of this as a centerpiece...|m,For my performance, I will be requiring the aid of this...|m,It's nearly time, and to gauge your excitement, I will be using this..."
-    if existing_data != None:
-        transitions = existing_data["signposts"]
-        slide_transitions = ""
+talking_points_picture = CustomContent("JackboxTalks", "JackboxTalksPicture", "name", {
+    "previous_window": "talking_points",
+    "layout_list": [{"text": "Choose a .JPG file (will show up on your mobile device as a black photo, but it will appear in the game itself): ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "",
+            "param_name": "photo_path"
+        }, {
+            "type": sg.FileBrowse,
+            "default_value": "Browse",
+            "param_name": "photo_file_browse",
+            "kwargs": {
+                "file_types": [(".JPG", "*.jpg"), ("ALL Files", "*.*")]
+            }
+        }
+    ]}, {"text": "Low Res .JPG (recommended, will use higher-res picture if not given): ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "",
+            "param_name": "low_res_path"
+        }, {
+            "type": sg.FileBrowse,
+            "default_value": "Browse",
+            "param_name": "low_res_file_browse",
+            "kwargs": {
+                "file_types": [(".JPG", "*.jpg"), ("ALL Files", "*.*")]
+            }
+        }
+    ]}, {"text": "Description of the Picture (required): ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "",
+            "param_name": "picture_description"
+        }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Picture contains adult content",
+            "kwargs": {"default": False},
+            "param_name": "x"
+        }
+    ]}],
+    "content_list": [
+        {"type": "json"},
+        {"type": "files", "files": {
+            "args": [{"path": "param_name", "param_name": "photo_path", "name": "id"}],
+            "kwargs": {"path": "./JackboxTalks/content/JackboxTalksPicture"}
+        }},
+        {"type": "files", "files": {
+            "args": [{"path": "param_name", "param_name": "low_res_path", "name": "id"}],
+            "kwargs": {"path": "./JackboxTalks/content/JackboxTalksPictureLow", "adding_other_files": True}
+        }}
+    ],
+    "filter": talking_points_picture_filter
+})
+
+def talking_points_prompt_import(values):
+    new_values = values
+    slide_transitions = ""
+    transitions = values["signposts"]
+    for item in transitions:
+        slide_transitions += item["position"][0] + "," + item["signpost"] + "|"
+    new_values["signposts"] = transitions
+    return new_values
+
+def talking_points_prompt_filter(values):
+    new_values = values
+    transitions = values["signposts"]
+    transitions_list = []
+    if transitions != "" and (transitions[0] == "e" or transitions[0] == "m"):
+        transitions = values["signposts"].split("|")
         for item in transitions:
-            slide_transitions += item["position"][0] + "," + item["signpost"] + "|"
-    layout = [[sg.Text("Prompt: "), sg.InputText("I'm about to do what you're all afraid of. That's right, I'm going to: <BLANK>" if existing_data == None else existing_data["title"], key="talk_title", size=(200,1))], [sg.Checkbox("Contains adult content", default=False if existing_data == None else existing_data["x"], key="x")],
-    [sg.Text("Safety Answers (separate by |): "), sg.Multiline(default_text="Do absolutely nothing|Eat a snake live on camera|Downvote a post on reddit" if existing_data == None else "|".join(existing_data["safetyAnswers"]), key="safety_answers")],
-    [sg.Text("Slide Transitions (separate by |, add (m,) for Middle of presentation, (e,) for End of presentation at the beginning for each transition. Slide Transitions are optional.):")],
-    [sg.Multiline(default_text=slide_transitions, key="transitions", size=(200, 5))],
-    [sg.Button("Make Prompt"), sg.Button("Go Back")]]
-    window = sg.Window("Make a prompt" if existing_data == None else existing_data["id"], layout)
-    while True:
-        event, values = window.read()
-        if event == sg.WIN_CLOSED:
-            break
-        if event == "Go Back":
-            window.close()
-            if existing_data == None:
-                talking_points.run()
-            break
-        if event == "Make Prompt":
-            safety_answers = values["safety_answers"].split("|")
-            transitions = values["transitions"]
-            transitions_list = []
-            if transitions != "" and (transitions[0] == "e" or transitions[0] == "m"):
-                transitions = values["transitions"].split("|")
-                for item in transitions:
-                    if len(item) > 2 and ("e," in item or "m," in item):
-                        position = item[0]
-                        signpost = item[2:] #Ignore the m, and e,
-                        transitions_list.append({"position": position, "signpost": signpost})
-            custom_prompt = CustomContent({"safetyAnswers": safety_answers, "signposts": transitions_list, "title": values["talk_title"], "x": values["x"]}, "JackboxTalks", "JackboxTalksTitle", values["talk_title"])
-            custom_prompt.write_to_json()
-            #custom_prompt.save_to_custom_content()
-            sg.Popup("Custom prompt created, ID: " + custom_prompt.id)
-    window.close()
+            if len(item) > 2 and ("e," in item or "m," in item):
+                position = item[0]
+                signpost = item[2:] #Ignore the m, and e,
+                transitions_list.append({"position": position, "signpost": signpost})
+    new_values["signposts"] = transitions
+    return new_values
 
-def talking_points_slide_transition(selection=None, existing_data=None):
-    layout=[[sg.Text("Transition Text: "), sg.InputText("Of course, now I hear you ask \"Do you have any evidence?\". Well sure..." if existing_data == None else existing_data["signpost"], key="signpost", size=(100, 1))], 
-    [sg.Text("Position of transition:"), sg.Listbox(("middle", "end"), size=(10,2), default_values="middle" if existing_data == None else existing_data["position"], select_mode="LISTBOX_SELECT_MODE_SINGLE", key="position")],
-    [sg.Checkbox("Contains Adult Content", key="x", default=False if existing_data == None else existing_data["x"])], [sg.Button("Make Transition"), sg.Button("Go Back")]]
-    window = sg.Window("Make a slide transition" if existing_data == None else existing_data["id"], layout)
-    while True:
-        event, values = window.read()
-        if event == sg.WIN_CLOSED:
-            break
-        if event == "Go Back":
-            window.close()
-            if existing_data == None:
-                talking_points.run()
-        if event == "Make Transition":
-            custom_transition = CustomContent({"signpost": values["signpost"], "position": values["position"][0], "x": values["x"]}, "JackboxTalks", "JackboxTalksSignpost", values["signpost"])
-            custom_transition.write_to_json()
-            #custom_transition.save_to_custom_content()
-            sg.Popup("Transition created, ID: " + custom_transition.id)
-    window.close()
+talking_points_prompt = CustomContent("JackboxTalks", "JackboxTalksTitle", "title", {
+    "previous_window": "talking_points",
+    "layout_list": [{"text": "Prompt: ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "I'm about to do what you're all afraid of. That's right, I'm going to: <BLANK>",
+            "param_name": "title"
+        }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Contains adult content",
+            "kwargs": {"default": False},
+            "param_name": "x"
+        }
+    ]}, {"text": "Safety Answers (separate by |): ", "input": [
+        {
+            "type": sg.Multiline,
+            "default_value": "",
+            "kwargs": {"default_text": "Do absolutely nothing|Eat a snake live on camera|Downvote a post on reddit"},
+            "param_name": "safetyAnswers"
+        }
+    ]}, {"text": "Slide Transitions (separate by |, add (m,) for Middle of presentation, (e,) for End of presentation at the beginning for each transition. Slide transitions are optional.):"}, {"input": [
+        {
+            "type": sg.Multiline,
+            "default_value": "",
+            "kwargs": {"size": (200, 5), "default_text": "m,For those of you questioning my reasons, I was motivated by this...|m,For those of you who object, here's why you're all powerless to stop me...|m,If you're concerned about permissions, I have all the power I need from this...|e,Now for the Finale: What you're about to see next will ultimately prove my superiority...|m,What I'm about to say is actually banned in about 20 countries, so pay close attention...|e,For those of you at home, imitate exactly what you're about to hear and see...|e,Now it's flex time, and I'm going to flex with this...|e,I have no words for what you're about to witness, only vague and confusing noises/hand movements...|m,For this amazing feat, I will make use of this as a centerpiece...|m,For my performance, I will be requiring the aid of this...|m,It's nearly time, and to gauge your excitement, I will be using this..."},
+            "param_name": "signposts"
+        }
+    ]}],
+    "content_list": [
+        {"type": "json"}
+    ],
+    "filter": talking_points_prompt_filter,
+    "import_filter": talking_points_prompt_import
+})
+
+talking_points_slide_transition = CustomContent("JackboxTalks", "JackboxTalksSignpost", "signpost", {
+    "previous_window": "talking_points",
+    "layout_list": [{"text": "Transition Text: ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "Of course, now I hear you ask \"Do you have any evidence?\" Well sure...",
+            "param_name": "signpost",
+            "kwargs": {"size": (100, 1)}
+        }
+    ]}, {"text": "Position of transition:", "input": [
+        {
+            "type": sg.Listbox,
+            "default_value": ("middle", "end"),
+            "kwargs": {"default_values": "param_name"},
+            "param_name": "position",
+            "position": "middle"
+        }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Contains Adult Content",
+            "param_name": "x",
+            "kwargs": {"default": False}
+        }
+    ]}],
+    "content_list": [
+        {"type": "json"}
+    ]
+})
 
 talking_points = SelectionWindow("Talking Points Content Selection", ["Please select the type of content", ("Picture", "Prompt", "Slide Transition"), "talking_points_content_type"], {
-    "Picture": talking_points_picture,
-    "Prompt": talking_points_prompt,
-    "Slide Transition": talking_points_slide_transition
+    "Picture": talking_points_picture.create_window,
+    "Prompt": talking_points_prompt.create_window,
+    "Slide Transition": talking_points_slide_transition.create_window
 }, "create_content")
 
 #Main Menu stuff
@@ -623,12 +680,12 @@ window_mapping = { #Used for backing out of stuff.
     "talking_points": talking_points
 }
 content_type_mapping = { #Used in editing content to change data.
-    "Quiplash3Round1Question": round_prompt,
-    "Quiplash3Round2Question": round_prompt,
-    "Quiplash3FinalQuestion": round_prompt_final,
-    "Quiplash3SafetyQuips": safety_quip,
-    "JackboxTalksPicture": talking_points_picture,
-    "JackboxTalksTitle": talking_points_prompt,
-    "JackboxTalksSignpost": talking_points_slide_transition
+    "Quiplash3Round1Question": round_prompt_1.create_window,
+    "Quiplash3Round2Question": round_prompt_2.create_window,
+    "Quiplash3FinalQuestion": round_prompt_final.create_window,
+    "Quiplash3SafetyQuips": safety_quip.create_window,
+    "JackboxTalksPicture": talking_points_picture.create_window,
+    "JackboxTalksTitle": talking_points_prompt.create_window,
+    "JackboxTalksSignpost": talking_points_slide_transition.create_window
 }
 main_window.run()
