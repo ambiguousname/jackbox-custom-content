@@ -8,6 +8,8 @@ from shutil import copyfile, rmtree
 # Test importing content
 # Add example images in the Readme
 # Add feature to delete everything but custom content
+# Fix the import feature so it just automatically adds everything.
+# Test making multiple content of the same type (might not work?)
 
 def id_gen(custom_values): #custom_values should be a dict that passes on any other identifying information for the user
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
@@ -236,10 +238,10 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
             if event == "Edit":
                 _id = values["content_selection"][0].split(":")[0]
                 existing_data = content[_id]["values"]
-                content_type_mapping[existing_data["content_type"]](existing_data=existing_data)
+                content_type_mapping[existing_data["content_type"]].create_window(existing_data=existing_data)
             if event == "Delete":
                 _id = values["content_selection"][0].split(":")[0]
-                custom_content = CustomContent(content[_id]["values"], content[_id]["values"]["game"], content[_id]["values"]["content_type"], content[_id]["values"]["descriptor_text"], _id) #Setting None because values already has the game, type, and descriptor_text.
+                custom_content = CustomContent(content[_id]["values"]["game"], content[_id]["values"]["content_type"], content[_id]["values"]["content_type"], content[_id]["values"]["descriptor_text"], _id) #Setting None because values already has the game, type, and descriptor_text.
                 #Remove the content from the custom_content JSON file
                 content.pop(_id)
                 #Remove the content from the game's master .JET file
@@ -287,7 +289,7 @@ def import_content(selected=None):
                     for i in range(new_content.keys()):
                         n_c = new_content[new_content.keys(i)]
                         content[str(latest_id + i + 1)] = n_c
-                        content_type_mapping[n_c["content_type"]](existing_data=n_c["values"]) #Requires you to manually add in each piece of content.
+                        content_type_mapping[n_c["content_type"]].create_window(existing_data=n_c["values"]) #Requires you to manually add in each piece of content.
                     ids.seek(0)
                     ids.truncate()
                     ids.write(json.dumps(content))
@@ -415,8 +417,10 @@ def round_final_filter(values):
     safety_quip = new_values["safetyQuips"].split("|")
     for i in range(len(safety_quip)):
         if not (i + 3 > len(safety_quip)):
-            formatted_quips.append(safety_quip[0] + "|" + safety_quip[1] + "|" + safety_quip[2])
+            formatted_quips.append(safety_quip[i][0] + "|" + safety_quip[i][1] + "|" + safety_quip[i][2])
     new_values["safetyQuips"] = formatted_quips
+    new_values["response_filter"] = ""
+    new_values["response_transcript"] = ""
     return new_values
 
 round_prompt_final = CustomContent("Quiplash3", "Quiplash3FinalQuestion", "prompt", {
@@ -680,12 +684,12 @@ window_mapping = { #Used for backing out of stuff.
     "talking_points": talking_points
 }
 content_type_mapping = { #Used in editing content to change data.
-    "Quiplash3Round1Question": round_prompt_1.create_window,
-    "Quiplash3Round2Question": round_prompt_2.create_window,
-    "Quiplash3FinalQuestion": round_prompt_final.create_window,
-    "Quiplash3SafetyQuips": safety_quip.create_window,
-    "JackboxTalksPicture": talking_points_picture.create_window,
-    "JackboxTalksTitle": talking_points_prompt.create_window,
-    "JackboxTalksSignpost": talking_points_slide_transition.create_window
+    "Quiplash3Round1Question": round_prompt_1,
+    "Quiplash3Round2Question": round_prompt_2,
+    "Quiplash3FinalQuestion": round_prompt_final,
+    "Quiplash3SafetyQuips": safety_quip,
+    "JackboxTalksPicture": talking_points_picture,
+    "JackboxTalksTitle": talking_points_prompt,
+    "JackboxTalksSignpost": talking_points_slide_transition
 }
 main_window.run()
