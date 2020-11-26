@@ -6,9 +6,7 @@ from shutil import copyfile, rmtree
 #TODO:
 # Test if content rework works (plus editing) (Quiplash Prompts Round 1 2 3, Safety Quips, Picture, Slide Transition, Slide Prompt)
 # Test importing content
-# Add example images in the Readme
 # Add feature to delete everything but custom content
-# Fix the import feature so it just automatically adds everything.
 # Test making multiple content of the same type (might not work?)
 
 def id_gen(custom_values): #custom_values should be a dict that passes on any other identifying information for the user
@@ -35,13 +33,83 @@ def id_gen(custom_values): #custom_values should be a dict that passes on any ot
     ids.close()
     return _id
 
+class CustomContentWindow(object):
+
+    def __init__(self, *args, **kwargs):
+        self.window_layout = args[3]
+        self.game = args[0]
+        self.content_type = args[1]
+        self.descriptor_text_name = args[2]
+
+    def create_content(self, values, _id=None):
+        new_content = CustomContent(values, self.game, self.content_type, values[self.descriptor_text_name], id=None if _id == None else _id)
+        new_content.save_to_custom_content()
+        for content in self.window_layout["content_list"]:
+            if content["type"] == "json":
+                new_content.write_to_json(None if not "path" in content else content["path"], False if not "delete" in content else content["delete"])
+            if content["type"] == "files":
+                kwargs = content["files"]["kwargs"]
+                args = content["files"]["args"]
+                new_content.add_custom_files(*args, **kwargs)
+            if content["type"] == "CustomData":
+                data = content["func"](new_content.values)
+                kwargs = content["kwargs"]
+                new_content.add_custom_files(data, **kwargs)
+        sg.Popup("Content Created, ID: " + new_content.id)
+
+    def create_window(self, *args, **kwargs):
+        existing_data = None
+        if "existing_data" in kwargs:
+            existing_data = kwargs["existing_data"]
+            if "import_filter" in self.window_layout:
+                existing_data = self.window_layout["import_filter"](kwargs["existing_data"])
+        if self.window_layout and "layout_list" in self.window_layout:
+            layout = []
+            for item in self.window_layout["layout_list"]:
+                layout_item = []
+                if "text" in item:
+                    layout_item.append(sg.Text(item["text"]))
+                if "input" in item:
+                    for input_type in item["input"]:
+                        kwargs = {}
+                        if "kwargs" in input_type:
+                            kwargs = input_type["kwargs"]
+                            for item in kwargs:
+                                if kwargs[item] == "param_name":
+                                    kwargs[item] = kwargs[kwargs["param_name"]]
+                        new_input = input_type["type"](input_type["default_value"] if existing_data == None or not input_type["param_name"] in existing_data else existing_data[input_type["param_name"]], key=input_type["param_name"], **kwargs)
+                        layout_item.append(new_input)
+                layout.append(layout_item)
+            layout.append([sg.Button("Ok"), sg.Button("Go Back") if existing_data == None else sg.Button("Exit")])
+            window = sg.Window(self.content_type if existing_data == None else existing_data["id"], layout)
+            while True:
+                event, values = window.read()
+                if event == sg.WIN_CLOSED or event == "Exit":
+                    break
+                if event == "Ok":
+                    new_values = values
+                    if "filter" in self.window_layout:
+                        new_values = self.window_layout["filter"](new_values)
+                    _id = None
+                    if existing_data != None:
+                        _id = existing_data["id"]
+                    self.create_content(new_values, _id)
+                if event == "Go Back":
+                    window.close()
+                    window_mapping[self.window_layout["previous_window"]].run()
+            window.close()
+        else:
+            raise Exception("Did not Instantiate CustomContent with 'window_layout' kwarg.")
+
 class CustomContent(object):
     def __init__(self, *args, **kwargs): #values, game, content_type, descriptor_text, _id=None
-        self.values = {"game": args[0], "content_type": args[1]} #We stores these in .values because .values is written to custom_content.json for content editing.
-        self.descriptor_text_name = args[2]
-        self.window_layout = args[3]
-        if "id" in kwargs:
+        self.values = {"game": args[1], "content_type": args[2], "descriptor_text": args[3]} #We stores these in .values because .values is written to custom_content.json for content editing.
+        self.values.update(args[0])
+        if "id" in kwargs and type(kwargs["id"]) == "str" and kwargs["id"].isnumeric():
             self.id = kwargs["id"]
+        else:
+            self.id = id_gen(self.values)
+        self.values.update({"id": self.id})
 
     def write_to_json(self, p=None, delete=False): #Right now, add_custom_files doesn't support custom file paths. Only write_to_json supports custom paths for data.jet files.
         path = "" 
@@ -69,13 +137,7 @@ class CustomContent(object):
                 jf.write(json.dumps(self.values))
             jf.close()
     
-    def save_to_custom_content(self, values, _id=None): #Save to custom_content.json file which keeps track of everything. Call this first, it generates an ID. We have values as an argument to pass any additional values.
-        self.values.update(values)
-        if _id == None and not hasattr(self, "id"): #Are we using an existing id?
-            self.id = id_gen(self.values)
-        elif _id != None:
-            self.id = _id
-        self.values.update({"id": self.id})
+    def save_to_custom_content(self): #Save to custom_content.json file which keeps track of everything. Call this first before adding content. We have values as an argument to pass any additional values.
         ids = open("./custom_content.json", "r+")
         content = json.load(ids)
         content[self.id].update({"id": self.id, "values": self.values})
@@ -114,60 +176,6 @@ class CustomContent(object):
                         f = open(path + file['name'], "w+")
                         f.write(file['str'])
                         f.close()
-
-    def create_window(self, *args, **kwargs):
-        existing_data = None
-        if "existing_data" in kwargs:
-            existing_data = kwargs["existing_data"]
-            if "import_filter" in self.window_layout:
-                existing_data = self.window_layout["import_filter"](kwargs["existing_data"])
-        if self.window_layout and "layout_list" in self.window_layout:
-            layout = []
-            for item in self.window_layout["layout_list"]:
-                layout_item = []
-                if "text" in item:
-                    layout_item.append(sg.Text(item["text"]))
-                if "input" in item:
-                    for input_type in item["input"]:
-                        kwargs = {}
-                        if "kwargs" in input_type:
-                            kwargs = input_type["kwargs"]
-                            for item in kwargs:
-                                if kwargs[item] == "param_name":
-                                    kwargs[item] = kwargs[kwargs["param_name"]]
-                        new_input = input_type["type"](input_type["default_value"] if existing_data == None or not input_type["param_name"] in existing_data else existing_data[input_type["param_name"]], key=input_type["param_name"], **kwargs)
-                        layout_item.append(new_input)
-                layout.append(layout_item)
-            layout.append([sg.Button("Ok"), sg.Button("Go Back") if existing_data == None else sg.Button("Exit")])
-            window = sg.Window(self.values["content_type"] if existing_data == None else existing_data["id"], layout)
-            while True:
-                event, values = window.read()
-                if event == sg.WIN_CLOSED or event == "Exit":
-                    break
-                if event == "Ok":
-                    new_values = values
-                    if "filter" in self.window_layout:
-                        new_values = self.window_layout["filter"](new_values)
-                    self.values["descriptor_text"] = new_values[self.descriptor_text_name]
-                    self.save_to_custom_content(new_values, None if existing_data == None else existing_data["id"])
-                    for content in self.window_layout["content_list"]:
-                        if content["type"] == "json":
-                            self.write_to_json(None if not "path" in content else content["path"], False if not "delete" in content else content["delete"])
-                        if content["type"] == "files":
-                            kwargs = content["files"]["kwargs"]
-                            args = content["files"]["args"]
-                            self.add_custom_files(*args, **kwargs)
-                        if content["type"] == "CustomData":
-                            data = content["func"](self.values)
-                            kwargs = content["kwargs"]
-                            self.add_custom_files(data, **kwargs)
-                    sg.Popup("Content Created, ID: " + self.id)
-                if event == "Go Back":
-                    window.close()
-                    window_mapping[self.window_layout["previous_window"]].run()
-            window.close()
-        else:
-            raise Exception("Did not Instantiate CustomContent with 'window_layout' kwarg.")
 
 class CustomData(CustomContent):
     def __init__(self):
@@ -241,7 +249,7 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
                 content_type_mapping[existing_data["content_type"]].create_window(existing_data=existing_data)
             if event == "Delete":
                 _id = values["content_selection"][0].split(":")[0]
-                custom_content = CustomContent(content[_id]["values"]["game"], content[_id]["values"]["content_type"], content[_id]["values"]["content_type"], content[_id]["values"]["descriptor_text"], _id) #Setting None because values already has the game, type, and descriptor_text.
+                custom_content = CustomContent(content[_id]["values"], content[_id]["values"]["game"], content[_id]["values"]["content_type"], content[_id]["values"]["content_type"], content[_id]["values"]["descriptor_text"], id=_id) #Setting None because values already has the game, type, and descriptor_text.
                 #Remove the content from the custom_content JSON file
                 content.pop(_id)
                 #Remove the content from the game's master .JET file
@@ -289,7 +297,7 @@ def import_content(selected=None):
                     for i in range(new_content.keys()):
                         n_c = new_content[new_content.keys(i)]
                         content[str(latest_id + i + 1)] = n_c
-                        content_type_mapping[n_c["content_type"]].create_window(existing_data=n_c["values"]) #Requires you to manually add in each piece of content.
+                        content_type_mapping[n_c["content_type"]].create_content(n_c["values"], str(latest_id + i + 1)) #Requires you to manually add in each piece of content.
                     ids.seek(0)
                     ids.truncate()
                     ids.write(json.dumps(content))
@@ -407,9 +415,9 @@ round_prompt_layout = {
     "filter": round_filter
 }
 
-round_prompt_1 = CustomContent("Quiplash3", "Quiplash3Round1Question", "prompt", round_prompt_layout)
+round_prompt_1 = CustomContentWindow("Quiplash3", "Quiplash3Round1Question", "prompt", round_prompt_layout)
 
-round_prompt_2 = CustomContent("Quiplash3", "Quiplash3Round2Question", "prompt", round_prompt_layout)
+round_prompt_2 = CustomContentWindow("Quiplash3", "Quiplash3Round2Question", "prompt", round_prompt_layout)
 
 def round_final_filter(values):
     new_values = values
@@ -423,7 +431,7 @@ def round_final_filter(values):
     new_values["response_transcript"] = ""
     return new_values
 
-round_prompt_final = CustomContent("Quiplash3", "Quiplash3FinalQuestion", "prompt", {
+round_prompt_final = CustomContentWindow("Quiplash3", "Quiplash3FinalQuestion", "prompt", {
     "previous_window": "quiplash_prompt",
     "layout_list": [{"text": "Prompt Text: ", "input": [
         {
@@ -479,7 +487,7 @@ round_prompt_final = CustomContent("Quiplash3", "Quiplash3FinalQuestion", "promp
     "filter": round_final_filter
 })
 
-safety_quip = CustomContent("Quiplash3", "Quiplash3SafetyQuips", "value", {
+safety_quip = CustomContentWindow("Quiplash3", "Quiplash3SafetyQuips", "value", {
     "previous_window": "quiplash_3",
     "layout_list": [{"text": "Safety Quip Text (Should be generic): ", "input": [
         {
@@ -507,16 +515,16 @@ quiplash_3 = SelectionWindow("Quiplash 3 Content Selection", ["Please select the
 def talking_points_picture_filter(values):
     new_values = values
     if new_values["low_res_path"] == "":
-        new_values["low_res_path"] = new_values["photo_path"]
+        new_values["low_res_path"] = new_values["path"]
     return new_values
 
-talking_points_picture = CustomContent("JackboxTalks", "JackboxTalksPicture", "name", {
+talking_points_picture = CustomContentWindow("JackboxTalks", "JackboxTalksPicture", "name", {
     "previous_window": "talking_points",
     "layout_list": [{"text": "Choose a .JPG file (will show up on your mobile device as a black photo, but it will appear in the game itself): ", "input": [
         {
             "type": sg.InputText,
             "default_value": "",
-            "param_name": "photo_path"
+            "param_name": "path"
         }, {
             "type": sg.FileBrowse,
             "default_value": "Browse",
@@ -542,7 +550,7 @@ talking_points_picture = CustomContent("JackboxTalks", "JackboxTalksPicture", "n
         {
             "type": sg.InputText,
             "default_value": "",
-            "param_name": "picture_description"
+            "param_name": "name"
         }
     ]}, {"input": [
         {
@@ -555,7 +563,7 @@ talking_points_picture = CustomContent("JackboxTalks", "JackboxTalksPicture", "n
     "content_list": [
         {"type": "json"},
         {"type": "files", "files": {
-            "args": [{"path": "param_name", "param_name": "photo_path", "name": "id"}],
+            "args": [{"path": "param_name", "param_name": "path", "name": "id"}],
             "kwargs": {"path": "./JackboxTalks/content/JackboxTalksPicture"}
         }},
         {"type": "files", "files": {
@@ -589,7 +597,7 @@ def talking_points_prompt_filter(values):
     new_values["signposts"] = transitions
     return new_values
 
-talking_points_prompt = CustomContent("JackboxTalks", "JackboxTalksTitle", "title", {
+talking_points_prompt = CustomContentWindow("JackboxTalks", "JackboxTalksTitle", "title", {
     "previous_window": "talking_points",
     "layout_list": [{"text": "Prompt: ", "input": [
         {
@@ -626,7 +634,7 @@ talking_points_prompt = CustomContent("JackboxTalks", "JackboxTalksTitle", "titl
     "import_filter": talking_points_prompt_import
 })
 
-talking_points_slide_transition = CustomContent("JackboxTalks", "JackboxTalksSignpost", "signpost", {
+talking_points_slide_transition = CustomContentWindow("JackboxTalks", "JackboxTalksSignpost", "signpost", {
     "previous_window": "talking_points",
     "layout_list": [{"text": "Transition Text: ", "input": [
         {
