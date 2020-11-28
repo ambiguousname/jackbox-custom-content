@@ -6,7 +6,7 @@ from shutil import copyfile, rmtree
 #TODO:
 # Test if content rework works (plus editing) (Quiplash Prompts Round 1 2 3, Safety Quips, Picture, Slide Transition, Slide Prompt)
 # Test importing content
-# Add feature to delete everything but custom content
+# Test feature to delete everything but custom content
 # Test making multiple content of the same type (might not work?)
 
 def id_gen(values): #id_gen needs a values dict to work with
@@ -322,6 +322,41 @@ def import_content(selected=None):
             main_window.run()
             break
     window.close()
+
+def game_content_del(game, content_type):
+    content = content_type_mapping[game][content_type].window_layout["content_list"]
+    for item in content:
+        content_type = item["type"]
+        path = "./" + game + "/content/" + content_type
+        if content_type == "json":
+            jet_file = open("./" + game + "/content/" + content_type + ".jet", "r", encoding="utf-8")
+            json_file = json.load(json_file)
+            for content_piece in json_file["content"]:
+                if int(content_piece["id"]) < 100000:
+                    json_file["content"].remove(content_piece)
+            jet_file.close()
+            jet_file = open(path + ".jet", "w")
+            jet_file.write(json.dumps(json_file))
+        elif content_type == "CustomData" or content_type == "files":
+            path = path + "/"
+            for item in os.scandir(path + "/"):
+                if int(item) < 100000:
+                    os.remove(path + "/" + item)
+        elif content_type == "files":
+            for content_file in item["args"]:
+                if "path" in content_file:
+                    path = content_file["path"]
+                for new_file in os.scandir(path):
+                    file_num = 100000
+                    if new_file.split(".")[0].isnumeric():
+                        file_num = int(new_file.split(".")[0])
+                    if file_num < 100000:
+                        if os.path.exists(path + "/" + new_file):
+                            os.remove(path + "/" + new_file)
+                    
+
+
+
 
 def del_all_else(selected=None):
     layout = [[sg.Text("Are you absolutely sure you want to do this?")], [sg.Text("This option will effectively delete all the game's content files so that you can only play with your own custom content. Please make sure you have backups.")],
