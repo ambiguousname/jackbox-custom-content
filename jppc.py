@@ -168,11 +168,11 @@ class CustomContent(object):
                     file_path = file["path"]
                     name = file["name"]
                     if name == "id":
-                        name = self.id
+                        name = self.id + file["extension"]
                     if file_path == "param_name":
-                        file_path = file["param_name"]
+                        file_path = self.values[file["param_name"]]
                     if(os.path.exists(file_path)): #Only add this if the file's path exists.
-                        copyfile(file_path, path + file['name']) #From shutil
+                        copyfile(file_path, path + "/" + name) #From shutil
                 else: #If we're going to be writing a custom file from like a .JSON or whatever.
                     if isinstance(file, CustomContent):
                         if os.path.exists(path + "data.jet"):
@@ -346,13 +346,17 @@ def game_content_del(game, content_type):
             for content_file in item["args"]:
                 if "path" in content_file:
                     path = content_file["path"]
-                for new_file in os.scandir(path):
-                    file_num = 100000
-                    if new_file.split(".")[0].isnumeric():
-                        file_num = int(new_file.split(".")[0])
-                    if file_num < 100000:
-                        if os.path.exists(path + "/" + new_file):
-                            os.remove(path + "/" + new_file)
+                if os.path.exists(path):
+                    for new_file in os.scandir(path):
+                        file_num = 100000
+                        if new_file.split(".")[0].isnumeric():
+                            file_num = int(new_file.split(".")[0])
+                        file_extension = "/"
+                        if len(new_file.split(".")) > 1:
+                            file_extension = new_file.split(".")[-1]
+                        if file_num < 100000:
+                            if os.path.exists(path + "/" + new_file + file_extension):
+                                os.remove(path + "/" + new_file + file_extension)
                     
 
 
@@ -576,7 +580,7 @@ quiplash_3 = SelectionWindow("Quiplash 3 Content Selection", ["Please select the
 def talking_points_picture_filter(values):
     new_values = values
     if new_values["low_res_path"] == "":
-        new_values["low_res_path"] = new_values["path"]
+        new_values["low_res_path"] = new_values["file_path"]
     new_values["custom_file_path"] = "./JackboxTalks/content/JackboxTalksPicture/"
     return new_values
 
@@ -586,7 +590,7 @@ talking_points_picture = CustomContentWindow("JackboxTalks", "JackboxTalksPictur
         {
             "type": sg.InputText,
             "default_value": "",
-            "param_name": "path"
+            "param_name": "file_path"
         }, {
             "type": sg.FileBrowse,
             "default_value": "Browse",
@@ -625,11 +629,11 @@ talking_points_picture = CustomContentWindow("JackboxTalks", "JackboxTalksPictur
     "content_list": [
         {"type": "json"},
         {"type": "files", "files": {
-            "args": [{"path": "param_name", "param_name": "path", "name": "id"}],
+            "args": [{"path": "param_name", "param_name": "file_path", "name": "id", "extension": ".jpg"}],
             "kwargs": {"path": "./JackboxTalks/content/JackboxTalksPicture", "adding_other_files": True}
         }},
         {"type": "files", "files": {
-            "args": [{"path": "param_name", "param_name": "low_res_path", "name": "id"}],
+            "args": [{"path": "param_name", "param_name": "low_res_path", "name": "id", "extension": ".jpg"}],
             "kwargs": {"path": "./JackboxTalks/content/JackboxTalksPictureLow", "adding_other_files": True}
         }}
     ],
