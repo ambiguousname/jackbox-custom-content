@@ -5,7 +5,6 @@ from shutil import copyfile, rmtree
 
 #TODO:
 # Test if content rework works (plus editing) (Quiplash Prompts Round 1 2 3, Safety Quips, Picture, Slide Transition, Slide Prompt)
-# Test importing content
 # Test feature to delete everything but custom content
 # Test making multiple content of the same type (might not work?)
 
@@ -146,7 +145,10 @@ class CustomContent(object):
     def save_to_custom_content(self): #Save to custom_content.json file which keeps track of everything. Call this first before adding content. We have values as an argument to pass any additional values.
         ids = open("./custom_content.json", "r+")
         content = json.load(ids)
-        content[self.id].update({"id": self.id, "values": self.values})
+        if self.id in content:
+            content[self.id].update({"id": self.id, "values": self.values})
+        else:
+            content[self.id] = {"id": self.id, "values": self.values}
         ids.seek(0)
         ids.truncate()
         ids.write(json.dumps(content))
@@ -256,6 +258,7 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
                 existing_data = content[_id]["values"]
                 content_type_mapping[existing_data["game"]][existing_data["content_type"]].create_window(existing_data=existing_data)
                 window.close()
+                ids.close()
                 edit_content()
             if event == "Delete":
                 _id = values["content_selection"][0].split(":")[0]
@@ -275,6 +278,7 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
                     ids.close()
                     os.remove("./custom_content.json")
                 window.close()
+                ids.close()
                 sg.Popup("Content deleted!")
                 edit_content() #To update the list of content
             if event == "Go Back":
@@ -297,23 +301,26 @@ def import_content(selected=None):
             break
         if event == "Import":
             if os.path.exists(values["custom-files"]) and os.path.splitext(values["custom-files"])[1].lower() == ".json":
-                if os.path.exists("./custom_content.json"):
-                    new_ids = open(values["custom-files"], "r")
-                    new_content = json.load(new_ids.read())
-                    new_ids.close()
-                    ids = open("./custom_content.json", "r+")
-                    content = json.load(ids.read())
-                    latest_id = int(content.keys().sort()[-1])
-                    for i in range(new_content.keys()):
-                        n_c = new_content[new_content.keys(i)]
-                        content[str(latest_id + i + 1)] = n_c
-                        content_type_mapping[n_c["game"]][n_c["content_type"]].create_content(n_c["values"], str(latest_id + i + 1)) #Requires you to manually add in each piece of content.
-                    ids.seek(0)
-                    ids.truncate()
-                    ids.write(json.dumps(content))
-                    ids.close()
-                else:
+                new_ids = open(values["custom-files"], "r")
+                new_content = json.load(new_ids)
+                new_ids.close()
+                is_copying = False
+                if not os.path.exists("./custom_content.json"):
                     copyfile(values["custom-files"], "./custom_content.json")
+                    is_copying = True
+                ids = open("./custom_content.json", "r+")
+                content = json.load(ids)
+                content_keys = list(content.keys())
+                content_keys.sort()
+                latest_id = 100000 if is_copying == True else int(content_keys[-1]) + 1
+                for i in new_content:
+                    n_c = new_content[i]
+                    content[str(latest_id + int(i) - 100000)] = n_c
+                    content_type_mapping[n_c["values"]["game"]][n_c["values"]["content_type"]].create_content(n_c["values"], str(latest_id + int(i) - 100000)) #Requires you to manually add in each piece of content.
+                ids.seek(0)
+                ids.truncate()
+                ids.write(json.dumps(content))
+                ids.close()
                 sg.Popup("Custom content imported. View the files in the edit menu.")
             else:
                 sg.Popup("That file doesn't exist, or it isn't a .json file.")
@@ -375,7 +382,9 @@ def del_all_else(selected=None):
             main_window.run()
         if event == "Delete all non-custom content":
             if values["sure"] == True:
-                pass
+                for game in values["game_choice"]:
+                    for content_type in content_type_mapping[game]:
+                        game_content_del(game, content_type)
     window.close()
 
 #Stuff for Quiplash 3
@@ -643,7 +652,7 @@ talking_points_picture = CustomContentWindow("JackboxTalks", "JackboxTalksPictur
 def talking_points_prompt_import(values):
     new_values = values
     slide_transitions = ""
-    transitions = values["signposts"]
+    transitions = json.load(values["signposts"])
     for item in transitions:
         slide_transitions += item["position"][0] + "," + item["signpost"] + "|"
     new_values["signposts"] = transitions
