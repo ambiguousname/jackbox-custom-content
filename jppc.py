@@ -7,6 +7,7 @@ from shutil import copyfile, rmtree
 # Test if content rework works (plus editing) (Quiplash Prompts Round 1 2 3, Safety Quips, Picture, Slide Transition, Slide Prompt)
 # Test feature to delete everything but custom content
 # Test making multiple content of the same type (might not work?)
+# Test importing content when you already have existing content
 
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
@@ -314,9 +315,12 @@ def import_content(selected=None):
                 content_keys.sort()
                 latest_id = 100000 if is_copying == True else int(content_keys[-1]) + 1
                 for i in new_content:
+                    content_id = str(latest_id + int(i) - 100000)
                     n_c = new_content[i]
-                    content[str(latest_id + int(i) - 100000)] = n_c
-                    content_type_mapping[n_c["values"]["game"]][n_c["values"]["content_type"]].create_content(n_c["values"], str(latest_id + int(i) - 100000)) #Requires you to manually add in each piece of content.
+                    content[content_id] = n_c
+                    n_c["id"] = content_id
+                    n_c["values"]["id"] = content_id
+                    content_type_mapping[n_c["values"]["game"]][n_c["values"]["content_type"]].create_content(n_c["values"], content_id) #Will bug you with popups rn.
                 ids.seek(0)
                 ids.truncate()
                 ids.write(json.dumps(content))
@@ -333,24 +337,24 @@ def import_content(selected=None):
 def game_content_del(game, content_type):
     content = content_type_mapping[game][content_type].window_layout["content_list"]
     for item in content:
-        content_type = item["type"]
+        file_type = item["type"]
         path = "./" + game + "/content/" + content_type
-        if content_type == "json":
+        if file_type == "json":
             jet_file = open("./" + game + "/content/" + content_type + ".jet", "r", encoding="utf-8")
-            json_file = json.load(json_file)
+            json_file = json.load(jet_file)
             for content_piece in json_file["content"]:
                 if int(content_piece["id"]) < 100000:
                     json_file["content"].remove(content_piece)
             jet_file.close()
             jet_file = open(path + ".jet", "w")
             jet_file.write(json.dumps(json_file))
-        elif content_type == "CustomData" or content_type == "files":
+        elif file_type == "CustomData":
             path = path + "/"
             for item in os.scandir(path + "/"):
                 if int(item) < 100000:
                     os.remove(path + "/" + item)
-        elif content_type == "files":
-            for content_file in item["args"]:
+        elif file_type == "files":
+            for content_file in item["files"]["args"]:
                 if "path" in content_file:
                     path = content_file["path"]
                 if os.path.exists(path):
@@ -364,10 +368,6 @@ def game_content_del(game, content_type):
                         if file_num < 100000:
                             if os.path.exists(path + "/" + new_file + file_extension):
                                 os.remove(path + "/" + new_file + file_extension)
-                    
-
-
-
 
 def del_all_else(selected=None):
     layout = [[sg.Text("Are you absolutely sure you want to do this?")], [sg.Text("This option will effectively delete all the game's content files so that you can only play with your own custom content. Please make sure you have backups.")],
@@ -380,12 +380,41 @@ def del_all_else(selected=None):
         if event == "Cancel":
             window.close()
             main_window.run()
-        if event == "Delete all non-custom content":
+            break
+        if event == "Ok":
             if values["sure"] == True:
                 for game in values["game_choice"]:
                     for content_type in content_type_mapping[game]:
                         game_content_del(game, content_type)
+                sg.Popup("Content deleted for: " + str(values["game_choice"]))
     window.close()
+
+def all_content_reset():
+    if os.path.exists("./custom_content.json"):
+        layout = [[sg.Text("This feature is to be used if you restored your game's files to their original condition (which means that now all your custom content is no longer in the game).")],
+        [sg.Text("Please make a backup of your custom_content.json file, then import it after the reset to ensure all your custom content stays with you after the reset.")], [sg.Checkbox("I understand what I am about to do.", key="understand")],
+        [sg.Button("Ok"), sg.Button("Cancel")]]
+        window = sg.Window("Reset all custom content", layout)
+        while True:
+            event, values = window.read()
+            if event == sg.WIN_CLOSED:
+                break
+            if event == "Cancel":
+                window.close()
+                main_window.run()
+                break
+            if event == "Ok":
+                if values["understand"] == True:
+                    os.remove("./custom_content.json")
+                    sg.Popup("Content deleted.")
+                    window.close()
+                    main_window.run()
+                    break
+        window.close()
+    else:
+        sg.Popup("Sorry, you don't have any custom content to reset.")
+        main_window.run()
+
 
 #Stuff for Quiplash 3
 
@@ -754,11 +783,12 @@ create_content = SelectionWindow("Select a game", ["Select a game.", ("Talking P
     "Champ'd Up": None
 }, "main_window")
 
-main_window = SelectionWindow("Select an option", ["Please select an option.", ("Create Custom Content", "View/Edit Content", "Import Content", "Only Use Custom Content"), "option"], {
+main_window = SelectionWindow("Select an option", ["Please select an option.", ("Create Custom Content", "View/Edit Content", "Import Content", "Only Use Custom Content", "Reset All Custom Content"), "option"], {
     "Create Custom Content": create_content.run,
     "View/Edit Content": edit_content,
     "Import Content": import_content,
-    "Only Use Custom Content": del_all_else
+    "Only Use Custom Content": del_all_else,
+    "Reset All Custom Content": all_content_reset
 })
 window_mapping = { #Used for backing out of stuff.
     "quiplash_prompt": quiplash_prompt,
