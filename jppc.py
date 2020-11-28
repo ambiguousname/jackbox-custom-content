@@ -9,7 +9,7 @@ from shutil import copyfile, rmtree
 # Add feature to delete everything but custom content
 # Test making multiple content of the same type (might not work?)
 
-def id_gen(custom_values): #custom_values should be a dict that passes on any other identifying information for the user
+def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
     id_dict = None
     if os.path.exists("./custom_content.json"):
@@ -24,8 +24,8 @@ def id_gen(custom_values): #custom_values should be a dict that passes on any ot
         _id = "100000"
     else:
         _id = str(100000 + len(id_dict.keys()))
-    custom_values.update({"id": _id}) #Need to store the id twice so that things can work. The .jet files need a reference to the id.
-    id_dict[_id] = {"id": _id, "values": custom_values}
+    values.update({"id": _id}) #Need to store the id twice so that things can work. The .jet files need a reference to the id.
+    id_dict[_id] = {"id": _id, "values": values}
     ids.seek(0)
     ids.truncate()
     new_json = json.dumps(id_dict)
@@ -71,13 +71,19 @@ class CustomContentWindow(object):
                     layout_item.append(sg.Text(item["text"]))
                 if "input" in item:
                     for input_type in item["input"]:
-                        kwargs = {}
+                        new_kwargs = {}
                         if "kwargs" in input_type:
-                            kwargs = input_type["kwargs"]
-                            for item in kwargs:
-                                if kwargs[item] == "param_name":
-                                    kwargs[item] = kwargs[kwargs["param_name"]]
-                        new_input = input_type["type"](input_type["default_value"] if existing_data == None or not input_type["param_name"] in existing_data else existing_data[input_type["param_name"]], key=input_type["param_name"], **kwargs)
+                            new_kwargs = input_type["kwargs"]
+                            for item in new_kwargs:
+                                if type(new_kwargs[item]) == str and "existing_data" in new_kwargs[item].split("|"):
+                                    if existing_data != None:
+                                        new_kwargs[item] = existing_data[input_type["param_name"]]
+                                    else:
+                                        new_kwargs[item] = new_kwargs["regular_default"]
+                        if "regular_default" in new_kwargs:
+                            new_kwargs.pop("regular_default")
+                        exclude = [sg.FileBrowse, sg.Checkbox]
+                        new_input = input_type["type"](input_type["default_value"] if existing_data == None or input_type["type"] in exclude else existing_data[input_type["param_name"]], key=input_type["param_name"], **new_kwargs)
                         layout_item.append(new_input)
                 layout.append(layout_item)
             layout.append([sg.Button("Ok"), sg.Button("Go Back") if existing_data == None else sg.Button("Exit")])
@@ -105,7 +111,7 @@ class CustomContent(object):
     def __init__(self, *args, **kwargs): #values, game, content_type, descriptor_text, _id=None
         self.values = {"game": args[1], "content_type": args[2], "descriptor_text": args[3]} #We stores these in .values because .values is written to custom_content.json for content editing.
         self.values.update(args[0])
-        if "id" in kwargs and type(kwargs["id"]) == "str" and kwargs["id"].isnumeric():
+        if "id" in kwargs and type(kwargs["id"]) == str and kwargs["id"].isnumeric():
             self.id = kwargs["id"]
         else:
             self.id = id_gen(self.values)
@@ -201,7 +207,7 @@ class SelectionWindow():
         self.previous_window = previous_window
 
     def run(self, inputs=None): #Have to add inputs as an argument because the "Ok" event needs to pass a set of values for determining stuff. So the run function needs a second argument, but will never actually use it.
-        n_layout = [[sg.Text(self.layout_list[0])], [sg.Listbox(self.layout_list[1], size=(30, 10), select_mode="LISTBOX_SELECT_MODE_SINGLE", key=self.layout_list[2])], [sg.Button('Ok'), sg.Button('Exit' if not self.previous_window != None else 'Go Back')]]
+        n_layout = [[sg.Text(self.layout_list[0])], [sg.Listbox(self.layout_list[1], size=(30, 10), select_mode=sg.LISTBOX_SELECT_MODE_BROWSE, key=self.layout_list[2])], [sg.Button('Ok'), sg.Button('Exit' if not self.previous_window != None else 'Go Back')]]
         window = sg.Window(self.title, n_layout)
         while True:
             event, values = window.read()
@@ -227,7 +233,7 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
         content_list = []
         for item in content:
             content_list.append(content[item]["id"] + ": " + content[item]["values"]["content_type"] + " - " + content[item]["values"]["descriptor_text"])
-        layout = [[sg.Text("Choose Content to Edit/Delete:")], [sg.Listbox(content_list, key="content_selection", size=(100, 25), select_mode="LISTBOX_SELECT_MODE_SINGLE")], [sg.Button("Edit"), sg.Button("Delete"), sg.Button("Show Folder"), sg.Button("Go Back")]]
+        layout = [[sg.Text("Choose Content to Edit/Delete:")], [sg.Listbox(content_list, key="content_selection", size=(100, 25), select_mode=sg.LISTBOX_SELECT_MODE_BROWSE)], [sg.Button("Edit"), sg.Button("Delete"), sg.Button("Show Folder"), sg.Button("Go Back")]]
         window = sg.Window("Choose Content to Edit/Delete", layout)
         while True:
             event, values = window.read()
@@ -237,16 +243,20 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
                 _id = values["content_selection"][0].split(":")[0]
                 existing_data = content[_id]["values"]
                 path = os.path.realpath("./" + existing_data["game"] + "/content/" + existing_data["content_type"] + "/" + existing_data["id"])
-                if "path" in existing_data:
-                    path = existing_data["path"]
+                if "custom_file_path" in existing_data:
+                    path = os.path.realpath(existing_data["custom_file_path"])
                 if (os.path.exists(path)):
+                    if(os.path.isfile(path)):
+                        path = path + "/../"
                     os.startfile(path)
                 else:
-                    sg.Window("There is no folder containing the content (If the content contains only text (like a safety quip), it's probably just stored ... not in a folder).")
+                    sg.Popup("This content cannot be found in an easily accessible folder.")
             if event == "Edit":
                 _id = values["content_selection"][0].split(":")[0]
                 existing_data = content[_id]["values"]
-                content_type_mapping[existing_data["content_type"]].create_window(existing_data=existing_data)
+                content_type_mapping[existing_data["game"]][existing_data["content_type"]].create_window(existing_data=existing_data)
+                window.close()
+                edit_content()
             if event == "Delete":
                 _id = values["content_selection"][0].split(":")[0]
                 custom_content = CustomContent(content[_id]["values"], content[_id]["values"]["game"], content[_id]["values"]["content_type"], content[_id]["values"]["content_type"], content[_id]["values"]["descriptor_text"], id=_id) #Setting None because values already has the game, type, and descriptor_text.
@@ -297,7 +307,7 @@ def import_content(selected=None):
                     for i in range(new_content.keys()):
                         n_c = new_content[new_content.keys(i)]
                         content[str(latest_id + i + 1)] = n_c
-                        content_type_mapping[n_c["content_type"]].create_content(n_c["values"], str(latest_id + i + 1)) #Requires you to manually add in each piece of content.
+                        content_type_mapping[n_c["game"]][n_c["content_type"]].create_content(n_c["values"], str(latest_id + i + 1)) #Requires you to manually add in each piece of content.
                     ids.seek(0)
                     ids.truncate()
                     ids.write(json.dumps(content))
@@ -311,6 +321,22 @@ def import_content(selected=None):
             window.close()
             main_window.run()
             break
+    window.close()
+
+def del_all_else(selected=None):
+    layout = [[sg.Text("Are you absolutely sure you want to do this?")], [sg.Text("This option will effectively delete all the game's content files so that you can only play with your own custom content. Please make sure you have backups.")],
+    [sg.Text("Please select the game(s) whose content you'd like to remove: "), sg.Listbox(("Quiplash3", "JackboxTalks"), size=(50, 4), key="game_choice", select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE)], [sg.Checkbox("I am absolutely sure I want to do this. Please delete all non-custom content.", key="sure")], [sg.Button("Ok"), sg.Button("Cancel")]]
+    window = sg.Window("Delete all non-custom content", layout)
+    while True:
+        event, values = window.read()
+        if event == sg.WIN_CLOSED:
+            break
+        if event == "Cancel":
+            window.close()
+            main_window.run()
+        if event == "Delete all non-custom content":
+            if values["sure"] == True:
+                pass
     window.close()
 
 #Stuff for Quiplash 3
@@ -352,18 +378,18 @@ round_prompt_layout = {
         {
             "type": sg.Checkbox,
             "default_value": "Includes Player Name",
-            "kwargs": {"default": True},
+            "kwargs": {"default": "existing_data", "regular_default": True},
             "param_name": "includesPlayerName"
         },
         {
             "type": sg.Checkbox,
             "default_value": "Contains Adult Content",
-            "kwargs": {"default": False},
+            "kwargs": {"default": "existing_data", "regular_default": False},
             "param_name": "x"
         }, {
             "type": sg.Checkbox,
             "default_value": "Content is US-Specific",
-            "kwargs": {"default": False},
+            "kwargs": {"default": "existing_data", "regular_default": False},
             "param_name": "us"
         }
     ]}, {"text": ".ogg files of you reading the prompt (Optional):", "input": [
@@ -449,17 +475,17 @@ round_prompt_final = CustomContentWindow("Quiplash3", "Quiplash3FinalQuestion", 
         {
             "type": sg.Checkbox,
             "default_value": "Includes Player Name",
-            "kwargs": {"default": False},
+            "kwargs": {"default": "existing_data", "regular_default": True},
             "param_name": "includesPlayerName"
         }, {
             "type": sg.Checkbox,
             "default_value": "Contains Adult Content",
-            "kwargs": {"default": False},
+            "kwargs": {"default": "existing_data", "regular_default": False},
             "param_name": "x"
         }, {
             "type": sg.Checkbox,
             "default_value": "Content is US-Specific",
-            "kwargs": {"default": False},
+            "kwargs": {"default": "existing_data", "regular_default": False},
             "param_name": "us"
         }
     ]}, {"text": ".ogg file of you reading the prompt (Optional):", "input": [
@@ -516,6 +542,7 @@ def talking_points_picture_filter(values):
     new_values = values
     if new_values["low_res_path"] == "":
         new_values["low_res_path"] = new_values["path"]
+    new_values["custom_file_path"] = "./JackboxTalks/content/JackboxTalksPicture/"
     return new_values
 
 talking_points_picture = CustomContentWindow("JackboxTalks", "JackboxTalksPicture", "name", {
@@ -556,7 +583,7 @@ talking_points_picture = CustomContentWindow("JackboxTalks", "JackboxTalksPictur
         {
             "type": sg.Checkbox,
             "default_value": "Picture contains adult content",
-            "kwargs": {"default": False},
+            "kwargs": {"default": "existing_data", "regular_default": False},
             "param_name": "x"
         }
     ]}],
@@ -564,7 +591,7 @@ talking_points_picture = CustomContentWindow("JackboxTalks", "JackboxTalksPictur
         {"type": "json"},
         {"type": "files", "files": {
             "args": [{"path": "param_name", "param_name": "path", "name": "id"}],
-            "kwargs": {"path": "./JackboxTalks/content/JackboxTalksPicture"}
+            "kwargs": {"path": "./JackboxTalks/content/JackboxTalksPicture", "adding_other_files": True}
         }},
         {"type": "files", "files": {
             "args": [{"path": "param_name", "param_name": "low_res_path", "name": "id"}],
@@ -594,7 +621,7 @@ def talking_points_prompt_filter(values):
                 position = item[0]
                 signpost = item[2:] #Ignore the m, and e,
                 transitions_list.append({"position": position, "signpost": signpost})
-    new_values["signposts"] = transitions
+    new_values["signposts"] = str(transitions_list)
     return new_values
 
 talking_points_prompt = CustomContentWindow("JackboxTalks", "JackboxTalksTitle", "title", {
@@ -603,27 +630,27 @@ talking_points_prompt = CustomContentWindow("JackboxTalks", "JackboxTalksTitle",
         {
             "type": sg.InputText,
             "default_value": "I'm about to do what you're all afraid of. That's right, I'm going to: <BLANK>",
-            "param_name": "title"
+            "param_name": "title",
+            "kwargs": {"size": (75, 1)}
         }
     ]}, {"input": [
         {
             "type": sg.Checkbox,
             "default_value": "Contains adult content",
-            "kwargs": {"default": False},
+            "kwargs": {"default": "existing_data", "regular_default": False},
             "param_name": "x"
         }
     ]}, {"text": "Safety Answers (separate by |): ", "input": [
         {
             "type": sg.Multiline,
-            "default_value": "",
-            "kwargs": {"default_text": "Do absolutely nothing|Eat a snake live on camera|Downvote a post on reddit"},
+            "default_value": "Do absolutely nothing|Eat a snake live on camera|Downvote a post on reddit",
             "param_name": "safetyAnswers"
         }
     ]}, {"text": "Slide Transitions (separate by |, add (m,) for Middle of presentation, (e,) for End of presentation at the beginning for each transition. Slide transitions are optional.):"}, {"input": [
         {
             "type": sg.Multiline,
-            "default_value": "",
-            "kwargs": {"size": (200, 5), "default_text": "m,For those of you questioning my reasons, I was motivated by this...|m,For those of you who object, here's why you're all powerless to stop me...|m,If you're concerned about permissions, I have all the power I need from this...|e,Now for the Finale: What you're about to see next will ultimately prove my superiority...|m,What I'm about to say is actually banned in about 20 countries, so pay close attention...|e,For those of you at home, imitate exactly what you're about to hear and see...|e,Now it's flex time, and I'm going to flex with this...|e,I have no words for what you're about to witness, only vague and confusing noises/hand movements...|m,For this amazing feat, I will make use of this as a centerpiece...|m,For my performance, I will be requiring the aid of this...|m,It's nearly time, and to gauge your excitement, I will be using this..."},
+            "default_value": "m,For those of you questioning my reasons, I was motivated by this...|m,For those of you who object, here's why you're all powerless to stop me...|m,If you're concerned about permissions, I have all the power I need from this...|e,Now for the Finale: What you're about to see next will ultimately prove my superiority...|m,What I'm about to say is actually banned in about 20 countries, so pay close attention...|e,For those of you at home, imitate exactly what you're about to hear and see...|e,Now it's flex time, and I'm going to flex with this...|e,I have no words for what you're about to witness, only vague and confusing noises/hand movements...|m,For this amazing feat, I will make use of this as a centerpiece...|m,For my performance, I will be requiring the aid of this...|m,It's nearly time, and to gauge your excitement, I will be using this...",
+            "kwargs": {"size": (100, 5)},
             "param_name": "signposts"
         }
     ]}],
@@ -647,7 +674,7 @@ talking_points_slide_transition = CustomContentWindow("JackboxTalks", "JackboxTa
         {
             "type": sg.Listbox,
             "default_value": ("middle", "end"),
-            "kwargs": {"default_values": "param_name"},
+            "kwargs": {"default_values": "existing_data", "size": (20, 2), "regular_default": "middle"},
             "param_name": "position",
             "position": "middle"
         }
@@ -656,7 +683,7 @@ talking_points_slide_transition = CustomContentWindow("JackboxTalks", "JackboxTa
             "type": sg.Checkbox,
             "default_value": "Contains Adult Content",
             "param_name": "x",
-            "kwargs": {"default": False}
+            "kwargs": {"default": "existing_data", "regular_default": False}
         }
     ]}],
     "content_list": [
@@ -679,10 +706,11 @@ create_content = SelectionWindow("Select a game", ["Select a game.", ("Talking P
     "Champ'd Up": None
 }, "main_window")
 
-main_window = SelectionWindow("Select an option", ["Please select an option.", ("Create Custom Content", "View/Edit Content", "Import Content"), "option"], {
+main_window = SelectionWindow("Select an option", ["Please select an option.", ("Create Custom Content", "View/Edit Content", "Import Content", "Only Use Custom Content"), "option"], {
     "Create Custom Content": create_content.run,
     "View/Edit Content": edit_content,
-    "Import Content": import_content
+    "Import Content": import_content,
+    "Only Use Custom Content": del_all_else
 })
 window_mapping = { #Used for backing out of stuff.
     "quiplash_prompt": quiplash_prompt,
@@ -692,12 +720,16 @@ window_mapping = { #Used for backing out of stuff.
     "talking_points": talking_points
 }
 content_type_mapping = { #Used in editing content to change data.
-    "Quiplash3Round1Question": round_prompt_1,
-    "Quiplash3Round2Question": round_prompt_2,
-    "Quiplash3FinalQuestion": round_prompt_final,
-    "Quiplash3SafetyQuips": safety_quip,
-    "JackboxTalksPicture": talking_points_picture,
-    "JackboxTalksTitle": talking_points_prompt,
-    "JackboxTalksSignpost": talking_points_slide_transition
+    "Quiplash3":{
+        "Quiplash3Round1Question": round_prompt_1,
+        "Quiplash3Round2Question": round_prompt_2,
+        "Quiplash3FinalQuestion": round_prompt_final,
+        "Quiplash3SafetyQuips": safety_quip
+    },
+    "JackboxTalks":{
+        "JackboxTalksPicture": talking_points_picture,
+        "JackboxTalksTitle": talking_points_prompt,
+        "JackboxTalksSignpost": talking_points_slide_transition
+    }
 }
 main_window.run()
