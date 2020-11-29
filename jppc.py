@@ -237,7 +237,7 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
         content_list = []
         for item in content:
             content_list.append(content[item]["id"] + ": " + content[item]["values"]["content_type"] + " - " + content[item]["values"]["descriptor_text"])
-        layout = [[sg.Text("Choose Content to Edit/Delete:")], [sg.Listbox(content_list, key="content_selection", size=(100, 25), select_mode=sg.LISTBOX_SELECT_MODE_BROWSE)], [sg.Button("Edit"), sg.Button("Delete"), sg.Button("Show Folder"), sg.Button("Go Back")]]
+        layout = [[sg.Text("Choose Content to Edit/Delete:")], [sg.Listbox(content_list, key="content_selection", size=(100, 25), select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED)], [sg.Button("Edit"), sg.Button("Delete"), sg.Button("Show Folder"), sg.Button("Go Back")]]
         window = sg.Window("Choose Content to Edit/Delete", layout)
         while True:
             event, values = window.read()
@@ -256,21 +256,24 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
                 else:
                     sg.Popup("This content cannot be found in an easily accessible folder.")
             if event == "Edit":
-                _id = values["content_selection"][0].split(":")[0]
-                existing_data = content[_id]["values"]
-                content_type_mapping[existing_data["game"]][existing_data["content_type"]].create_window(existing_data=existing_data)
+                for item in values["content_selection"]:
+                    _id = item.split(":")[0]
+                    existing_data = content[_id]["values"]
+                    content_type_mapping[existing_data["game"]][existing_data["content_type"]].create_window(existing_data=existing_data)
                 window.close()
                 ids.close()
                 edit_content()
+                break
             if event == "Delete":
-                _id = values["content_selection"][0].split(":")[0]
-                custom_content = CustomContent(content[_id]["values"], content[_id]["values"]["game"], content[_id]["values"]["content_type"], content[_id]["values"]["content_type"], content[_id]["values"]["descriptor_text"], id=_id) #Setting None because values already has the game, type, and descriptor_text.
-                #Remove the content from the custom_content JSON file
-                content.pop(_id)
-                #Remove the content from the game's master .JET file
-                custom_content.write_to_json(None, True) #Delete the JSON file, using the pre-existing path.
-                #Remove the content's custom folder (will do nothing if one doesn't exist)
-                custom_content.add_custom_files(delete=True)
+                for item in values["content_selection"]:
+                    _id = item.split(":")[0]
+                    custom_content = CustomContent(content[_id]["values"], content[_id]["values"]["game"], content[_id]["values"]["content_type"], content[_id]["values"]["content_type"], content[_id]["values"]["descriptor_text"], id=_id) #Setting None because values already has the game, type, and descriptor_text.
+                    #Remove the content from the custom_content JSON file
+                    content.pop(_id)
+                    #Remove the content from the game's master .JET file
+                    custom_content.write_to_json(None, True) #Delete the JSON file, using the pre-existing path.
+                    #Remove the content's custom folder (will do nothing if one doesn't exist)
+                    custom_content.add_custom_files(delete=True)
                 ids.seek(0)
                 ids.truncate()
                 if len(content.keys()) != 0:
@@ -283,6 +286,7 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
                 ids.close()
                 sg.Popup("Content deleted!")
                 edit_content() #To update the list of content
+                break
             if event == "Go Back":
                 window.close()
                 main_window.run()
@@ -728,6 +732,11 @@ def talking_points_slide_transition_filter(values):
     new_values["position"] = values["position"][0]
     return new_values
 
+def talking_points_slide_transition_import(values):
+    new_values = values
+    new_values["position"] = list(values["position"])
+    return new_values
+
 talking_points_slide_transition = CustomContentWindow("JackboxTalks", "JackboxTalksSignpost", "signpost", {
     "previous_window": "talking_points",
     "layout_list": [{"text": "Transition Text: ", "input": [
@@ -755,7 +764,9 @@ talking_points_slide_transition = CustomContentWindow("JackboxTalks", "JackboxTa
     ]}],
     "content_list": [
         {"type": "json"}
-    ]
+    ],
+    "filter": talking_points_slide_transition_filter,
+    "import": talking_points_slide_transition_import
 })
 
 talking_points = SelectionWindow("Talking Points Content Selection", ["Please select the type of content", ("Picture", "Prompt", "Slide Transition"), "talking_points_content_type"], {
