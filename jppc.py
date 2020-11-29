@@ -8,6 +8,7 @@ from shutil import copyfile, rmtree
 # Test feature to delete everything but custom content
 # Test making multiple content of the same type (might not work?)
 # Test importing content when you already have existing content
+# Test importing content with non-existant custom files (like a .JPG or .OGG)
 
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
@@ -338,46 +339,30 @@ def game_content_del(game, content_type):
     content = content_type_mapping[game][content_type].window_layout["content_list"]
     for item in content:
         file_type = item["type"]
-        path = "./" + game + "/content/" + content_type
-        if file_type == "json":
-            jet_file = open("./" + game + "/content/" + content_type + ".jet", "r", encoding="utf-8")
+        if file_type == "json": #WE ONLY NEED THE .JSON FILE TO DELETE, IDIOT!
+            path = "./" + game + "/content/" + content_type + ".jet"
+            jet_file = open(path, "r", encoding="utf-8")
             json_file = json.load(jet_file)
+            new_content_list = []
             for content_piece in json_file["content"]:
-                if int(content_piece["id"]) < 100000:
-                    json_file["content"].remove(content_piece)
+                if int(content_piece["id"]) >= 100000:
+                    new_content_list.append(content_piece)
+            json_file["content"] = new_content_list
             jet_file.close()
-            jet_file = open(path + ".jet", "w")
+            jet_file = open(path, "w")
+            jet_file.truncate()
             jet_file.write(json.dumps(json_file))
-        elif file_type == "CustomData":
-            path = path + "/"
-            for item in os.scandir(path + "/"):
-                if int(item) < 100000:
-                    os.remove(path + "/" + item)
-        elif file_type == "files":
-            for content_file in item["files"]["args"]:
-                if "path" in content_file:
-                    path = content_file["path"]
-                if os.path.exists(path):
-                    for new_file in os.scandir(path):
-                        file_num = 100000
-                        if new_file.split(".")[0].isnumeric():
-                            file_num = int(new_file.split(".")[0])
-                        file_extension = "/"
-                        if len(new_file.split(".")) > 1:
-                            file_extension = new_file.split(".")[-1]
-                        if file_num < 100000:
-                            if os.path.exists(path + "/" + new_file + file_extension):
-                                os.remove(path + "/" + new_file + file_extension)
+            jet_file.close()
 
 def del_all_else(selected=None):
     layout = [[sg.Text("Are you absolutely sure you want to do this?")], [sg.Text("This option will effectively delete all the game's content files so that you can only play with your own custom content. Please make sure you have backups.")],
-    [sg.Text("Please select the game(s) whose content you'd like to remove: "), sg.Listbox(("Quiplash3", "JackboxTalks"), size=(50, 4), key="game_choice", select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE)], [sg.Checkbox("I am absolutely sure I want to do this. Please delete all non-custom content.", key="sure")], [sg.Button("Ok"), sg.Button("Cancel")]]
+    [sg.Text("Please select the game(s) whose content you'd like to remove: "), sg.Listbox(("Quiplash3", "JackboxTalks"), size=(50, 4), key="game_choice", select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE)], [sg.Checkbox("I am absolutely sure I want to do this. Please delete all non-custom content.", key="sure")], [sg.Button("Ok"), sg.Button("Go Back")]]
     window = sg.Window("Delete all non-custom content", layout)
     while True:
         event, values = window.read()
         if event == sg.WIN_CLOSED:
             break
-        if event == "Cancel":
+        if event == "Go Back":
             window.close()
             main_window.run()
             break
@@ -389,7 +374,7 @@ def del_all_else(selected=None):
                 sg.Popup("Content deleted for: " + str(values["game_choice"]))
     window.close()
 
-def all_content_reset():
+def all_content_reset(selected=None):
     if os.path.exists("./custom_content.json"):
         layout = [[sg.Text("This feature is to be used if you restored your game's files to their original condition (which means that now all your custom content is no longer in the game).")],
         [sg.Text("Please make a backup of your custom_content.json file, then import it after the reset to ensure all your custom content stays with you after the reset.")], [sg.Checkbox("I understand what I am about to do.", key="understand")],
@@ -684,7 +669,7 @@ def talking_points_prompt_import(values):
     transitions = json.load(values["signposts"])
     for item in transitions:
         slide_transitions += item["position"][0] + "," + item["signpost"] + "|"
-    new_values["signposts"] = transitions
+    new_values["signposts"]
     return new_values
 
 def talking_points_prompt_filter(values):
@@ -698,7 +683,7 @@ def talking_points_prompt_filter(values):
                 position = item[0]
                 signpost = item[2:] #Ignore the m, and e,
                 transitions_list.append({"position": position, "signpost": signpost})
-    new_values["signposts"] = str(transitions_list)
+    new_values["signposts"] = transitions_list
     return new_values
 
 talking_points_prompt = CustomContentWindow("JackboxTalks", "JackboxTalksTitle", "title", {
