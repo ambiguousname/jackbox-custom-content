@@ -8,7 +8,7 @@ from shutil import copyfile, rmtree
 # Test feature to delete everything but custom content
 # Test making multiple content of the same type (might not work?)
 # Test importing content when you already have existing content
-# Test importing content with non-existant custom files (like a .JPG or .OGG)
+# Test importing content with non-existent custom files (like a .JPG or .OGG)
 
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
@@ -682,7 +682,7 @@ def talking_points_prompt_filter(values):
             if len(item) > 2 and ("e," in item or "m," in item):
                 position = item[0]
                 signpost = item[2:] #Ignore the m, and e,
-                transitions_list.append({"position": position, "signpost": signpost})
+                transitions_list.append({"position": "end" if position == "e" else "middle", "signpost": signpost})
     new_values["signposts"] = transitions_list
     return new_values
 
@@ -722,6 +722,11 @@ talking_points_prompt = CustomContentWindow("JackboxTalks", "JackboxTalksTitle",
     "filter": talking_points_prompt_filter,
     "import_filter": talking_points_prompt_import
 })
+
+def talking_points_slide_transition_filter(values):
+    new_values = values
+    new_values["position"] = values["position"][0]
+    return new_values
 
 talking_points_slide_transition = CustomContentWindow("JackboxTalks", "JackboxTalksSignpost", "signpost", {
     "previous_window": "talking_points",
