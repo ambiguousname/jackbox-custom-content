@@ -4,11 +4,12 @@ import os
 from shutil import copyfile, rmtree
 
 #TODO:
-# Test if content rework works (plus editing) (Quiplash Prompts Round 1 2 3, Safety Quips, Picture, Slide Transition, Slide Prompt)
-# Test feature to delete everything but custom content
+# Test if content rework works (plus editing) (Quiplash Prompts Round 1 2 3, Safety Quips)
+# Test feature to delete everything but custom content (Works with Talking Points)
 # Test making multiple content of the same type (might not work?)
 # Test importing content when you already have existing content
 # Test importing content with non-existent custom files (like a .JPG or .OGG)
+# Test editing with multiple content
 
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
@@ -42,7 +43,7 @@ class CustomContentWindow(object):
         self.content_type = args[1]
         self.descriptor_text_name = args[2]
 
-    def create_content(self, values, _id=None):
+    def create_content(self, values, _id=None, window_suppress=False):
         new_content = CustomContent(values, self.game, self.content_type, values[self.descriptor_text_name], id=None if _id == None else _id)
         new_content.save_to_custom_content()
         for content in self.window_layout["content_list"]:
@@ -56,7 +57,7 @@ class CustomContentWindow(object):
                 data = content["func"](new_content.values)
                 kwargs = content["kwargs"]
                 new_content.add_custom_files(data, **kwargs)
-        if not ("window_suppress" in kwargs and kwargs["window_suppress"] == True):
+        if window_suppress == False:
             sg.Popup("Content Created, ID: " + new_content.id)
 
     def create_window(self, *args, **kwargs):
@@ -131,8 +132,14 @@ class CustomContent(object):
             if delete == True:
                 json_file["content"].remove(self.values)
             else:
-                if self.values in json_file["content"]:
-                    json_file["content"].remove(self.values)
+                #Work backwards. It's faster that way.
+                for i in range(len(json_file["content"]) - 1, -1, -1):
+                    cont = json_file["content"][i]
+                    if cont["id"] == self.id:
+                        json_file["content"].pop(i)
+                        break
+                    if int(cont["id"]) < 100000:
+                        break
                 json_file["content"].append(self.values)
             jf.close()
             #Close and reopen to write, because writing with utf-8 encoding gets... weird.
@@ -289,6 +296,7 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
                 edit_content() #To update the list of content
                 break
             if event == "Go Back":
+                ids.close()
                 window.close()
                 main_window.run()
                 break
@@ -326,7 +334,7 @@ def import_content(selected=None):
                     content[content_id] = n_c
                     n_c["id"] = content_id
                     n_c["values"]["id"] = content_id
-                    content_type_mapping[n_c["values"]["game"]][n_c["values"]["content_type"]].create_content(n_c["values"], content_id, window_suppress=True) #Will bug you with popups rn.
+                    content_type_mapping[n_c["values"]["game"]][n_c["values"]["content_type"]].create_content(n_c["values"], content_id, True) #Will bug you with popups rn.
                 ids.seek(0)
                 ids.truncate()
                 ids.write(json.dumps(content))
@@ -396,7 +404,7 @@ def all_content_reset(selected=None):
             if event == "Ok":
                 if values["understand"] == True:
                     os.remove("./custom_content.json")
-                    sg.Popup("Content deleted.")
+                    sg.Popup("Content reset.")
                     window.close()
                     main_window.run()
                     break
@@ -671,10 +679,11 @@ talking_points_picture = CustomContentWindow("JackboxTalks", "JackboxTalksPictur
 def talking_points_prompt_import(values):
     new_values = values
     slide_transitions = ""
-    transitions = json.load(values["signposts"])
-    for item in transitions:
-        slide_transitions += item["position"][0] + "," + item["signpost"] + "|"
-    new_values["signposts"]
+    transitions = values["signposts"]
+    for index, item in enumerate(transitions):
+        slide_transitions += item["position"][0] + "," + item["signpost"] + ("|" if index < len(transitions) - 1 else "")
+    new_values["signposts"] = slide_transitions
+    new_values["safetyAnswers"] = "|".join(values["safetyAnswers"])
     return new_values
 
 def talking_points_prompt_filter(values):
@@ -689,6 +698,7 @@ def talking_points_prompt_filter(values):
                 signpost = item[2:] #Ignore the m, and e,
                 transitions_list.append({"position": "end" if position == "e" else "middle", "signpost": signpost})
     new_values["signposts"] = transitions_list
+    new_values["safetyAnswers"] = values["safetyAnswers"].split("|")
     return new_values
 
 talking_points_prompt = CustomContentWindow("JackboxTalks", "JackboxTalksTitle", "title", {
