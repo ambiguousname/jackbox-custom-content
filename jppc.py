@@ -791,13 +791,61 @@ talking_points = SelectionWindow("Talking Points Content Selection", ["Please se
 
 # Champ'd Up Stuff
 
+#TODO: Add file browsing for contest and response .ogg
+
+champd_up_round_1 = CustomContentWindow("WorldChampions", "WorldChampionsRound", "contest", {
+    "previous_window": "champd_up",
+    "layout_list": [{"text": "Contest Name: ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "The Champion of <ANYPLAYER>'s Nightmares",
+            "param_name": "contest"
+        }
+    ]}, {"text": "A shorter description: ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "<ANYPLAYER>'s Nightmares",
+            "param_name": "gameText"
+        }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Includes Player Name",
+            "kwargs": {"default": "existing_data", "regular_default": True},
+            "param_name": "includesPlayerName"
+        }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Includes Adult Content",
+            "kwargs": {"default": "existing_data", "regular_default": False},
+            "param_name": "x"
+        }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Content is US-Specific",
+            "kwargs": {"default": "existing_data", "regular_default": False},
+            "param_name": "us"
+        }
+    ]}],
+    "content_list": [
+        {"type": "json"},
+        {"type": "files", "files"}
+    ]
+})
+
+champd_up = SelectionWindow("Champ'd Up Content Selection", ["Please select the type of content", ("Round 1 Prompt", "Round 2 Prompt", "Round 2.5 Prompt"), "champd_up_content_type"], {
+    "Round 1 Prompt": champd_up_round_1.create_window
+})
+
 #Main Menu stuff
-create_content = SelectionWindow("Select a game", ["Select a game.", ("Talking Points", "Quiplash 3"), "game"],{
+create_content = SelectionWindow("Select a game", ["Select a game.", ("Champ'd Up", "Quiplash 3", "Talking Points"), "game"],{
     "Blather Round": None,
     "Devils and the Details": None,
     "Talking Points": talking_points.run,
     "Quiplash 3": quiplash_3.run,
-    "Champ'd Up": None
+    "Champ'd Up": champd_up.run
 }, "main_window")
 
 main_window = SelectionWindow("Select an option", ["Please select an option.", ("Create Custom Content", "View/Edit Content", "Import Content", "Only Use Custom Content", "Reset All Custom Content"), "option"], {
@@ -812,7 +860,8 @@ window_mapping = { #Used for backing out of stuff.
     "quiplash_3": quiplash_3,
     "create_content": create_content,
     "main_window": main_window,
-    "talking_points": talking_points
+    "talking_points": talking_points,
+    "champd_up": champd_up
 }
 content_type_mapping = { #Used in editing content to change data.
     "Quiplash3":{
@@ -825,6 +874,11 @@ content_type_mapping = { #Used in editing content to change data.
         "JackboxTalksPicture": talking_points_picture,
         "JackboxTalksTitle": talking_points_prompt,
         "JackboxTalksSignpost": talking_points_slide_transition
+    },
+    "WorldChampions": {
+        "WorldChampionsRound": champd_up_round_1,
+        "WorldChampionsSecondHalfA": "",
+        "WorldChampionsSecondHalfB": ""
     }
 }
 main_window.run()
