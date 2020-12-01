@@ -4,12 +4,9 @@ import os
 from shutil import copyfile, rmtree
 
 #TODO:
-# Test if content rework works (plus editing) (Quiplash Prompts Round 1 2 3, Safety Quips)
-# Test feature to delete everything but custom content (Works with Talking Points)
-# Test making multiple content of the same type (might not work?)
 # Test importing content when you already have existing content
 # Test importing content with non-existent custom files (like a .JPG or .OGG)
-# Test editing with multiple content
+# Edit content by game?
 
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
@@ -524,12 +521,17 @@ def round_final_filter(values):
     new_values = values
     formatted_quips = []
     safety_quip = new_values["safetyQuips"].split("|")
-    for i in range(len(safety_quip)):
+    for i in range(0, len(safety_quip), 3):
         if not (i + 3 > len(safety_quip)):
-            formatted_quips.append(safety_quip[i][0] + "|" + safety_quip[i][1] + "|" + safety_quip[i][2])
+            formatted_quips.append(safety_quip[i] + "|" + safety_quip[i + 1] + "|" + safety_quip[i + 2])
     new_values["safetyQuips"] = formatted_quips
     new_values["response_filter"] = ""
     new_values["response_transcript"] = ""
+    return new_values
+
+def round_final_import(values):
+    new_values = values
+    new_values["safetyQuips"] = "|".join(values["safetyQuips"])
     return new_values
 
 round_prompt_final = CustomContentWindow("Quiplash3", "Quiplash3FinalQuestion", "prompt", {
@@ -585,7 +587,8 @@ round_prompt_final = CustomContentWindow("Quiplash3", "Quiplash3FinalQuestion", 
             "kwargs": {"adding_other_files": True}
         }}
     ],
-    "filter": round_final_filter
+    "filter": round_final_filter,
+    "import_filter": round_final_import
 })
 
 safety_quip = CustomContentWindow("Quiplash3", "Quiplash3SafetyQuips", "value", {
@@ -785,6 +788,8 @@ talking_points = SelectionWindow("Talking Points Content Selection", ["Please se
     "Prompt": talking_points_prompt.create_window,
     "Slide Transition": talking_points_slide_transition.create_window
 }, "create_content")
+
+# Champ'd Up Stuff
 
 #Main Menu stuff
 create_content = SelectionWindow("Select a game", ["Select a game.", ("Talking Points", "Quiplash 3"), "game"],{
