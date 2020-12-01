@@ -24,7 +24,24 @@ otherwise you're going to have to uninstall and reinstall your entire game if so
 - Move "jppc.py" to the "games" directory of your Jackbox Party Pack 7 install folder. (For steam on Windows: C:\Program Files (x86)\Steam\steamapps\common\The Jackbox Party Pack 7\games)
 - Run jppc.py in the terminal of your choice.
 
-# Potential Questions
+# Potential Questions/Problems
+
+## Doesn't Quiplash 3 already have a way for you to make your own questions?
+
+Yes, but there are a few differences. For one: making your own "episodes" in Quiplash 3 means you have to manually select them. If you add custom questions using this program, they'll get inserted into the normal rotation of questions. For two: using this program will allow you to add more stuff not available in Quiplash 3's "episodes" feature, like audio files to read the questions and custom responses to certain answers. And this program can be used for more games than Quiplash 3.
+
+## HELP, EVERYTHING IS BROKEN AND/OR I REMOVED ALL NON-CUSTOM CONTENT AND CAN'T GET IT BACK
+
+If you're using Steam, go to the Jackbox Party Pack 7 in your Steam Library. Right click on the game's icon or name, click "Properties".
+In the popup window, click on "Local Files". Then click "Verify integrity of game files..." That should fix everything.
+
+## EVERYTHING'S STILL BROKEN
+
+Uninstall and reinstall the Jackbox Party Pack 7
+
+## NOPE, IT STILL DOESN'T WORK
+
+Delete everything from your Jackbox Party Pack 7/games folder, then find the "Verify integrity of game files..." button and click it.
 
 ## The .EXE file is way too slow
 
@@ -34,24 +51,14 @@ If the .EXE is too slow for you, you can just follow the steps for cloning the r
 
 As of right now, you're just going to have to install python and install jppc.py on your OS of choice. I haven't figured out how to make distributables for other OSes yet.
 
-## HELP, EVERYTHING IS BROKEN
-
-If you're using Steam, go to the Jackbox Party Pack 7 in your Steam Library. Right click on the game's icon or name, click "Properties".
-In the popup window, click on "Local Files". Then click "Verify integrity of game files..." That should fix everything.
-
 ### Important note if you've clicked "verify integrity of game files..."
 
-That means all your custom prompts have been removed from the game. To get your custom prompts back, use the import feature, and select the "custom_content.json" file that's in the same folder as Jackbox Party Pack Custom.exe
+That means all your custom prompts have been removed from the game. To get your custom prompts back, you'll have to follow a couple of steps.
+1. Make a backup of custom_content.json
+2. Use the "Reset All Custom Content" option available in the menu.
+3. Use the import feature, and select the backup you made of custom_content.json.
 
-## EVERYTHING'S STILL BROKEN
-
-Uninstall and reinstall the Jackbox Party Pack 7
-
-## NOPE, IT STILL DOESN'T WORK
-
-Delete everything from your Jackbox Party Pack 7 folder, then find the "Verify integrity of game files..." button and click it.
-
-# Why does this program sometimes use weird names for each game?
+## Why does this program sometimes use weird names for each game?
 
 I have here a handy conversion for the games and their weird names:
 - BlankyBlank - Blather 'Round
@@ -62,14 +69,17 @@ I have here a handy conversion for the games and their weird names:
 
 The program does this because that's what the folders for each game are called.
 
+# Editing content
+
+If you want to change specific parts of your content or delete content, you're going to want to edit that content in the View/Edit Content option. You should note that you can select multiple pieces of content to edit, view, or delete.
+
 # Importing content
 
-As of right now, importing content requires you to manually look at each new piece of content and add it in. I have no idea when I'll change this. Alternatively, you could just copy someone else's Jackbox Party Pack 7 /game/ folder that contains the custom content.
+The import content feature cannot import certain custom files like .JPGs or .OGGs. It'll import things like prompts just fine, but to import things like images and sounds you'll need to go into the editing menu and edit each piece of content that contains a custom file (like a .JPG or .OGG) and add in the image manually.
 
-## Note on importing files
+# Using only custom content in a game
 
-The import content feature won't allow you to directly import any custom files, like .OGG files or .JPG files. To do that, you'll need to make a folder of all the custom files
-and then select them in the import dialogs that pop up.
+This is not at all recommended. If you have less than a certain amount of content for the game to pull from, it might just break entirely. It's better to mix in your custom content with the existing content. If you still want to only use custom content for your game, you can use the "Only Use Custom Content" option from the main menu to delete all existing game content.
 
 # Making custom responses to specific text for Quiplash 3:
 
