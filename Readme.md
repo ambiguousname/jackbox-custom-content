@@ -7,7 +7,7 @@ WARNING: I've really only tested this on Windows, it might not work on other ope
 You may also want to keep a backup of the Jackbox Party Pack 7's files if you're not using Steam,
 otherwise you're going to have to uninstall and reinstall your entire game if something goes wrong.
 
-# PROOF:
+## Some screenshots of custom content in the Jackbox Party Pack 7:
 
 ![Talking Points](https://raw.githubusercontent.com/ambiguousname/jackbox-custom-content/main/screenshots/TalkingPoints.PNG)\
 ![Quiplash3](https://raw.githubusercontent.com/ambiguousname/jackbox-custom-content/main/screenshots/Quiplash3.PNG)
@@ -24,7 +24,7 @@ otherwise you're going to have to uninstall and reinstall your entire game if so
 - Move "jppc.py" to the "games" directory of your Jackbox Party Pack 7 install folder. (For steam on Windows: C:\Program Files (x86)\Steam\steamapps\common\The Jackbox Party Pack 7\games)
 - Run jppc.py in the terminal of your choice.
 
-# Potential Questions
+# Potential Questions/Problems
 
 ## Doesn't Quiplash 3 already have a way for you to make your own questions?
 
@@ -35,13 +35,6 @@ Yes, but there are a few differences. For one: making your own "episodes" in Qui
 If you're using Steam, go to the Jackbox Party Pack 7 in your Steam Library. Right click on the game's icon or name, click "Properties".
 In the popup window, click on "Local Files". Then click "Verify integrity of game files..." That should fix everything.
 
-### Important note if you've clicked "verify integrity of game files..."
-
-That means all your custom prompts have been removed from the game. To get your custom prompts back, you'll have to follow a couple of steps.
-1. Make a backup of custom_content.json
-2. Use the "Reset All Custom Content" option available in the menu.
-3. Use the import feature, and select the backup you made of custom_content.json.
-
 ## EVERYTHING'S STILL BROKEN
 
 Uninstall and reinstall the Jackbox Party Pack 7
@@ -49,6 +42,21 @@ Uninstall and reinstall the Jackbox Party Pack 7
 ## NOPE, IT STILL DOESN'T WORK
 
 Delete everything from your Jackbox Party Pack 7/games folder, then find the "Verify integrity of game files..." button and click it.
+
+## The .EXE file is way too slow
+
+If the .EXE is too slow for you, you can just follow the steps for cloning the repository and using the .PY file.
+
+## I don't have Windows, and I don't want to install python
+
+As of right now, you're just going to have to install python and install jppc.py on your OS of choice. I haven't figured out how to make distributables for other OSes yet.
+
+### Important note if you've clicked "verify integrity of game files..."
+
+That means all your custom prompts have been removed from the game. To get your custom prompts back, you'll have to follow a couple of steps.
+1. Make a backup of custom_content.json
+2. Use the "Reset All Custom Content" option available in the menu.
+3. Use the import feature, and select the backup you made of custom_content.json.
 
 ## Why does this program sometimes use weird names for each game?
 
