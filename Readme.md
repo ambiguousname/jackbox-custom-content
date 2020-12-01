@@ -26,6 +26,10 @@ otherwise you're going to have to uninstall and reinstall your entire game if so
 
 # Potential Questions
 
+## Doesn't Quiplash 3 already have a way for you to make your own questions?
+
+Yes, but there are a few differences. For one: making your own "episodes" in Quiplash 3 means you have to manually select them. If you add custom questions using this program, they'll get inserted into the normal rotation of questions. For two: using this program will allow you to add more stuff not available in Quiplash 3's "episodes" feature, like audio files to read the questions and custom responses to certain answers. And this program can be used for more games than Quiplash 3.
+
 ## HELP, EVERYTHING IS BROKEN AND/OR I REMOVED ALL NON-CUSTOM CONTENT AND CAN'T GET IT BACK
 
 If you're using Steam, go to the Jackbox Party Pack 7 in your Steam Library. Right click on the game's icon or name, click "Properties".
@@ -46,7 +50,7 @@ Uninstall and reinstall the Jackbox Party Pack 7
 
 Delete everything from your Jackbox Party Pack 7/games folder, then find the "Verify integrity of game files..." button and click it.
 
-# Why does this program sometimes use weird names for each game?
+## Why does this program sometimes use weird names for each game?
 
 I have here a handy conversion for the games and their weird names:
 - BlankyBlank - Blather 'Round

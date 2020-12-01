@@ -6,6 +6,7 @@ from shutil import copyfile, rmtree
 #TODO:
 # Test importing content when you already have existing content
 # Test importing content with non-existent custom files (like a .JPG or .OGG)
+# Test Champ'd Up content
 # Edit content by game?
 
 def id_gen(values): #id_gen needs a values dict to work with
@@ -791,9 +792,7 @@ talking_points = SelectionWindow("Talking Points Content Selection", ["Please se
 
 # Champ'd Up Stuff
 
-#TODO: Add file browsing for contest and response .ogg
-
-champd_up_round_1 = CustomContentWindow("WorldChampions", "WorldChampionsRound", "contest", {
+champd_up_round_layout = {
     "previous_window": "champd_up",
     "layout_list": [{"text": "Contest Name: ", "input": [
         {
@@ -807,7 +806,34 @@ champd_up_round_1 = CustomContentWindow("WorldChampions", "WorldChampionsRound",
             "default_value": "<ANYPLAYER>'s Nightmares",
             "param_name": "gameText"
         }
-    ]}, {"input": [
+    ]}, {"text": ".OGG file of you reading the contest name (recommended)", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "",
+            "param_name": "contest_path"
+        }, {
+            "type": sg.FileBrowse,
+            "default_value": "Browse",
+            "param_name": "contest_browse",
+            "kwargs": {
+                "file_types": [(".OGG", "*.ogg"), ("ALL Files", "*.*")]
+            }
+        }
+    ]}, {"text": ".OGG file of you reacting to the prompt (something like 'Oooh! Scary!') (recommended)", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "",
+            "param_name": "response_path"
+        }, {
+            "type": sg.FileBrowse,
+            "default_value": "Browse",
+            "param_name": "response_browse",
+            "kwargs": {
+                "file_types": [(".OGG", "*.ogg"), ("ALL Files", "*.*")]
+            }
+        }
+    ]},
+    {"input": [
         {
             "type": sg.Checkbox,
             "default_value": "Includes Player Name",
@@ -831,15 +857,117 @@ champd_up_round_1 = CustomContentWindow("WorldChampions", "WorldChampionsRound",
     ]}],
     "content_list": [
         {"type": "json"},
-        {"type": "files", "files"}
+        {"type": "CustomData"},
+        {"type": "files", "files": {
+            "args": [{"path": "param_name", "param_name": "contest_path", "name": "contest.ogg"}],
+            "kwargs": {"adding_other_files": True}
+        }}
     ]
+}
+
+champd_up_round_1 = CustomContentWindow("WorldChampions", "WorldChampionsRound", "contest", champd_up_round_layout)
+
+def champd_up_round_import(values):
+    new_values = values
+    new_values["linkedPrompt"] = "|".join(values["linkedPrompts"])
+    return new_values
+
+def champd_up_round_filter(values):
+    new_values = values
+    new_values["linkedPrompts"] = values["linkedPrompts"].split("|")
+    return new_values
+
+champd_up_round_2 = CustomContentWindow("WorldChampions", "WorldChampionsSecondHalfA", "contest", {
+    "previous_window": "champd_up",
+    "layout_list": [{"text": "Contest Name: ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "The Champion of <ANYPLAYER>",
+            "param_name": "contest"
+        }
+    ]}, {"text": "A shorter description: ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "<ANYPLAYER>'s Champion",
+            "param_name": "gameText"
+        }
+    ]}, {"text": "List of connected prompts (separate by |): ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "500000|500002|500120",
+            "param_name": "linkedPrompts"
+        }
+    ]}, {"text": ".OGG file of you reading the contest name (recommended)", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "",
+            "param_name": "contest_path"
+        }, {
+            "type": sg.FileBrowse,
+            "default_value": "Browse",
+            "param_name": "contest_browse",
+            "kwargs": {
+                "file_types": [(".OGG", "*.ogg"), ("ALL Files", "*.*")]
+            }
+        }
+    ]}, {"text": ".OGG file of you reacting to the prompt (something like 'Oooh! Scary!') (recommended)", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "",
+            "param_name": "response_path"
+        }, {
+            "type": sg.FileBrowse,
+            "default_value": "Browse",
+            "param_name": "response_browse",
+            "kwargs": {
+                "file_types": [(".OGG", "*.ogg"), ("ALL Files", "*.*")]
+            }
+        }
+    ]},
+    {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Includes Player Name",
+            "kwargs": {"default": "existing_data", "regular_default": True},
+            "param_name": "includesPlayerName"
+        }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Includes Adult Content",
+            "kwargs": {"default": "existing_data", "regular_default": False},
+            "param_name": "x"
+        }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Content is US-Specific",
+            "kwargs": {"default": "existing_data", "regular_default": False},
+            "param_name": "us"
+        }
+    ]}],
+    "content_list": [
+        {"type": "json"},
+        {"type": "CustomData"},
+        {"type": "files", "files": {
+            "args": [{"path": "param_name", "param_name": "contest_path", "name": "contest.ogg"}],
+            "kwargs": {"adding_other_files": True}
+        }}
+    ],
+    "filter": champd_up_round_filter,
+    "import_filter": champd_up_round_import
 })
 
+champd_up_round_2_5 = CustomContentWindow("WorldChampions", "WorldChampionsSecondHalfB", "contest", champd_up_round_layout)
+
 champd_up = SelectionWindow("Champ'd Up Content Selection", ["Please select the type of content", ("Round 1 Prompt", "Round 2 Prompt", "Round 2.5 Prompt"), "champd_up_content_type"], {
-    "Round 1 Prompt": champd_up_round_1.create_window
+    "Round 1 Prompt": champd_up_round_1.create_window,
+    "Round 2 Prompt": champd_up_round_2.create_window,
+    "Round 2.5 Prompt": champd_up_round_2_5.create_window
 })
 
 #Main Menu stuff
+
 create_content = SelectionWindow("Select a game", ["Select a game.", ("Champ'd Up", "Quiplash 3", "Talking Points"), "game"],{
     "Blather Round": None,
     "Devils and the Details": None,
@@ -855,6 +983,7 @@ main_window = SelectionWindow("Select an option", ["Please select an option.", (
     "Only Use Custom Content": del_all_else,
     "Reset All Custom Content": all_content_reset
 })
+
 window_mapping = { #Used for backing out of stuff.
     "quiplash_prompt": quiplash_prompt,
     "quiplash_3": quiplash_3,
@@ -863,6 +992,7 @@ window_mapping = { #Used for backing out of stuff.
     "talking_points": talking_points,
     "champd_up": champd_up
 }
+
 content_type_mapping = { #Used in editing content to change data.
     "Quiplash3":{
         "Quiplash3Round1Question": round_prompt_1,
@@ -877,8 +1007,9 @@ content_type_mapping = { #Used in editing content to change data.
     },
     "WorldChampions": {
         "WorldChampionsRound": champd_up_round_1,
-        "WorldChampionsSecondHalfA": "",
-        "WorldChampionsSecondHalfB": ""
+        "WorldChampionsSecondHalfA": champd_up_round_2,
+        "WorldChampionsSecondHalfB": champd_up_round_2_5
     }
 }
+
 main_window.run()
