@@ -9,7 +9,7 @@ otherwise you're going to have to uninstall and reinstall your entire game if so
 
 ## Some screenshots of custom content in the Jackbox Party Pack 7:
 
-![Talking Points](https://raw.githubusercontent.com/ambiguousname/jackbox-custom-content/main/screenshots/TalkingPoints.PNG)\
+![Talking Points](https://raw.githubusercontent.com/ambiguousname/jackbox-custom-content/main/screenshots/TalkingPoints.PNG)
 ![Quiplash3](https://raw.githubusercontent.com/ambiguousname/jackbox-custom-content/main/screenshots/Quiplash3.PNG)
 
 # Install instructions
