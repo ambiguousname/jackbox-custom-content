@@ -56,7 +56,8 @@ class CustomContentWindow(object):
                 data = content["func"](new_content.values)
                 kwargs = content["kwargs"]
                 new_content.add_custom_files(data, **kwargs)
-        sg.Popup("Content Created, ID: " + new_content.id)
+        if not ("window_suppress" in kwargs and kwargs["window_suppress"] == True):
+            sg.Popup("Content Created, ID: " + new_content.id)
 
     def create_window(self, *args, **kwargs):
         existing_data = None
@@ -325,7 +326,7 @@ def import_content(selected=None):
                     content[content_id] = n_c
                     n_c["id"] = content_id
                     n_c["values"]["id"] = content_id
-                    content_type_mapping[n_c["values"]["game"]][n_c["values"]["content_type"]].create_content(n_c["values"], content_id) #Will bug you with popups rn.
+                    content_type_mapping[n_c["values"]["game"]][n_c["values"]["content_type"]].create_content(n_c["values"], content_id, window_suppress=True) #Will bug you with popups rn.
                 ids.seek(0)
                 ids.truncate()
                 ids.write(json.dumps(content))
