@@ -792,6 +792,17 @@ talking_points = SelectionWindow("Talking Points Content Selection", ["Please se
 
 # Champ'd Up Stuff
 
+def champd_up_data_jet(values):
+    data = CustomData()
+    data.add_data("B", "true" if values["contest_path"] != "" else "false", "HasContestAudio") 
+    data.add_data("A", "contest", "ContestAudio")
+    data.add_data("S", values["contest"], "ContestText") #Included even though there might not be response audio
+    data.add_data("S", values["gameText"], "GameText")
+    data.add_data("B", "true" if values["response_path"] != "" else "false", "HasResponseAudio")
+    data.add_data("A", "response", "ResponseAudio") #I think this is asking for the file name of the audio. I think I can leave this in if the audio doesn't exist, because some prompts don't have response audio, but we include the above line. 
+    data.add_data("S", values["response_transcript"], "ResponseText")
+    return data
+
 champd_up_round_layout = {
     "previous_window": "champd_up",
     "layout_list": [{"text": "Contest Name: ", "input": [
@@ -800,7 +811,7 @@ champd_up_round_layout = {
             "default_value": "The Champion of <ANYPLAYER>'s Nightmares",
             "param_name": "contest"
         }
-    ]}, {"text": "A shorter description: ", "input": [
+    ]}, {"text": "A shorter description (that doesn't include the word \"Champion\"): ", "input": [
         {
             "type": sg.InputText,
             "default_value": "<ANYPLAYER>'s Nightmares",
@@ -833,6 +844,13 @@ champd_up_round_layout = {
             }
         }
     ]},
+    {"text": "Transcript of your reaction: ", "input": [
+        {
+            "type": sg.InputText(),
+            "default_value": "",
+            "param_name": "response_transcript"
+        }
+    ]},
     {"input": [
         {
             "type": sg.Checkbox,
@@ -857,7 +875,7 @@ champd_up_round_layout = {
     ]}],
     "content_list": [
         {"type": "json"},
-        {"type": "CustomData"},
+        {"type": "CustomData", "func": champd_up_data_jet, "kwargs": {}},
         {"type": "files", "files": {
             "args": [{"path": "param_name", "param_name": "contest_path", "name": "contest.ogg"}],
             "kwargs": {"adding_other_files": True}
@@ -923,8 +941,13 @@ champd_up_round_2 = CustomContentWindow("WorldChampions", "WorldChampionsSecondH
                 "file_types": [(".OGG", "*.ogg"), ("ALL Files", "*.*")]
             }
         }
-    ]},
-    {"input": [
+    ]}, {"text": "Transcript of your reaction: ", "input": [
+        {
+            "type": sg.InputText(),
+            "default_value": "",
+            "param_name": "response_transcript"
+        }
+    ]}, {"input": [
         {
             "type": sg.Checkbox,
             "default_value": "Includes Player Name",
@@ -948,7 +971,7 @@ champd_up_round_2 = CustomContentWindow("WorldChampions", "WorldChampionsSecondH
     ]}],
     "content_list": [
         {"type": "json"},
-        {"type": "CustomData"},
+        {"type": "CustomData", "func": champd_up_data_jet, "kwargs": {}},
         {"type": "files", "files": {
             "args": [{"path": "param_name", "param_name": "contest_path", "name": "contest.ogg"}],
             "kwargs": {"adding_other_files": True}
