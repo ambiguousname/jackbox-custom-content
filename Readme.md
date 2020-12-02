@@ -85,9 +85,9 @@ This is not at all recommended. If you have less than a certain amount of conten
 
 So, you may notice that in Quiplash 3 the announcer will sometimes react to a specific prompt. You can do this too!
 
-NOTE: This only works for Round 1 and 2 questions. You can't have custom responses for Final Round questions. 
+This only works for Round 1 and 2 questions. You can't have custom responses for Final Round questions. 
 
-Okay, I'm note entirely sure how this works, but say you have a prompt like:
+Let's say you have a prompt like:
 
 `Oh no, my dog ate my <BLANK>!`
 
