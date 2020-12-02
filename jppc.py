@@ -367,7 +367,7 @@ def game_content_del(game, content_type):
 
 def del_all_else(selected=None):
     layout = [[sg.Text("Are you absolutely sure you want to do this?")], [sg.Text("This option will effectively delete all the game's content files so that you can only play with your own custom content. Please make sure you have backups.")],
-    [sg.Text("Please select the game(s) whose content you'd like to remove: "), sg.Listbox(("JackboxTalks", "Quiplash3", "Champ'd Up"), size=(50, 4), key="game_choice", select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE)], [sg.Checkbox("I am absolutely sure I want to do this. Please delete all non-custom content.", key="sure")], [sg.Button("Ok"), sg.Button("Go Back")]]
+    [sg.Text("Please select the game(s) whose content you'd like to remove: "), sg.Listbox(([item for item in content_type_mapping]), size=(50, 4), key="game_choice", select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE)], [sg.Checkbox("I am absolutely sure I want to do this. Please delete all non-custom content.", key="sure")], [sg.Button("Ok"), sg.Button("Go Back")]]
     window = sg.Window("Delete all non-custom content", layout)
     while True:
         event, values = window.read()
