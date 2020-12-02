@@ -62,12 +62,18 @@ That means all your custom prompts have been removed from the game. To get your 
 
 I have here a handy conversion for the games and their weird names:
 - BlankyBlank - Blather 'Round
-- Everyday - Devils and the Details
 - JackboxTalks - Talking Points 
 - World Champions - Champ'd Up
 - Quiplash3 - Quiplash 3
 
 The program does this because that's what the folders for each game are called.
+
+## Why isn't Devils and the Details included on that list?
+
+An excellent question. For now, I'm not going to bother supporting custom Devils and the Details content for a few reasons:
+1. The Devils and the Details' game files have a different file structure compared to every other game in the party pack, meaning it would be harder for me to add support
+2. Those game files use a language called "EVERYDASIC" (similar to BASIC, ha ha, get it?), which I'm going to have to deconstruct and fiddle around with if I want to add support.
+3. I don't think the game is that great anyway, and so all that effort for Devils and the Details doesn't seem worth it.
 
 # Editing content
 
