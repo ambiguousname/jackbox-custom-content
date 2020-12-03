@@ -4,10 +4,10 @@ import os
 from shutil import copyfile, rmtree
 
 #TODO:
-# Test importing content when you already have existing content
-# Test importing content with non-existent custom files (like a .JPG or .OGG)
-# Test Champ'd Up content, Quiplash 3 Content (especially with using only pre-existing content.)
-# Edit content by game?
+# Test Champ'd Up Content (Editing, Importing, Only Custom)
+# Test Quiplash 3 Content (Editing, Importing, Only Custom)
+# Add/Test Blather Round content (Adding, Editing, Importing, Only Custom)
+# View/Edit content by game then content type?
 
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
@@ -128,7 +128,10 @@ class CustomContent(object):
             jf = open(path, "r", encoding="utf-8")
             json_file = json.load(jf)
             if delete == True:
-                json_file["content"].remove(self.values)
+                if self.values in json_file["content"]:
+                    json_file["content"].remove(self.values)
+                else:
+                    sg.Popup("Sorry, that content doesn't appear to exist in the game's files. Try saving custom_content.json somewhere else, using the Reset All Custom Content feature, and then importing custom_content.json back in.")
             else:
                 #Work backwards. It's faster that way.
                 for i in range(len(json_file["content"]) - 1, -1, -1):
@@ -183,6 +186,8 @@ class CustomContent(object):
                         file_path = self.values[file["param_name"]]
                     if(os.path.exists(file_path)): #Only add this if the file's path exists.
                         copyfile(file_path, path + "/" + name) #From shutil
+                    else:
+                        sg.Popup("The file: " + file_path + " does not exist. Custom content added anyway (please edit content #: " + self.id + " in the view/edit content menu.")
                 else: #If we're going to be writing a custom file from like a .JSON or whatever.
                     if isinstance(file, CustomContent):
                         if os.path.exists(path + "data.jet"):
@@ -846,7 +851,7 @@ champd_up_round_layout = {
     ]},
     {"text": "Transcript of your reaction: ", "input": [
         {
-            "type": sg.InputText(),
+            "type": sg.InputText,
             "default_value": "",
             "param_name": "response_transcript"
         }
@@ -943,7 +948,7 @@ champd_up_round_2 = CustomContentWindow("WorldChampions", "WorldChampionsSecondH
         }
     ]}, {"text": "Transcript of your reaction: ", "input": [
         {
-            "type": sg.InputText(),
+            "type": sg.InputText,
             "default_value": "",
             "param_name": "response_transcript"
         }
@@ -987,7 +992,7 @@ champd_up = SelectionWindow("Champ'd Up Content Selection", ["Please select the 
     "Round 1 Prompt": champd_up_round_1.create_window,
     "Round 2 Prompt": champd_up_round_2.create_window,
     "Round 2.5 Prompt": champd_up_round_2_5.create_window
-})
+}, "create_content")
 
 #Main Menu stuff
 

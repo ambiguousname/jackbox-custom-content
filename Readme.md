@@ -83,6 +83,8 @@ If you want to change specific parts of your content or delete content, you're g
 
 The import content feature cannot import certain custom files like .JPGs or .OGGs. It'll import things like prompts just fine, but to import things like images and sounds you'll need to go into the editing menu and edit each piece of content that contains a custom file (like a .JPG or .OGG) and add in the image manually.
 
+Additionally, you may have to edit imported content for Champ'd Up, since certain prompts are connected to other prompts with specific IDs, which may be changed on import. 
+
 # Using only custom content in a game
 
 This is not at all recommended. If you have less than a certain amount of content for the game to pull from, it might just break entirely. It's better to mix in your custom content with the existing content. If you still want to only use custom content for your game, you can use the "Only Use Custom Content" option from the main menu to delete all existing game content.
