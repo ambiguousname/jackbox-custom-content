@@ -4,8 +4,8 @@ import os
 from shutil import copyfile, rmtree
 
 #TODO:
-# Test Champ'd Up Content (Editing, Importing, Only Custom)
-# Test Quiplash 3 Content (Editing, Importing, Only Custom)
+# Test Champ'd Up Content (Adding, Editing, Importing, Only Custom) (Data .JET file not added?)
+# Test Quiplash 3 Content (Only Custom)
 # Add/Test Blather Round content (Adding, Editing, Importing, Only Custom)
 # View/Edit content by game then content type?
 
@@ -118,13 +118,20 @@ class CustomContent(object):
             self.id = id_gen(self.values)
         self.values.update({"id": self.id})
 
-    def write_to_json(self, p=None, delete=False): #Right now, add_custom_files doesn't support custom file paths. Only write_to_json supports custom paths for data.jet files.
+    def write_to_json(self, p=None, delete=False, data=None):
         path = "" 
         if p:
             path = p
         else:
             path = "./" + self.values["game"] + "/content/" + self.values["content_type"] + ".jet"
-        if os.path.exists(path): #Are we making a new .JSON file, or are we appending to an existing .JSON file?
+        if data != None:
+            if os.path.exists(path):
+                os.remove(path)
+            if delete == False:
+                custom_data = open(path, "w")
+                custom_data.write(json.dumps(data.values))
+                custom_data.close()
+        elif os.path.exists(path): #Are we making a new .JSON file, or are we appending to an existing .JSON file?
             jf = open(path, "r", encoding="utf-8")
             json_file = json.load(jf)
             if delete == True:
@@ -192,7 +199,7 @@ class CustomContent(object):
                     if isinstance(file, CustomContent):
                         if os.path.exists(path + "data.jet"):
                             os.remove(path + "data.jet")
-                        file.write_to_json(path + "data.jet")
+                        file.write_to_json(path + "data.jet", False, args[0])
                     elif 'str' in file: #Just making sure there are no files that have an empty path. "str" is if a file has specific data that we're writing.
                         f = open(path + file['name'], "w+")
                         f.write(file['str'])
