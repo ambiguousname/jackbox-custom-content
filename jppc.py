@@ -6,7 +6,7 @@ from shutil import copyfile, rmtree
 #TODO:
 # Test Champ'd Up Content (Adding, Editing, Importing, Only Custom) (Data .JET file not added?)
 # Test Quiplash 3 Content (Only Custom)
-# Add/Test Blather Round content (Adding, Editing, Importing, Only Custom)
+# Test Blather Round content (Adding, Editing, Importing, Only Custom)
 # View/Edit content by game then content type?
 # Make it so you can reimport your own custom_content.json file instead of using the reset option?
 # Read through BlankyBlank's .JET files to get all existing subcategories and word lists.
@@ -1213,7 +1213,7 @@ blather_round = SelectionWindow("Blather 'Round Content Selection", ["Please sel
 
 #Main Menu stuff
 
-create_content = SelectionWindow("Select a game", ["Select a game.", ("Blather 'Round", "Champ'd Up", "Quiplash 3", "Talking Points"), "game"],{
+create_content = SelectionWindow("Select a game", ["Select a game.", ("Blather 'Round (Recommended you read Readme)", "Champ'd Up", "Quiplash 3", "Talking Points"), "game"],{
     "Blather 'Round": blather_round.run,
     "Talking Points": talking_points.run,
     "Quiplash 3": quiplash_3.run,
