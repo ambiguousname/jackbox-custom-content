@@ -98,24 +98,24 @@ Word - The word that the player is trying to guess.
 - Subcategory - You can put anything you want here. Just add one word that adds a little bit more detail than the previous category (e.g., "tv" for "Yu Gi Oh!", "athlete" for "LeBron James", "animal" for "Walrus"). You should use an existing subcategory (Navigate to your Jackbox Party Pack 7 games directory, then /BlankyBlank/content/BlankyBlankSentenceStructures.jet to see existing subcategories) If you're going to make up your own subcategory, please see Descriptor for making your own descriptive sentences.
 - Difficulty - I'm pretty sure you can put whatever you want, but it's recommended to put "easy" for things that are fairly common knowledge (e.g., Australia, Office Space), "medium" for things that require more specific knowledge (e.g., Walrus, Marianas Trench, Les Mis), and "hard" for things that require very specific knowledge (e.g., Diff'rent Strokes, Mr. Snuffleupagus)
 - Forbidden Words - Hardly ever used, but if you have some common words that occur in your word/phrase or some really good descriptors (Like "murder" in "Murder She Wrote" or "big" and "dude" in "Big Lebowsky"), then you should put in those words here.
-- Tailored Words - Words that are tailor made to more accurately describe the word/phrase. First describe the descriptor (put into brackets: <descriptor>), then the specific word (separate by |, so: "<descriptor>|word"). What are the categories/words? Well, you can make your own in the Descriptor menu. If you want to use pre-existing words, go to your Jackbox Party Pack 7 games folder, then navigate to /BlankyBlank/content/BlankyBlankWordLists.jet. You should see each descriptor (listed under "name"), along with a list of words to match that descriptor (for instance, if I had "Pompeii", I would write "<emotion-bad>|sad|<building>|structure|<land>|land|<texture-complex>|firey|<abstract-concept>|tourism|<building-complex>|ruin", etc.) 
+- Tailored Words - Words that are tailor made to more accurately describe the word/phrase. First describe the descriptor (put into brackets: \<descriptor\>), then the specific word (separate by |, so: "\<descriptor\>|word"). What are the categories/words? Well, you can make your own in the Descriptor menu. If you want to use pre-existing words, go to your Jackbox Party Pack 7 games folder, then navigate to /BlankyBlank/content/BlankyBlankWordLists.jet. You should see each descriptor (listed under "name"), along with a list of words to match that descriptor (for instance, if I had "Pompeii", I would write "\<emotion-bad\>|sad|\<building\>|structure|\<land\>|land|\<texture-complex\>|firey|\<abstract-concept\>|tourism|\<building-complex\>|ruin", etc.) 
 
 Category - A *broad* category meant to describe the general idea of a word (ideally person/place/thing/story work well, so making a new category isn't recommended)
-- Structures - The sentence structures used to give hints about what the thing is about. Use <descriptor> tags (e.g., <emotion-bad>, <building>) for each thing you have to fill in the blank for (again, go to /BlankyBlank/content/BlankyBlankWordLists.jet to see the words you can use, or add your own with Descriptor). Separate each entry by |. 
+- Structures - The sentence structures used to give hints about what the thing is about. Use \<descriptor\> tags (e.g., \<emotion-bad\>, \<building\>) for each thing you have to fill in the blank for (again, go to /BlankyBlank/content/BlankyBlankWordLists.jet to see the words you can use, or add your own with Descriptor). Separate each entry by |. 
 
-Descriptor - You have three options: Describing Adjectives/Nouns/Verbs to apply to a category, sentences to respond to other people's guesses (like "It's very similar to ____!"), or descriptor words meant for <descriptor> tags (to be used in the Tailored Words section for a Word). The steps for making each are similar.
+Descriptor - You have three options: Describing Adjectives/Nouns/Verbs to apply to a category, sentences to respond to other people's guesses (like "It's very similar to ____!"), or descriptor words meant for \<descriptor\> tags (to be used in the Tailored Words section for a Word). The steps for making each are similar.
 - Descriptor name - How you name the descriptor will (I think) determine how that descriptor is used.
   - If I'm making a specific group of words (adjectives, nouns, or verbs) that pair with a category, I'd name the Descriptor "CATEGORY-VERB/ADJECTIVE/NOUN-SIMPLE/COMPLEX". Where you write in the category name, whether you're using a verb, adjective, or noun, and whether the list of words is simple or complex. Something is considered "complex" if it has relatively simple words (I trust you to use your own judgement here). So if I were making a list of verbs that matched with category "story" with verbs like "runs", "eats", "lives with", etc., I'd call it "story-verb-simple"
   - If I'm making a responding sentence to a subcategory, I name it: "response-sentence-CATEGORY-SUBCATEGORY". You can remove the "-SUBCATEGORY" if you want to make a responding sentence to an overall category. So for instance, if I wanted to list possible responding sentences to something that has a category of "place" and "tv", I'd write "response-sentence-place-tv".
-  - If I'm making a descriptor words for a <descriptor> tag (to be used by Category and Word content), I'd call it whatever I'd like (as long as it's hyphenated). So if I were to make a bunch of words describing odors I'd call it "smells-simple", or something like that.
-- Words List - The list of words (or sentences) that you're using for the Descriptor. If you're writing a list of words, you can use <descriptor> tags to refer to other descriptors. Separate each word/sentence with |. If you consider a word or sentence to be essential to a descriptor, add a capital T in front to signify that it is essential):
+  - If I'm making a descriptor words for a \<descriptor\> tag (to be used by Category and Word content), I'd call it whatever I'd like (as long as it's hyphenated). So if I were to make a bunch of words describing odors I'd call it "smells-simple", or something like that.
+- Words List - The list of words (or sentences) that you're using for the Descriptor. If you're writing a list of words, you can use \<descriptor\> tags to refer to other descriptors. Separate each word/sentence with |. If you consider a word or sentence to be essential to a descriptor, add a capital T in front to signify that it is essential):
   - If I'm writing something for "story-verb-simple", I write something like: "runs|eats|lives with|T|discovers", etc.
   - If I'm writing something for "response-sentence-place-tv", I'd write something like: "It's something like|It's a fictional version of|It reminds me of", etc.
-  - If I'm writing something for "smells-simple", I'd write something like "gross|<taste-complex>|nasty|lemony"
+  - If I'm writing something for "smells-simple", I'd write something like "gross|\<taste-complex\>|nasty|lemony"
 - Max Choices - If a player is making a selection on what words to choose, is there a set limit to how much they get to pick? (Please write something like 1, 2, or 3)
   - For something like "story-verb-simple", you should set this to 1, 2, or 3 since you're probably going to use a verb once in a sentence (1), an adjective maybe three times (3), and a noun maybe twice (2).
   - For something like "response-sentence-place-tv", set this to 1, since you're only going to pick one sentence.
-  - For something like "smells-simple", don't set this at all, since the game will automatically decide a limit for descriptors regarding <descriptor> tags.
+  - For something like "smells-simple", don't set this at all, since the game will automatically decide a limit for descriptors regarding \<descriptor\> tags.
 - Placeholder text - Generally, the placeholder text used when you can't get a sentence or a word there. Usually, it's something like "blank" (for non plural words), "blanks" (for plural words), and "blanky" (for sentences).
 
 # Making custom responses to specific text for Quiplash 3:
@@ -126,22 +126,22 @@ This only works for Round 1 and 2 questions. You can't have custom responses for
 
 Let's say you have a prompt like:
 
-`Oh no, my dog ate my <BLANK>!`
+`Oh no, my dog ate my \<BLANK\>!`
 
 And you want a specific response if someone says "homework".
 
 In the "What to filter field", you'd put:
 
-`<PRONOUN> Homework|<PROUNOUN> homework|hw|<PRONOUN> hw`
+`\<PRONOUN\> Homework|\<PROUNOUN\> homework|hw|\<PRONOUN\> hw`
 
-You should already know that Jackbox uses tags like <ANYPLAYER> and <BLANK> for questions, and so for their responses to specific answers,
-they use the tags <ARTICLE> (Like "the", "a", "an", "a massive", "a lot of", etc.), <PRONOUN> (Like "I", "My", "His", "Her", "I've got", "this", "that", etc.), and I believe <VERB> (Like "having a", "craving a", "needing a", "downing a", "guzzling") (I haven't seen a custom response that uses <VERB> yet, but the game can detect the kinds of examples I just gave, I think. You'll have to test it out for yourself.). Jackbox will also separate possible answers by a "|" sign.
+You should already know that Jackbox uses tags like \<ANYPLAYER\> and \<BLANK\> for questions, and so for their responses to specific answers,
+they use the tags \<ARTICLE\> (Like "the", "a", "an", "a massive", "a lot of", etc.), \<PRONOUN\> (Like "I", "My", "His", "Her", "I've got", "this", "that", etc.), and I believe \<VERB\> (Like "having a", "craving a", "needing a", "downing a", "guzzling") (I haven't seen a custom response that uses \<VERB\> yet, but the game can detect the kinds of examples I just gave, I think. You'll have to test it out for yourself.). Jackbox will also separate possible answers by a "|" sign.
 
 You should also try to anticipate alternate answers, like abbreviations or misspellings. Let's look at another example.
 
 For the question "What skin tags probably taste like", Jackbox has:
 
-`<ARTICLE>  chicken | chicken|<ARTICLE>  chiken | chiken|<ARTICLE> chikin | chikin`
+`\<ARTICLE\>  chicken | chicken|\<ARTICLE\>  chiken | chiken|\<ARTICLE\> chikin | chikin`
 
 as a filter, trying to detect things like "A chicken", "chicken", "A chiken", "chiken", etc.
 
