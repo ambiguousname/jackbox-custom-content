@@ -4,12 +4,16 @@ import os
 from shutil import copyfile, rmtree
 
 #TODO:
+# Sample content
+# Blather Round: Word (5 left), Category (1 left), Descriptor (3 left)
+# Champ'd Up: Round 1 (4 left), Round 2 (5 left), Round 2.5 (5 left)
+# Talking Points: Prompt (5 left), Picture (5 left), Transition (5 left)
+# Quiplash 3: Round 1 Prompt (5 left), Round 2 Prompt (5 left), Round 3 Prompt (5 left), Safety Quip (5 left)
 # Test Champ'd Up Content (Adding, Editing, Importing, Only Custom) (Data .JET file not added?)
 # Test Quiplash 3 Content (Only Custom)
 # Test Blather Round content (Adding, Editing, Importing, Only Custom)
 # View/Edit content by game then content type?
 # Make it so you can reimport your own custom_content.json file instead of using the reset option?
-# Read through BlankyBlank's .JET files to get all existing subcategories and word lists.
 
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
@@ -1205,15 +1209,15 @@ blather_round_descriptor = CustomContentWindow("BlankyBlank", "BlankyBlankWordLi
     "import_filter": blather_round_category_import
 })
 
-blather_round = SelectionWindow("Blather 'Round Content Selection", ["Please select the type of content (Please, please see Readme for more info)", ("Word", "Category", "Descriptors"), "blather_round_content_type"], {
+blather_round = SelectionWindow("Blather 'Round Content Selection", ["Please select the type of content (Read Readme)", ("Word", "Category", "Descriptors"), "blather_round_content_type"], {
     "Word": blather_round_word.create_window,
     "Category": blather_round_category.create_window,
     "Descriptors": blather_round_descriptor.create_window
-})
+}, "create_content")
 
 #Main Menu stuff
 
-create_content = SelectionWindow("Select a game", ["Select a game.", ("Blather 'Round (Recommended you read Readme)", "Champ'd Up", "Quiplash 3", "Talking Points"), "game"],{
+create_content = SelectionWindow("Select a game", ["Select a game.", ("Blather 'Round", "Champ'd Up", "Quiplash 3", "Talking Points"), "game"],{
     "Blather 'Round": blather_round.run,
     "Talking Points": talking_points.run,
     "Quiplash 3": quiplash_3.run,
