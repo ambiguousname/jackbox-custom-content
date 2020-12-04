@@ -8,6 +8,8 @@ from shutil import copyfile, rmtree
 # Test Quiplash 3 Content (Only Custom)
 # Add/Test Blather Round content (Adding, Editing, Importing, Only Custom)
 # View/Edit content by game then content type?
+# Make it so you can reimport your own custom_content.json file instead of using the reset option?
+# Read through BlankyBlank's .JET files to get all existing subcategories and word lists.
 
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
@@ -1001,11 +1003,218 @@ champd_up = SelectionWindow("Champ'd Up Content Selection", ["Please select the 
     "Round 2.5 Prompt": champd_up_round_2_5.create_window
 }, "create_content")
 
+#Blather Round stuff
+
+def blather_round_word_filter(values):
+    new_values = values
+    new_values["alternateSpellings"] = values["alternateSpellings"].split("|")
+    new_values["forbiddenWords"] = values["forbiddenWords"].split("|")
+    tailored_words = []
+    old_tailored_words = values["tailoredWords"].split("|")
+    for i in range(0, old_tailored_words, 2):
+        tailored_words.append({"list": old_tailored_words[i], "word": old_tailored_words[i + 1]})
+    new_values["tailoredWords"] = tailored_words
+    return new_values
+
+def blather_round_word_import(values):
+    new_values = values
+    new_values["alternateSpellings"] = "|".join(values["alternateSpellings"])
+    new_values["forbiddenWords"] = "|".join(values["forbiddenWords"])
+    tailored_words_str = ""
+    for index, item in enumerate(values["tailoredWords"]):
+        tailored_words_str += item["list"] + "|" + item["word"] + ("|" if index < len(values["tailoredWords"]) - 1 else "")
+    new_values["tailoredWords"] = tailored_words_str
+    return new_values
+
+def blather_round_word_data_jet(values):
+    data = CustomData()
+    data.add_data("S", values["password"], "Password")
+    data.add_data("S", values["category"], "Category")
+    if values["subcategory"] != "":
+        data.add_data("S", values["subcategory"], "Subcategory")
+    data.add_data("S", values["difficulty"], "Difficulty")
+    data.add_data("S", "|".join(values["forbiddenWords"]), "ForbiddenWords")
+    data.add_data("S", "|".join(values["alternateSpellings"]), "AlternateSpellings")
+    return data
+
+blather_round_word = CustomContentWindow("BlankyBlank", "BlankyBlankPasswords", "password", {
+    "previous_window": "blather_round",
+    "window_layout": [{"text": "Word/Phrase to use: ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "R'lyeh",
+            "param_name": "password"
+        }
+    ]}, {"text": "Alternate spellings (separate by |): ", "input": [
+        {
+            "type": sg.Multiline,
+            "default_value": "Rlyeh|Ryleh|R'yleh|R'leyh|Rehly|Rl'yeh|Ry'leh|Relyh|Rly'eh",
+            "param_name": "alternateSpellings"
+        }
+    ]}, {"text": "Word/Phrase Category: ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "place",
+            "param_name": "category"
+        }
+    ]}, {"text": "Subcategory (optional): ", "input":[
+        {
+            "type": sg.InputText,
+            "default_value": "city",
+            "param_name": "subcategory"
+        }
+    ]}, {"text": "Difficulty (easy, medium, or hard): ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "hard",
+            "param_name": "difficulty"
+        }
+    ]}, {"text": "Forbidden Words (separate by |): ", "input": [
+        {
+            "type": sg.Multiline,
+            "default_value": "",
+            "param_name": "forbiddenWords"
+        }
+    ]}, {"text": "Tailored Words (separate by |): ", "input": [
+        {
+            "type": sg.Multiline,
+            "default_value": "<nature-places>|underwater|<nature-places>|sea|<abstract-concept>|insanity|<abstract-concept>|evil|<genre>|horror|<genre>|fiction",
+            "param_name": "tailoredWords"
+        }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Content is US-Specific",
+            "kwargs": {"default": "existing_data", "regular_default": False},
+            "param_name": "us"
+        }
+    ]}],
+    "content_list": [
+        {"type": "json"},
+        {"type": "CustomData", "func": blather_round_word_data_jet, "kwargs": {}}
+    ],
+    "filter": blather_round_word_filter,
+    "import_filter": blather_round_word_import
+})
+
+def blather_round_category_filter(values):
+    new_values = values
+    new_values["structures"] = values["structures"].split("|")
+    return new_values
+
+def blather_round_category_import(values):
+    new_values = values
+    new_values["structures"] = "|".join(values["structures"])
+    return new_values
+
+def blather_round_category_data_jet(values):
+    data = CustomData()
+    data.add_data("S", values["category"], "Category")
+    data.add_data("S", "|".join(values["structures"]), "Structures")
+    return data
+
+blather_round_category = CustomContentWindow("BlankyBlank", "BlankyBlankSentenceStructures", "category", {
+    "previous_window": "blather_round",
+    "window_layout": [{"text": "Broad Category Name: ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "art",
+            "param_name": "category"
+        }
+    ]}, {"text": "Sentence Structures (separate by |): ", "input": [
+        {
+            "type": sg.Multiline,
+            "default_value": "It's <article-1> <thing-adjective-simple> <thing-noun-simple>.|It <thing-verb-simple> <article-2> <thing-noun-simple>.|Talk about <thing-adjective-complex>!|It <thing-verb-simple> <article-2> <thing-noun-complex>.|Oh, <thing-noun-complex>!|Quite simply, it's <article-1> <thing-adjective-complex> <thing-noun-complex>.",
+            "param_name": "structures"
+        }
+    ]}],
+    "content_list": [
+        {"type": "json"},
+        {"type": "CustomData", "func": blather_round_category_data_jet, "kwargs": {}}
+    ],
+    "filter": blather_round_category_filter,
+    "import_filter": blather_round_category_import
+})
+
+def blather_round_descriptor_filter(values):
+    new_values = values
+    new_values["amount"] = ""
+    new_values["optional"] = False
+    words_list = values["words"].split("|")
+    new_words = []
+    next_true = False
+    for item in words_list:
+        if item == "T":
+            next_true = True
+        new_words.append({"word": item, "alwaysChoose": next_true})
+        if next_true == True:
+            next_true = False
+    new_values["words"] = new_words
+    return new_values
+
+def blather_round_descriptor_import(values):
+    new_values = values
+    words_str = ""
+    for index, item in enumerate(new_values["words"]):
+        if item["alwaysChoose"] == True:
+            words_str += ("|" if index == 0 else "") + "T|"
+        words_str += item["word"] + ("|" if index < len(new_values["words"]) - 1 else "")
+    new_values["words"] = words_str
+    return new_values
+
+def blather_round_descriptor_data_jet(values):
+    data = CustomData()
+    data.add_data("S", values["name"], "Name")
+    data.add_data("B", values["optional"], "Optional")
+    data.add_data("S", values["amount"], "Amount")
+    data.add_data("S", values["maxChoices"], "MaxChoices")
+    data.add_data("S", values["placeholder"], "Placeholder")
+
+blather_round_descriptor = CustomContentWindow("BlankyBlank", "BlankyBlankWordLists", "name", {
+    "previous_window": "blather_round",
+    "window_layout": [{"text": "Descriptor name (hyphenate, please): ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "hyphenated-descriptor (Please read README)",
+            "param_name": "name"
+        }
+    ]}, {"text": "Words List: ", "input": [
+        {
+            "type": sg.Multiline,
+            "default_value": "list|of|separated|T|words|or|sentences",
+            "param_name": "words"
+        }
+    ]}, {"text": "Maximum number of choices (leave blank for none): ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "",
+            "param_name": "maxChoices"
+        }
+    ]}, {"text": "Placeholder text (blank, blanks, or blanky): ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "blank",
+            "param_name": "placeholder"
+        }
+    ]}],
+    "content_list": [
+        {"type": "json"},
+        {"type": "CustomData", "func": blather_round_descriptor_data_jet, "kwargs": {}}
+    ],
+    "filter": blather_round_descriptor_filter,
+    "import_filter": blather_round_category_import
+})
+
+blather_round = SelectionWindow("Blather 'Round Content Selection", ["Please select the type of content (Please, please see Readme for more info)", ("Word", "Category", "Descriptors"), "blather_round_content_type"], {
+    "Word": blather_round_word.create_window,
+    "Category": blather_round_category.create_window,
+    "Descriptors": blather_round_descriptor.create_window
+})
+
 #Main Menu stuff
 
-create_content = SelectionWindow("Select a game", ["Select a game.", ("Champ'd Up", "Quiplash 3", "Talking Points"), "game"],{
-    "Blather Round": None,
-    "Devils and the Details": None,
+create_content = SelectionWindow("Select a game", ["Select a game.", ("Blather 'Round", "Champ'd Up", "Quiplash 3", "Talking Points"), "game"],{
+    "Blather 'Round": blather_round.run,
     "Talking Points": talking_points.run,
     "Quiplash 3": quiplash_3.run,
     "Champ'd Up": champd_up.run
@@ -1025,7 +1234,8 @@ window_mapping = { #Used for backing out of stuff.
     "create_content": create_content,
     "main_window": main_window,
     "talking_points": talking_points,
-    "champd_up": champd_up
+    "champd_up": champd_up,
+    "blather_round": blather_round
 }
 
 content_type_mapping = { #Used in editing content to change data.
@@ -1044,6 +1254,11 @@ content_type_mapping = { #Used in editing content to change data.
         "WorldChampionsRound": champd_up_round_1,
         "WorldChampionsSecondHalfA": champd_up_round_2,
         "WorldChampionsSecondHalfB": champd_up_round_2_5
+    },
+    "BlankyBlank": {
+        "BlankyBlankPasswords": blather_round_word,
+        "BlankyBlankSentenceStructures": blather_round_category,
+        "BlankyBlankWordLists": blather_round_descriptor 
     }
 }
 
