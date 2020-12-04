@@ -141,7 +141,7 @@ You should also try to anticipate alternate answers, like abbreviations or missp
 
 For the question "What skin tags probably taste like", Jackbox has:
 
-`\<ARTICLE\>  chicken | chicken|\<ARTICLE\>  chiken | chiken|\<ARTICLE\> chikin | chikin`
+`<ARTICLE>  chicken | chicken|<ARTICLE>  chiken | chiken|<ARTICLE> chikin | chikin`
 
 as a filter, trying to detect things like "A chicken", "chicken", "A chiken", "chiken", etc.
 
