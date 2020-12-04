@@ -119,9 +119,9 @@ How you name the descriptor will (I think) determine how that descriptor is used
 - If I'm making a responding sentence to a subcategory, I name it: `response-sentence-CATEGORY-SUBCATEGORY`. You can remove the `-SUBCATEGORY` if you want to make a responding sentence to an overall category. So for instance, if I wanted to list possible responding sentences to something that has a category of `place` and `tv`, I'd write `response-sentence-place-tv`.
 - If I'm making a descriptor words for a \<descriptor\> tag (to be used by Category and Word content), I'd call it whatever I'd like (as long as it's hyphenated). So if I were to make a bunch of words describing odors I'd call it `smells-simple`, or something like that.
 ## Words List
-The list of words (or sentences) that you're using for the Descriptor. If you're writing a list of words, you can use \<descriptor\> tags to refer to other descriptors. Separate each word/sentence with |. If you consider a word or sentence to be essential to a descriptor, add a capital T in front to signify that it is essential):
-- If I'm writing something for `story-verb-simple`, I write something like: `runs|eats|lives with|T|discovers`, etc.
-- If I'm writing something for `response-sentence-place-tv`, I'd write something like: `It's something like|It's a fictional version of|It reminds me of`, etc.
+The list of words (or sentences) that you're using for the Descriptor. If you're writing a list of words, you can use \<descriptor\> tags to refer to other descriptors. Separate each word/sentence with |. If you consider a word or sentence to be essential to a descriptor, add a `|T|` in front to signify that the word/sentence  is essential):
+- If I'm writing something for `story-verb-simple`, I write something like: `runs|eats|lives with|T|discovers|T|learns`, etc.
+- If I'm writing something for `response-sentence-place-tv`, I'd write something like: `|T|It's something like|T|It's a fictional version of|T|It reminds me of`, etc.
 - If I'm writing something for `smells-simple`, I'd write something like `gross|<taste-complex>|nasty|lemony`
 ## Max Choices
 If a player is making a selection on what words to choose, is there a set limit to how much they get to pick? (Please write something like 1, 2, or 3)
@@ -130,6 +130,9 @@ If a player is making a selection on what words to choose, is there a set limit 
 - For something like `smells-simple`, don't set this at all, since the game will automatically decide a limit for descriptors regarding \<descriptor\> tags.
 ## Placeholder text 
 Generally, the placeholder text used when you can't get a sentence or a word there. Usually, it's something like `blank` (for non plural words), `blanks` (for plural words), and `blanky` (for sentences).
+- For `story-verb-simple`, the placeholder would be `blanks` (since almost every word/phrase is plural)
+- For `response-sentence-place-tv`, the placeholder would be `blanky` (since everything in the words list is a sentence)
+- For `smells-simple`, the placeholder would be `blank` (since every word is singular)
 
 # Making custom responses to specific text for Quiplash 3:
 
