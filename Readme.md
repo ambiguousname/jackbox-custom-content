@@ -89,6 +89,24 @@ Additionally, you may have to edit imported content for Champ'd Up, since certai
 
 This is not at all recommended. If you have less than a certain amount of content for the game to pull from, it might just break entirely. It's better to mix in your custom content with the existing content. If you still want to only use custom content for your game, you can use the "Only Use Custom Content" option from the main menu to delete all existing game content.
 
+# Making custom content for Blather Round
+
+Blather 'Round is one of the most customizable games for the Jackbox Party Pack 7. As such, it has a lot of confusing content options. Here's a description of what each content means, along with some descriptions for the options:
+
+Word - The word that the player is trying to guess.
+- Word/Phrase Category - The category to describe the word/phrase. Default options are person, place, thing, or story. If you want to add your own broad category, see Category.
+- Subcategory - You can put anything you want here. Just add one word that adds a little bit more detail than the previous category (e.g., "tv" for "Yu Gi Oh!", "athlete" for "LeBron James", "animal" for "Walrus"). If you're going to make up your own subcategory, please see Descriptor for making your own descriptive sentences.
+- Difficulty - I'm pretty sure you can put whatever you want, but it's recommended to put "easy" for things that are fairly common knowledge (e.g., Australia, Office Space), "medium" for things that require more specific knowledge (e.g., Walrus, Marianas Trench, Les Mis), and "hard" for things that require very specific knowledge (e.g., Diff'rent Strokes, Mr. Snuffleupagus)
+- Forbidden Words - Hardly ever used, but if you have some common words that occur in your word/phrase or some really good descriptors (Like "murder" in "Murder She Wrote" or "big" and "dude" in "Big Lebowsky"), then you should put in those words here.
+- Tailored Words - Words that are tailor made to more accurately describe the word/phrase. First describe the descriptor (put into brackets: <descriptor>), then the specific word (separate by |, so: "<descriptor>|word"). What are the categories/words? Well, you can make your own in the Descriptor menu. If you want to use pre-existing words, go to your Jackbox Party Pack 7 games folder, then navigate to /BlankyBlank/content/BlankyBlankWordLists.jet. You should see each descriptor (listed under "name"), along with a list of words to match that descriptor (for instance, if I had "Pompeii", I would write "<emotion-bad>|sad|<building>|structure|<land>|land|<texture-complex>|firey|<abstract-concept>|tourism|<building-complex>|ruin", etc.) 
+
+Category - A *broad* category meant to describe the general idea of a word (ideally person/place/thing/story work well, so making a new category isn't recommended)
+- Structures - The sentence structures used to give hints about what the thing is about. Use <descriptor> tags (e.g., <emotion-bad>, <building>) for each thing you have to fill in the blank for (again, go to /BlankyBlank/content/BlankyBlankWordLists.jet to see the words you can use, or add your own with Descriptor). Separate each entry by |. 
+
+Descriptor - One of three options: A group of starter sentences for specific subcategories, descriptor words for categories, or descriptor words meant for <descriptor> tags (to be used in the Tailored Words section for a Word). The steps for making each are similar.
+- 
+
+
 # Making custom responses to specific text for Quiplash 3:
 
 So, you may notice that in Quiplash 3 the announcer will sometimes react to a specific prompt. You can do this too!
