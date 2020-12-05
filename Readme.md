@@ -81,7 +81,7 @@ If you want to change specific parts of your content or delete content, you're g
 
 # Importing content
 
-The import content feature cannot import certain custom files like .JPGs or .OGGs. It'll import things like prompts just fine, but to import things like images and sounds you'll need to go into the editing menu and edit each piece of content that contains a custom file (like a .JPG or .OGG) and add in the image manually.
+The import content feature will only import certain custom files like .JPGs or .OGGs if those files are stored in the folder ./external content/, if that folder is in the same location as jppc.py or Jackbox Party Pack Custom.exe. 
 
 Additionally, you may have to edit imported content for Champ'd Up, since certain prompts are connected to other prompts with specific IDs, which may be changed on import. 
 
