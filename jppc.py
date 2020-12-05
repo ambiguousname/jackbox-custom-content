@@ -4,16 +4,14 @@ import os
 from shutil import copyfile, rmtree
 
 #TODO:
-# Sample content
-# Blather Round: Word (5 left), Category (1 left), Descriptor (3 left)
-# Champ'd Up: Round 1 (4 left), Round 2 (5 left), Round 2.5 (5 left)
-# Talking Points: Prompt (5 left), Picture (5 left), Transition (5 left)
-# Quiplash 3: Round 1 Prompt (5 left), Round 2 Prompt (5 left), Round 3 Prompt (5 left), Safety Quip (5 left)
 # Test Champ'd Up Content (Adding, Editing, Importing, Only Custom) (Data .JET file not added?)
 # Test Quiplash 3 Content (Only Custom)
 # Test Blather Round content (Adding, Editing, Importing, Only Custom)
-# View/Edit content by game then content type?
-# Make it so you can reimport your own custom_content.json file instead of using the reset option?
+# Sample content
+# Blather Round: Word (6 left, 1 per player), Category (at least 2 left), Descriptor (at least 3 left)
+# Champ'd Up: Round 1 (8 left, 1 per player), Round 2 (8 left, 1 per player), Round 2.5 (8 left, 1 per player)
+# Talking Points: Prompt (8 left, 1 per player), Picture (8 left, 3 per player (no way am I adding that much)), Transition (5 left, 3 per player (again, no way))
+# Quiplash 3: Round 1 Prompt (8 left, 1 per player), Round 2 Prompt (8 left, 1 per player), Round 3 Prompt (8 left, 1 per player), Safety Quip (5 left)
 
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
@@ -71,24 +69,27 @@ class CustomContentWindow(object):
             if "import_filter" in self.window_layout:
                 existing_data = self.window_layout["import_filter"](kwargs["existing_data"])
         if self.window_layout and "layout_list" in self.window_layout:
+            self.file_browse_keys = []
             layout = []
             for item in self.window_layout["layout_list"]:
                 layout_item = []
                 if "text" in item:
                     layout_item.append(sg.Text(item["text"]))
                 if "input" in item:
-                    for input_type in item["input"]:
+                    for index, input_type in enumerate(item["input"]):
                         new_kwargs = {}
                         if "kwargs" in input_type:
                             new_kwargs = input_type["kwargs"]
-                            for item in new_kwargs:
-                                if type(new_kwargs[item]) == str and "existing_data" in new_kwargs[item].split("|"):
+                            for new_kwarg in new_kwargs:
+                                if type(new_kwargs[new_kwarg]) == str and "existing_data" in new_kwargs[new_kwarg].split("|"):
                                     if existing_data != None:
-                                        new_kwargs[item] = existing_data[input_type["param_name"]]
+                                        new_kwargs[new_kwarg] = existing_data[input_type["param_name"]]
                                     else:
-                                        new_kwargs[item] = new_kwargs["regular_default"]
+                                        new_kwargs[new_kwarg] = new_kwargs["regular_default"]
                         if "regular_default" in new_kwargs:
                             new_kwargs.pop("regular_default")
+                        if input_type["type"] == sg.FileBrowse:
+                            self.file_browse_keys.append(item["input"][index - 1]["param_name"])
                         exclude = [sg.FileBrowse, sg.Checkbox]
                         new_input = input_type["type"](input_type["default_value"] if existing_data == None or input_type["type"] in exclude else existing_data[input_type["param_name"]], key=input_type["param_name"], **new_kwargs)
                         layout_item.append(new_input)
@@ -104,9 +105,25 @@ class CustomContentWindow(object):
                     if "filter" in self.window_layout:
                         new_values = self.window_layout["filter"](new_values)
                     _id = None
+                    for key in self.file_browse_keys:
+                        curr_path = new_values[key].split("/")
+                        new_path = ""
+                        file_path = "./external content/"
+                        looking_for_external = True
+                        for directory in curr_path:
+                            if looking_for_external == True:
+                                new_path += directory + "/"
+                                if directory == "external content":
+                                    looking_for_external = False
+                            else:
+                                file_path += directory + "/"
+                        if "external content" in curr_path and os.path.realpath("./external content/") == os.path.realpath(new_path):
+                            new_values[key] = file_path
                     if existing_data != None:
                         _id = existing_data["id"]
                     self.create_content(new_values, _id)
+                    window.close()
+                    self.create_window()
                 if event == "Go Back":
                     window.close()
                     window_mapping[self.window_layout["previous_window"]].run()
@@ -197,6 +214,7 @@ class CustomContent(object):
                         name = self.id + file["extension"]
                     if file_path == "param_name":
                         file_path = self.values[file["param_name"]]
+                    file_path = os.path.realpath(file_path)
                     if(os.path.exists(file_path)): #Only add this if the file's path exists.
                         copyfile(file_path, path + "/" + name) #From shutil
                     else:
@@ -322,9 +340,38 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
         sg.Popup("Sorry, no content to edit.")
         main_window.run()
 
-def import_content(selected=None):
+def import_content(path="./custom_content.json"):
+    if os.path.exists(path):
+        new_ids = open(path, "r")
+        new_content = json.load(new_ids)
+        new_ids.close()
+        is_copying = False
+        if not os.path.exists("./custom_content.json"):
+            copyfile(path, "./custom_content.json")
+            is_copying = True
+        if os.path.realpath(path) == os.path.realpath("./custom_content.json"):
+            is_copying = True
+        ids = open("./custom_content.json", "r+")
+        content = json.load(ids)
+        content_keys = list(content.keys())
+        content_keys.sort()
+        latest_id = 100000 if is_copying == True else int(content_keys[-1]) + 1
+        for i in new_content:
+            content_id = str(latest_id + int(i) - 100000)
+            n_c = new_content[i]
+            content[content_id] = n_c
+            n_c["id"] = content_id
+            n_c["values"]["id"] = content_id
+            content_type_mapping[n_c["values"]["game"]][n_c["values"]["content_type"]].create_content(n_c["values"], content_id, True) #Will bug you with popups rn.
+        ids.seek(0)
+        ids.truncate()
+        ids.write(json.dumps(content))
+        ids.close()
+
+def import_content_window(selected=None):
     layout = [[sg.Text("To share content for import, share custom_content.json (from the same folder as Jackbox Party Pack Custom.exe). NOTE: See the readme for importing files like .OGGs or .JPGs.")],
-    [sg.Text("If that file has been shared with you, select it here: "), sg.InputText(key="custom-files"), sg.FileBrowse(file_types=((".JSON", "*.json"), ("ALL Types", "*.*")))], [sg.Button("Import"), sg.Button("Go Back")]]
+    [sg.Text("If you've restored your game's files to their original condition, select custom_content.json to reimport.")],
+    [sg.Text("If that file has been shared with you, select it here.: "), sg.InputText(key="custom-files"), sg.FileBrowse(file_types=((".JSON", "*.json"), ("ALL Types", "*.*")))], [sg.Button("Import"), sg.Button("Go Back")]]
     window = sg.Window("Select File to Import", layout)
     while True:
         event, values = window.read()
@@ -332,29 +379,7 @@ def import_content(selected=None):
             break
         if event == "Import":
             if os.path.exists(values["custom-files"]) and os.path.splitext(values["custom-files"])[1].lower() == ".json":
-                new_ids = open(values["custom-files"], "r")
-                new_content = json.load(new_ids)
-                new_ids.close()
-                is_copying = False
-                if not os.path.exists("./custom_content.json"):
-                    copyfile(values["custom-files"], "./custom_content.json")
-                    is_copying = True
-                ids = open("./custom_content.json", "r+")
-                content = json.load(ids)
-                content_keys = list(content.keys())
-                content_keys.sort()
-                latest_id = 100000 if is_copying == True else int(content_keys[-1]) + 1
-                for i in new_content:
-                    content_id = str(latest_id + int(i) - 100000)
-                    n_c = new_content[i]
-                    content[content_id] = n_c
-                    n_c["id"] = content_id
-                    n_c["values"]["id"] = content_id
-                    content_type_mapping[n_c["values"]["game"]][n_c["values"]["content_type"]].create_content(n_c["values"], content_id, True) #Will bug you with popups rn.
-                ids.seek(0)
-                ids.truncate()
-                ids.write(json.dumps(content))
-                ids.close()
+                import_content(values["custom-files"])
                 sg.Popup("Custom content imported. View the files in the edit menu.")
             else:
                 sg.Popup("That file doesn't exist, or it isn't a .json file.")
@@ -402,33 +427,6 @@ def del_all_else(selected=None):
                         game_content_del(game, content_type)
                 sg.Popup("Content deleted for: " + str(values["game_choice"]))
     window.close()
-
-def all_content_reset(selected=None):
-    if os.path.exists("./custom_content.json"):
-        layout = [[sg.Text("This feature is to be used if you restored your game's files to their original condition (which means that now all your custom content is no longer in the game).")],
-        [sg.Text("Please make a backup of your custom_content.json file, then import it after the reset to ensure all your custom content stays with you after the reset.")], [sg.Checkbox("I understand what I am about to do.", key="understand")],
-        [sg.Button("Ok"), sg.Button("Cancel")]]
-        window = sg.Window("Reset all custom content", layout)
-        while True:
-            event, values = window.read()
-            if event == sg.WIN_CLOSED:
-                break
-            if event == "Cancel":
-                window.close()
-                main_window.run()
-                break
-            if event == "Ok":
-                if values["understand"] == True:
-                    os.remove("./custom_content.json")
-                    sg.Popup("Content reset.")
-                    window.close()
-                    main_window.run()
-                    break
-        window.close()
-    else:
-        sg.Popup("Sorry, you don't have any custom content to reset.")
-        main_window.run()
-
 
 #Stuff for Quiplash 3
 
@@ -1224,12 +1222,11 @@ create_content = SelectionWindow("Select a game", ["Select a game.", ("Blather '
     "Champ'd Up": champd_up.run
 }, "main_window")
 
-main_window = SelectionWindow("Select an option", ["Please select an option.", ("Create Custom Content", "View/Edit Content", "Import Content", "Only Use Custom Content", "Reset All Custom Content"), "option"], {
+main_window = SelectionWindow("Select an option", ["Please select an option.", ("Create Custom Content", "View/Edit Content", "Import/Reimport Content", "Only Use Custom Content"), "option"], {
     "Create Custom Content": create_content.run,
     "View/Edit Content": edit_content,
-    "Import Content": import_content,
-    "Only Use Custom Content": del_all_else,
-    "Reset All Custom Content": all_content_reset
+    "Import/Reimport Content": import_content_window,
+    "Only Use Custom Content": del_all_else
 })
 
 window_mapping = { #Used for backing out of stuff.

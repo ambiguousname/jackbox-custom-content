@@ -16,7 +16,7 @@ otherwise you're going to have to uninstall and reinstall your entire game if so
 
 ## If you don't have python installed and are running on Windows:
 - Go to the releases page and download the .ZIP file: https://github.com/ambiguousname/jackbox-custom-content/releases
-- Unzip the contents of the .ZIP file into the "games" directory of your Jackbox Party Pack 7 install folder. (For steam on Windows: C:\Program Files (x86)\Steam\steamapps\common\The Jackbox Party Pack 7\games)
+- Extract the contents of the .ZIP file into the "games" directory of your Jackbox Party Pack 7 install folder. (For steam on Windows: C:\Program Files (x86)\Steam\steamapps\common\The Jackbox Party Pack 7\games)
 - Run "Jackbox Party Pack Custom.exe".
 
 ## If you do have python installed:
@@ -54,9 +54,9 @@ As of right now, you're just going to have to install python and install jppc.py
 ### Important note if you've clicked "verify integrity of game files..."
 
 That means all your custom prompts have been removed from the game. To get your custom prompts back, you'll have to follow a couple of steps.
-1. Make a backup of custom_content.json
-2. Use the "Reset All Custom Content" option available in the menu.
-3. Use the import feature, and select the backup you made of custom_content.json.
+1. Use the "Import/Reimport" option available in the menu
+2. Select "custom_content.json" from the file browser.
+3. Import.
 
 ## Why does this program sometimes use weird names for each game?
 
@@ -87,9 +87,11 @@ Additionally, you may have to edit imported content for Champ'd Up, since certai
 
 # Using only custom content in a game
 
-This is not at all recommended. If you have less than a certain amount of content for the game to pull from, it might just break entirely. It's better to mix in your custom content with the existing content. If you still want to only use custom content for your game, you can use the "Only Use Custom Content" option from the main menu to delete all existing game content.
+This is not at all recommended. If you have less than a certain amount of content for the game to pull from, the game will not continue. It's better to mix in your custom content with the existing content. If you still want to only use custom content for your game, you can use the "Only Use Custom Content" option from the main menu to delete all existing game content.
 
 # Making custom content for Blather Round
+
+NOTE: For reasons you'll see in a second, it's not recommended that you use the "Only Custom Content" option for Blather 'Round.
 
 Blather 'Round is one of the most customizable games for the Jackbox Party Pack 7. As such, it has a lot of confusing content options. Here's a description of what each content means, along with some descriptions for the options:
 
@@ -155,13 +157,8 @@ they use the tags \<ARTICLE\> (Like "the", "a", "an", "a massive", "a lot of", e
 
 You should also try to anticipate alternate answers, like abbreviations or misspellings. Let's look at another example.
 
-For the question "What skin tags probably taste like", Jackbox has:
-
-`<ARTICLE>  chicken | chicken|<ARTICLE>  chiken | chiken|<ARTICLE> chikin | chikin`
-
-as a filter, trying to detect things like "A chicken", "chicken", "A chiken", "chiken", etc.
+For the question "What skin tags probably taste like", Jackbox has: `<ARTICLE>  chicken | chicken|<ARTICLE>  chiken | chiken|<ARTICLE> chikin | chikin` as a filter, trying to detect things like "A chicken", "chicken", "A chiken", "chiken", etc.
 
 Note the spaces in between the "|" signs in the example above. It's just a formatting thing, I don't think it really matters. You can add spaces only if you want to.
 
-Once you've added the filtering, then you can add your response audio as a .ogg file. Jackbox also requires a transcript of your response for captioning purposes (I think),
-so you should write out what you've said in the "Transcript of your response: " field.
+Once you've added the filtering, then you can add your response audio as a .ogg file. Jackbox also requires a transcript of your response (I think for captioning purposes), so you should write out what you've said in the "Transcript of your response: " field.
