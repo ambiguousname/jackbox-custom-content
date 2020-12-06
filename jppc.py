@@ -1277,7 +1277,7 @@ blather_round_descriptor = CustomContentWindow("BlankyBlank", "BlankyBlankWordLi
         {"type": "CustomData", "func": blather_round_descriptor_data_jet, "kwargs": {}}
     ],
     "filter": blather_round_descriptor_filter,
-    "import_filter": blather_round_category_import
+    "import_filter": blather_round_descriptor_import
 })
 
 blather_round = SelectionWindow("Blather 'Round Content Selection", ["Please select the type of content (Read Readme)", ("Word", "Category", "Descriptors"), "blather_round_content_type"], {
