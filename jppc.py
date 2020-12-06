@@ -4,12 +4,12 @@ import os
 from shutil import copyfile, rmtree
 
 #TODO:
-# Test Champ'd Up Content (Adding, Editing, Importing, Only Custom) (Data .JET file not added?)
+# Test Champ'd Up Content (Importing, Only Custom)
 # Test Quiplash 3 Content (Only Custom)
 # Test Blather Round content (Adding, Editing, Importing, Only Custom)
 # Sample content
 # Blather Round: Word (6 left, 1 per player), Category (at least 2 left), Descriptor (at least 3 left)
-# Champ'd Up: Round 1 (8 left, 1 per player), Round 2 (8 left, 1 per player), Round 2.5 (8 left, 1 per player)
+# Champ'd Up: Round 1 (7 left, 1 per player), Round 2 (8 left, 1 per player), Round 2.5 (8 left, 1 per player)
 # Talking Points: Prompt (8 left, 1 per player), Picture (8 left, 3 per player (no way am I adding that much)), Transition (5 left, 3 per player (again, no way))
 # Quiplash 3: Round 1 Prompt (8 left, 1 per player), Round 2 Prompt (8 left, 1 per player), Round 3 Prompt (8 left, 1 per player), Safety Quip (5 left)
 
@@ -123,7 +123,7 @@ class CustomContentWindow(object):
                         _id = existing_data["id"]
                     self.create_content(new_values, _id)
                     window.close()
-                    self.create_window()
+                    self.create_window(existing_data=None if existing_data == None else existing_data)
                 if event == "Go Back":
                     window.close()
                     window_mapping[self.window_layout["previous_window"]].run()
@@ -214,10 +214,10 @@ class CustomContent(object):
                         name = self.id + file["extension"]
                     if file_path == "param_name":
                         file_path = self.values[file["param_name"]]
-                    file_path = os.path.realpath(file_path)
                     if(os.path.exists(file_path)): #Only add this if the file's path exists.
+                        file_path = os.path.realpath(file_path)
                         copyfile(file_path, path + "/" + name) #From shutil
-                    else:
+                    elif file_path != "./" and file_path != "":
                         sg.Popup("The file: " + file_path + " does not exist. Custom content added anyway (please edit content #: " + self.id + " in the view/edit content menu.")
                 else: #If we're going to be writing a custom file from like a .JSON or whatever.
                     if isinstance(file, CustomContent):
@@ -294,7 +294,7 @@ def edit_content_window(selected=None): #Selected goes unused because of how Sel
         content = json.load(ids)
         content_list = []
         for item in content:
-            if item["content_type"] == selected or selected == "All Games" or (selected == "All Content" and item["content_type"] == content_type_mapping[selected.split(" ")[0]]):
+            if content[item]["values"]["content_type"] == selected or selected == "All Games" or (selected == "All Content" and content[item]["values"]["content_type"] == content_type_mapping[selected.split(" ")[0]]):
                 content_list.append(content[item]["id"] + ": " + content[item]["values"]["content_type"] + " - " + content[item]["values"]["descriptor_text"])
         layout = [[sg.Text("Choose Content to Edit/Delete:")], [sg.Listbox(content_list, key="content_selection", size=(100, 25), select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED)], [sg.Button("Edit"), sg.Button("Delete"), sg.Button("Show Folder"), sg.Button("Go Back")]]
         window = sg.Window("Choose Content to Edit/Delete", layout)
@@ -321,7 +321,7 @@ def edit_content_window(selected=None): #Selected goes unused because of how Sel
                     content_type_mapping[existing_data["game"]][existing_data["content_type"]].create_window(existing_data=existing_data)
                 window.close()
                 ids.close()
-                edit_content()
+                edit_content_window(selected)
                 break
             if event == "Delete":
                 for item in values["content_selection"]:
@@ -344,7 +344,7 @@ def edit_content_window(selected=None): #Selected goes unused because of how Sel
                 window.close()
                 ids.close()
                 sg.Popup("Content deleted!")
-                edit_content() #To update the list of content
+                edit_content_window(selected) #To update the list of content
                 break
             if event == "Go Back":
                 ids.close()
