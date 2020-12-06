@@ -58,13 +58,26 @@ That means all your custom prompts have been removed from the game. To get your 
 2. Select "custom_content.json" from the file browser.
 3. Import.
 
-## Why does this program sometimes use weird names for each game?
+## Why does this program sometimes use weird names for each game/content?
 
 I have here a handy conversion for the games and their weird names:
 - BlankyBlank - Blather 'Round
+  - BlankyBlankPasswords - Word
+  - BlankyBlankSentenceStructures - Category
+  - BlankyBlankWordLists - Descriptor
 - JackboxTalks - Talking Points 
-- World Champions - Champ'd Up
+  - JackboxTalksPicture - Picture
+  - JackboxTalksTitle - Prompt
+  - JackboxTalksSignpost - Slide Transition
 - Quiplash3 - Quiplash 3
+  - Quiplash3Round1Question - Round 1 Question
+  - Quiplash3Round2Question - Round 2 Question
+  - Quiplash3FinalQuestion - Final Round Question
+  - Quiplash3SafetyQuips - Safety Quips
+- World Champions - Champ'd Up
+  - WorldChampionsRound - Round 1
+  - WorldChampionsRoundSecondHalfA - Round 2
+  - WorldChampionsRoundSecondHalfB - Round 2.5
 
 The program does this because that's what the folders for each game are called.
 

@@ -261,24 +261,41 @@ class SelectionWindow():
                 break
             if event == "Ok":
                 window.close()
-                func = self.selector.get(values[self.list_key][0])
-                func(values[self.list_key][0]) #What we need the "inputs" argument for. 
+                if values[self.list_key][0] in self.selector:
+                    func = self.selector.get(values[self.list_key][0])
+                    func(values[self.list_key][0]) #What we need the "inputs" argument for. 
+                elif "all" in self.selector:
+                    func = self.selector.get("all")
+                    func(values[self.list_key][0])
                 break
             if event == "Go Back" and self.previous_window:
                 window.close()
-                window_mapping[self.previous_window].run()
+                if hasattr(window_mapping[self.previous_window], "run"):
+                    window_mapping[self.previous_window].run()
+                else:
+                    window_mapping[self.previous_window]()
                 break
         window.close()
                 
 #Stuff for file management
 
-def edit_content(selected=None): #Selected goes unused because of how SelectWindow works.
+def edit_content_window(selected=None): #Selected goes unused because of how SelectWindow works.
+    previous_window = content_type_mapping
+    if selected.split(" ")[1] == "All" and selected.split(" ")[2] == "Content":
+        previous_window = selected.split(" ")[0]
+    elif selected != "All Games":
+        for game in content_type_mapping:
+            for content_type in content_type_mapping[game]:
+                if content_type == selected:
+                    previous_window = game
+                    break
     if os.path.exists("./custom_content.json"):
         ids = open("./custom_content.json", 'r+')
         content = json.load(ids)
         content_list = []
         for item in content:
-            content_list.append(content[item]["id"] + ": " + content[item]["values"]["content_type"] + " - " + content[item]["values"]["descriptor_text"])
+            if item["content_type"] == selected or selected == "All Games" or (selected == "All Content" and item["content_type"] == content_type_mapping[selected.split(" ")[0]]):
+                content_list.append(content[item]["id"] + ": " + content[item]["values"]["content_type"] + " - " + content[item]["values"]["descriptor_text"])
         layout = [[sg.Text("Choose Content to Edit/Delete:")], [sg.Listbox(content_list, key="content_selection", size=(100, 25), select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED)], [sg.Button("Edit"), sg.Button("Delete"), sg.Button("Show Folder"), sg.Button("Go Back")]]
         window = sg.Window("Choose Content to Edit/Delete", layout)
         while True:
@@ -332,13 +349,34 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
             if event == "Go Back":
                 ids.close()
                 window.close()
-                main_window.run()
+                if selected == "All Games":
+                    edit_content()
+                else:
+                    game_content_select(previous_window)
                 break
         ids.close()
         window.close()
     else:
         sg.Popup("Sorry, no content to edit.")
-        main_window.run()
+        if selected == "All Games":
+            edit_content()
+        else:
+            game_content_select(previous_window)
+
+def game_content_select(selected=None):
+    layout_list = tuple(content_type_mapping[selected].keys()) + tuple([selected + " All Content"])
+    select_window = SelectionWindow("Select content type to view/edit for " + selected + ".", ["Select content type to view/edit for " + selected + ".", layout_list, "edit_content_type_selector"], {
+        "all": edit_content_window
+    }, "edit_content")
+    select_window.run()
+        
+def edit_content(selected=None):
+    layout_list = tuple(content_type_mapping.keys()) + tuple(["All Games"])
+    select_window = SelectionWindow("Select a game to view/edit content for.", ["Select game to view/edit content for.", layout_list, "edit_content_selector"], {
+        "all": game_content_select,
+        "All Games": edit_content_window
+    }, "main_window")
+    select_window.run()
 
 def import_content(path="./custom_content.json"):
     if os.path.exists(path):
@@ -1236,30 +1274,31 @@ window_mapping = { #Used for backing out of stuff.
     "main_window": main_window,
     "talking_points": talking_points,
     "champd_up": champd_up,
-    "blather_round": blather_round
+    "blather_round": blather_round,
+    "edit_content": edit_content
 }
 
 content_type_mapping = { #Used in editing content to change data.
-    "Quiplash3":{
-        "Quiplash3Round1Question": round_prompt_1,
-        "Quiplash3Round2Question": round_prompt_2,
-        "Quiplash3FinalQuestion": round_prompt_final,
-        "Quiplash3SafetyQuips": safety_quip
+    "BlankyBlank": {
+        "BlankyBlankPasswords": blather_round_word,
+        "BlankyBlankSentenceStructures": blather_round_category,
+        "BlankyBlankWordLists": blather_round_descriptor 
     },
     "JackboxTalks":{
         "JackboxTalksPicture": talking_points_picture,
         "JackboxTalksTitle": talking_points_prompt,
         "JackboxTalksSignpost": talking_points_slide_transition
     },
+    "Quiplash3":{
+        "Quiplash3Round1Question": round_prompt_1,
+        "Quiplash3Round2Question": round_prompt_2,
+        "Quiplash3FinalQuestion": round_prompt_final,
+        "Quiplash3SafetyQuips": safety_quip
+    },
     "WorldChampions": {
         "WorldChampionsRound": champd_up_round_1,
         "WorldChampionsSecondHalfA": champd_up_round_2,
         "WorldChampionsSecondHalfB": champd_up_round_2_5
-    },
-    "BlankyBlank": {
-        "BlankyBlankPasswords": blather_round_word,
-        "BlankyBlankSentenceStructures": blather_round_category,
-        "BlankyBlankWordLists": blather_round_descriptor 
     }
 }
 
