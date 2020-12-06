@@ -1242,6 +1242,7 @@ def blather_round_descriptor_data_jet(values):
     data.add_data("S", values["amount"], "Amount")
     data.add_data("S", values["maxChoices"], "MaxChoices")
     data.add_data("S", values["placeholder"], "Placeholder")
+    return data
 
 blather_round_descriptor = CustomContentWindow("BlankyBlank", "BlankyBlankWordLists", "name", {
     "previous_window": "blather_round",
@@ -1255,7 +1256,8 @@ blather_round_descriptor = CustomContentWindow("BlankyBlank", "BlankyBlankWordLi
         {
             "type": sg.Multiline,
             "default_value": "list|of|separated|T|words|or|sentences",
-            "param_name": "words"
+            "param_name": "words",
+            "kwargs": {"size": (50, 5)}
         }
     ]}, {"text": "Maximum number of choices (leave blank for none): ", "input": [
         {
