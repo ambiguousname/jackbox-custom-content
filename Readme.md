@@ -24,6 +24,13 @@ otherwise you're going to have to uninstall and reinstall your entire game if so
 - Move "jppc.py" to the "games" directory of your Jackbox Party Pack 7 install folder. (For steam on Windows: C:\Program Files (x86)\Steam\steamapps\common\The Jackbox Party Pack 7\games)
 - Run jppc.py in the terminal of your choice.
 
+## To add the sample custom content:
+- Add Jackbox Party Pack Custom.exe or jppc.py to the "games" directory of the Jackbox Party Pack 7 folder.
+- Run jppc.py or Jackbox Party Pack Custom.exe
+- Select the "Import/Reimport Content" option.
+- Select the "sample_custom_content.json" file.
+- Click "Import".
+
 # Potential Questions/Problems
 
 ## Doesn't Quiplash 3 already have a way for you to make your own questions?
@@ -124,7 +131,7 @@ Words that are tailor made to more accurately describe the word/phrase. First de
 ## Category 
 A *broad* category meant to describe the general idea of a word (ideally person/place/thing/story work well, so making a new category isn't recommended)
 ### Structures 
-The sentence structures used to give hints about what the thing is about. Use \<descriptor\> tags (e.g., \<emotion-bad\>, \<building\>) for each thing you have to fill in the blank for (again, go to [the wiki](https://github.com/ambiguousname/jackbox-custom-content/wiki/Blather-Round-Desciptor-Words-List) to see the words you can use, or add your own with Descriptor). Separate each entry by |. 
+The sentence structures used to give hints about what the thing is about. Use \<descriptor\> tags (e.g., \<emotion-bad\>, \<building\>) for each thing you have to fill in the blank for (again, go to [the wiki](https://github.com/ambiguousname/jackbox-custom-content/wiki/Blather-Round-Desciptor-Words-List) to see the words you can use, or add your own with Descriptor). Separate each entry by |.
 
 ### Descriptor 
 You have three options: Describing Adjectives/Nouns/Verbs to apply to a category, sentences to respond to other people's guesses (like `It's very similar to ____!`), or descriptor words meant for \<descriptor\> tags (to be used in the Tailored Words section for a Word). The steps for making each are similar.

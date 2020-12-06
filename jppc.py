@@ -8,7 +8,7 @@ from shutil import copyfile, rmtree
 # Test Quiplash 3 Content (Only Custom)
 # Test Blather Round content (Adding, Editing, Importing, Only Custom)
 # Sample content
-# Blather Round: Word (6 left, 1 per player), Category (at least 2 left), Descriptor (at least 3 left)
+# Blather Round: Word (6 left, 1 per player), Descriptor (at least 3 left)
 # Champ'd Up: Round 1 (7 left, 1 per player), Round 2 (8 left, 1 per player), Round 2.5 (8 left, 1 per player)
 # Talking Points: Prompt (8 left, 1 per player), Picture (8 left, 3 per player (no way am I adding that much)), Transition (5 left, 3 per player (again, no way))
 # Quiplash 3: Round 1 Prompt (8 left, 1 per player), Round 2 Prompt (8 left, 1 per player), Round 3 Prompt (8 left, 1 per player), Safety Quip (5 left)
@@ -61,10 +61,11 @@ class CustomContentWindow(object):
                 new_content.add_custom_files(data, **kwargs)
         if window_suppress == False:
             sg.Popup("Content Created, ID: " + new_content.id)
+        return new_content.id
 
     def create_window(self, *args, **kwargs):
         existing_data = None
-        if "existing_data" in kwargs:
+        if "existing_data" in kwargs and kwargs["existing_data"] != None:
             existing_data = kwargs["existing_data"]
             if "import_filter" in self.window_layout:
                 existing_data = self.window_layout["import_filter"](kwargs["existing_data"])
@@ -102,6 +103,9 @@ class CustomContentWindow(object):
                     break
                 if event == "Ok":
                     new_values = values
+                    for value in new_values:
+                        if type(new_values[value]) == str:
+                            new_values[value] = new_values[value].replace("\n", "")
                     if "filter" in self.window_layout:
                         new_values = self.window_layout["filter"](new_values)
                     _id = None
@@ -121,15 +125,17 @@ class CustomContentWindow(object):
                             new_values[key] = file_path
                     if existing_data != None:
                         _id = existing_data["id"]
-                    self.create_content(new_values, _id)
+                    new_content = self.create_content(new_values, _id)
                     window.close()
-                    self.create_window(existing_data=None if existing_data == None else existing_data)
+                    existing_data = new_values
+                    existing_data["id"] = new_content
+                    self.create_window(existing_data=existing_data)
                 if event == "Go Back":
                     window.close()
                     window_mapping[self.window_layout["previous_window"]].run()
             window.close()
         else:
-            raise Exception("Did not Instantiate CustomContent with 'window_layout' kwarg.")
+            raise Exception("Did not Instantiate CustomContentWindow with 'window_layout' kwarg.")
 
 class CustomContent(object):
     def __init__(self, *args, **kwargs): #values, game, content_type, descriptor_text, _id=None
@@ -260,14 +266,16 @@ class SelectionWindow():
             if event == sg.WIN_CLOSED or event == "Exit":
                 break
             if event == "Ok":
-                window.close()
-                if values[self.list_key][0] in self.selector:
+                if len(values[self.list_key]) == 1 and values[self.list_key][0] in self.selector:
+                    window.close()
                     func = self.selector.get(values[self.list_key][0])
                     func(values[self.list_key][0]) #What we need the "inputs" argument for. 
-                elif "all" in self.selector:
+                    break
+                elif "all" in self.selector and len(values[self.list_key]) == 1:
+                    window.close()
                     func = self.selector.get("all")
                     func(values[self.list_key][0])
-                break
+                    break
             if event == "Go Back" and self.previous_window:
                 window.close()
                 if hasattr(window_mapping[self.previous_window], "run"):
@@ -446,10 +454,29 @@ def game_content_del(game, content_type):
             jet_file.write(json.dumps(json_file))
             jet_file.close()
 
+def del_by_content(game):
+    layout = [[sg.Text("Again, are you absolutely sure you want to do this?")],
+    [sg.Text("Please select the content type(s) you'd like to remove: "), sg.Listbox(([item for item in content_type_mapping[game]]), size=(50, 4), key="content_choice", select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE)], [sg.Checkbox("I am absolutely sure I want to do this. Please delete the non-custom content types I've selected.", key="sure")],
+    [sg.Button("Ok"), sg.Button("Go Back")]]
+    window = sg.Window("Delete content types", layout)
+    while True:
+        event, values = window.read()
+        if event == sg.WIN_CLOSED:
+            break
+        if event == "Go Back":
+            window.close()
+            del_all_else()
+            break
+        if event == "Ok":
+            if values["sure"] == True:
+                for content_type in values["content_choice"]:
+                    game_content_del(game, content_type)
+            sg.Popup("Non-Custom Content deleted for: " + str(values["content_choice"]))
+
 def del_all_else(selected=None):
     layout = [[sg.Text("Are you absolutely sure you want to do this?")], [sg.Text("This option will effectively delete all the game's content files so that you can only play with your own custom content. Please make sure you have backups.")],
-    [sg.Text("Please select the game(s) whose content you'd like to remove: "), sg.Listbox(([item for item in content_type_mapping]), size=(50, 4), key="game_choice", select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE)], [sg.Checkbox("I am absolutely sure I want to do this. Please delete all non-custom content.", key="sure")], [sg.Button("Ok"), sg.Button("Go Back")]]
-    window = sg.Window("Delete all non-custom content", layout)
+    [sg.Text("Please select the game whose content you'd like to remove: "), sg.Listbox(([item for item in content_type_mapping]), size=(50, 4), key="game_choice", select_mode=sg.LISTBOX_SELECT_MODE_BROWSE)], [sg.Checkbox("I am absolutely sure I want to do this. Please delete all non-custom content for the game I have selected.", key="sure")], [sg.Button("Ok"), sg.Button("Remove Non-Custom Content By Type"), sg.Button("Go Back")]]
+    window = sg.Window("Delete non-custom content", layout)
     while True:
         event, values = window.read()
         if event == sg.WIN_CLOSED:
@@ -463,8 +490,13 @@ def del_all_else(selected=None):
                 for game in values["game_choice"]:
                     for content_type in content_type_mapping[game]:
                         game_content_del(game, content_type)
-                sg.Popup("Content deleted for: " + str(values["game_choice"]))
+                sg.Popup("Non-Custom Content deleted for: " + str(values["game_choice"]))
+        if event == "Remove Non-Custom Content By Type":
+            window.close()
+            for game in values["game_choice"]:
+                del_by_content(game)
     window.close()
+
 
 #Stuff for Quiplash 3
 
@@ -1079,7 +1111,7 @@ def blather_round_word_data_jet(values):
 
 blather_round_word = CustomContentWindow("BlankyBlank", "BlankyBlankPasswords", "password", {
     "previous_window": "blather_round",
-    "window_layout": [{"text": "Word/Phrase to use: ", "input": [
+    "layout_list": [{"text": "Word/Phrase to use: ", "input": [
         {
             "type": sg.InputText,
             "default_value": "R'lyeh",
@@ -1155,7 +1187,7 @@ def blather_round_category_data_jet(values):
 
 blather_round_category = CustomContentWindow("BlankyBlank", "BlankyBlankSentenceStructures", "category", {
     "previous_window": "blather_round",
-    "window_layout": [{"text": "Broad Category Name: ", "input": [
+    "layout_list": [{"text": "Broad Category Name: ", "input": [
         {
             "type": sg.InputText,
             "default_value": "art",
@@ -1164,8 +1196,9 @@ blather_round_category = CustomContentWindow("BlankyBlank", "BlankyBlankSentence
     ]}, {"text": "Sentence Structures (separate by |): ", "input": [
         {
             "type": sg.Multiline,
-            "default_value": "It's <article-1> <thing-adjective-simple> <thing-noun-simple>.|It <thing-verb-simple> <article-2> <thing-noun-simple>.|Talk about <thing-adjective-complex>!|It <thing-verb-simple> <article-2> <thing-noun-complex>.|Oh, <thing-noun-complex>!|Quite simply, it's <article-1> <thing-adjective-complex> <thing-noun-complex>.",
-            "param_name": "structures"
+            "default_value": "It's <article-1> <art-adjective-simple> <art-noun-simple>.|It <art-verb-simple> <article-2> <art-noun-simple>.|Talk about <art-adjective-complex>!|It <art-verb-simple> <article-2> <art-noun-complex>.|Oh, <art-noun-complex>!|Quite simply, it's <article-1> <art-adjective-complex> <art-noun-complex>.",
+            "param_name": "structures",
+            "kwargs": {"size": (50, 10)}
         }
     ]}],
     "content_list": [
@@ -1212,7 +1245,7 @@ def blather_round_descriptor_data_jet(values):
 
 blather_round_descriptor = CustomContentWindow("BlankyBlank", "BlankyBlankWordLists", "name", {
     "previous_window": "blather_round",
-    "window_layout": [{"text": "Descriptor name (hyphenate, please): ", "input": [
+    "layout_list": [{"text": "Descriptor name (hyphenate, please): ", "input": [
         {
             "type": sg.InputText,
             "default_value": "hyphenated-descriptor (Please read README)",
