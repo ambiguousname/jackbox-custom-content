@@ -4,7 +4,7 @@ import os
 from shutil import copyfile, rmtree
 
 #TODO:
-# Test Champ'd Up Content (Importing, Only Custom)
+# Test Champ'd Up Content (Only Custom)
 # Test Quiplash 3 Content (Only Custom)
 # Test Blather Round content (Adding, Editing, Importing, Only Custom)
 # Sample content
@@ -95,7 +95,7 @@ class CustomContentWindow(object):
                         new_input = input_type["type"](input_type["default_value"] if existing_data == None or input_type["type"] in exclude else existing_data[input_type["param_name"]], key=input_type["param_name"], **new_kwargs)
                         layout_item.append(new_input)
                 layout.append(layout_item)
-            layout.append([sg.Button("Ok"), sg.Button("Go Back") if existing_data == None else sg.Button("Exit")])
+            layout.append([sg.Button("Ok"), sg.Button("Go Back") if existing_data == None and not ("Go Back" in existing_data and existing_data["Go Back"] == True) else sg.Button("Exit")])
             window = sg.Window(self.content_type if existing_data == None else existing_data["id"], layout)
             while True:
                 event, values = window.read()
@@ -127,8 +127,12 @@ class CustomContentWindow(object):
                         _id = existing_data["id"]
                     new_content = self.create_content(new_values, _id)
                     window.close()
+                    go_back = False
+                    if existing_data == None:
+                        go_back = True
                     existing_data = new_values
                     existing_data["id"] = new_content
+                    existing_data["Go Back"] = go_back
                     self.create_window(existing_data=existing_data)
                 if event == "Go Back":
                     window.close()
@@ -207,7 +211,7 @@ class CustomContent(object):
             path = kwargs["path"]
         else:
             path = "./" + self.values["game"] + "/content/" + self.values["content_type"] + "/" + self.id + "/"
-        if os.path.exists(path) and not ("path" in kwargs and ("adding_other_files" in kwargs and kwargs["adding_other_files"] == True)): #If there's a folder here, but we're not selecting a custom path
+        if os.path.exists(path) and not ("adding_other_files" in kwargs and kwargs["adding_other_files"] == True): #If there's a folder here, but we're not selecting a custom path
             rmtree(path)
         if not ("delete" in kwargs and kwargs["delete"] == True):
             if not (os.path.exists(path)):
@@ -1219,9 +1223,10 @@ def blather_round_descriptor_filter(values):
     for item in words_list:
         if item == "T":
             next_true = True
-        new_words.append({"word": item, "alwaysChoose": next_true})
-        if next_true == True:
-            next_true = False
+        else:
+            new_words.append({"word": item, "alwaysChoose": next_true})
+            if next_true == True:
+                next_true = False
     new_values["words"] = new_words
     return new_values
 
@@ -1230,7 +1235,7 @@ def blather_round_descriptor_import(values):
     words_str = ""
     for index, item in enumerate(new_values["words"]):
         if item["alwaysChoose"] == True:
-            words_str += ("|" if index == 0 else "") + "T|"
+            words_str += ("|" if index != 0 else "") + "T|"
         words_str += item["word"] + ("|" if index < len(new_values["words"]) - 1 else "")
     new_values["words"] = words_str
     return new_values
