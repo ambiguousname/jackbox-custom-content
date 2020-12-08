@@ -8,9 +8,9 @@ from shutil import copyfile, rmtree
 # Test Quiplash 3 Content (Only Custom)
 # Test Blather Round content (Only Custom)
 # Sample content
-# Champ'd Up: Round 1 (7 left, 1 per player), Round 2 (8 left, 1 per player), Round 2.5 (8 left, 1 per player)
+# Champ'd Up: Round 1 (6 left, 1 per player), Round 2 (8 left, 1 per player), Round 2.5 (8 left, 1 per player) (Missing audio)
 # Talking Points: Prompt (8 left, 1 per player), Picture (8 left, 3 per player (no way am I adding that much)), Transition (5 left, 3 per player (again, no way))
-# Quiplash 3: Round 1 Prompt (8 left, 1 per player), Round 2 Prompt (8 left, 1 per player), Round 3 Prompt (8 left, 1 per player), Safety Quip (5 left)
+# Quiplash 3: Round 1 Prompt (8 left, 1 per player), Round 2 Prompt (8 left, 1 per player), Round 3 Prompt (8 left, 1 per player), Safety Quip (5 left) (Missing audio)
 
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
@@ -81,7 +81,7 @@ class CustomContentWindow(object):
                         if "kwargs" in input_type:
                             new_kwargs = input_type["kwargs"]
                             for new_kwarg in new_kwargs:
-                                if type(new_kwargs[new_kwarg]) == str and "existing_data" in new_kwargs[new_kwarg].split("|"):
+                                if (type(new_kwargs[new_kwarg]) == str and "existing_data" in new_kwargs[new_kwarg].split("|")) or input_type["type"] == sg.Checkbox:
                                     if existing_data != None:
                                         new_kwargs[new_kwarg] = existing_data[input_type["param_name"]]
                                     else:
