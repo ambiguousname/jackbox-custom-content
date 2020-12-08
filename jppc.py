@@ -8,7 +8,7 @@ from shutil import copyfile, rmtree
 # Test Quiplash 3 Content (Only Custom)
 # Test Blather Round content (Adding, Editing, Importing, Only Custom)
 # Sample content
-# Blather Round: Word (6 left, 1 per player), Descriptor (at least 3 left)
+# Blather Round: Word (5 left, 1 per player)
 # Champ'd Up: Round 1 (7 left, 1 per player), Round 2 (8 left, 1 per player), Round 2.5 (8 left, 1 per player)
 # Talking Points: Prompt (8 left, 1 per player), Picture (8 left, 3 per player (no way am I adding that much)), Transition (5 left, 3 per player (again, no way))
 # Quiplash 3: Round 1 Prompt (8 left, 1 per player), Round 2 Prompt (8 left, 1 per player), Round 3 Prompt (8 left, 1 per player), Safety Quip (5 left)
@@ -95,13 +95,13 @@ class CustomContentWindow(object):
                         new_input = input_type["type"](input_type["default_value"] if existing_data == None or input_type["type"] in exclude else existing_data[input_type["param_name"]], key=input_type["param_name"], **new_kwargs)
                         layout_item.append(new_input)
                 layout.append(layout_item)
-            layout.append([sg.Button("Ok"), sg.Button("Go Back") if existing_data == None and not ("Go Back" in existing_data and existing_data["Go Back"] == True) else sg.Button("Exit")])
+            layout.append([sg.Button("Ok") if existing_data == None else sg.Button("Edit"), sg.Button("Make New Content") if existing_data != None else sg.Text(), sg.Button("Go Back") if existing_data == None or ("Go Back" in existing_data and existing_data["Go Back"] == True) else sg.Button("Exit")])
             window = sg.Window(self.content_type if existing_data == None else existing_data["id"], layout)
             while True:
                 event, values = window.read()
                 if event == sg.WIN_CLOSED or event == "Exit":
                     break
-                if event == "Ok":
+                if event == "Ok" or event == "Edit" or event == "Make New Content":
                     new_values = values
                     for value in new_values:
                         if type(new_values[value]) == str:
@@ -131,7 +131,8 @@ class CustomContentWindow(object):
                     if existing_data == None:
                         go_back = True
                     existing_data = new_values
-                    existing_data["id"] = new_content
+                    if event != "Make New Content":
+                        existing_data["id"] = new_content
                     existing_data["Go Back"] = go_back
                     self.create_window(existing_data=existing_data)
                 if event == "Go Back":
@@ -1087,7 +1088,7 @@ def blather_round_word_filter(values):
     new_values["forbiddenWords"] = values["forbiddenWords"].split("|")
     tailored_words = []
     old_tailored_words = values["tailoredWords"].split("|")
-    for i in range(0, old_tailored_words, 2):
+    for i in range(0, len(old_tailored_words), 2):
         tailored_words.append({"list": old_tailored_words[i], "word": old_tailored_words[i + 1]})
     new_values["tailoredWords"] = tailored_words
     return new_values

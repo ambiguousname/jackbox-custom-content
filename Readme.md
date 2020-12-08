@@ -99,6 +99,10 @@ An excellent question. For now, I'm not going to bother supporting custom Devils
 
 If you want to change specific parts of your content or delete content, you're going to want to edit that content in the View/Edit Content option. You should note that you can select multiple pieces of content to edit, view, or delete.
 
+## The "Make New Content" Button
+
+If you've made changes to content, but you want to save those changes to a new piece of content (rather than editing the existing piece of content), push this button to make your changes into a new piece of content.
+
 # Importing content
 
 The import content feature will only import certain custom files like .JPGs or .OGGs if those files are stored in the folder ./external content/, if that folder is in the same location as jppc.py or Jackbox Party Pack Custom.exe. 
