@@ -7,8 +7,8 @@ from shutil import copyfile, rmtree
 # Test Champ'd Up Content (Only Custom)
 # Test Quiplash 3 Content (Only Custom)
 # Test Blather Round content (Only Custom)
-# Sample content
-# Champ'd Up: Round 2 (8 left, 1 per player), Round 2.5 (4 left, 1 per player) (Missing audio)
+# Sample content:
+# Champ'd Up (Missing audio)
 # Talking Points: Prompt (8 left, 1 per player), Picture (8 left, 3 per player (no way am I adding that much)), Transition (5 left, 3 per player (again, no way))
 # Quiplash 3: Round 1 Prompt (8 left, 1 per player), Round 2 Prompt (8 left, 1 per player), Round 3 Prompt (8 left, 1 per player), Safety Quip (5 left) (Missing audio)
 
@@ -126,11 +126,13 @@ class CustomContentWindow(object):
                         _id = existing_data["id"]
                     new_content = self.create_content(new_values, _id)
                     window.close()
-                    if existing_data == None:
-                        existing_data["Go Back"] = True
-                    elif not "Go Back" in existing_data:
-                        existing_data["Go Back"] = False
+                    go_back = True
+                    if existing_data != None and not "Go Back" in existing_data:
+                        go_back = False
+                    elif existing_data != None and "Go Back" in existing_data:
+                        go_back = existing_data["Go Back"]
                     existing_data = new_values
+                    existing_data["Go Back"] = go_back
                     existing_data["id"] = new_content
                     self.create_window(existing_data=existing_data)
                 if event == "Go Back":
@@ -803,13 +805,6 @@ talking_points_prompt = CustomContentWindow("JackboxTalks", "JackboxTalksTitle",
             "param_name": "title",
             "kwargs": {"size": (75, 1)}
         }
-    ]}, {"input": [
-        {
-            "type": sg.Checkbox,
-            "default_value": "Contains adult content",
-            "kwargs": {"default": "existing_data", "regular_default": False},
-            "param_name": "x"
-        }
     ]}, {"text": "Safety Answers (separate by |): ", "input": [
         {
             "type": sg.Multiline,
@@ -822,6 +817,13 @@ talking_points_prompt = CustomContentWindow("JackboxTalks", "JackboxTalksTitle",
             "default_value": "m,For those of you questioning my reasons, I was motivated by this...|m,For those of you who object, here's why you're all powerless to stop me...|m,If you're concerned about permissions, I have all the power I need from this...|e,Now for the Finale: What you're about to see next will ultimately prove my superiority...|m,What I'm about to say is actually banned in about 20 countries, so pay close attention...|e,For those of you at home, imitate exactly what you're about to hear and see...|e,Now it's flex time, and I'm going to flex with this...|e,I have no words for what you're about to witness, only vague and confusing noises/hand movements...|m,For this amazing feat, I will make use of this as a centerpiece...|m,For my performance, I will be requiring the aid of this...|m,It's nearly time, and to gauge your excitement, I will be using this...",
             "kwargs": {"size": (100, 5)},
             "param_name": "signposts"
+        }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Contains adult content",
+            "kwargs": {"default": "existing_data", "regular_default": False},
+            "param_name": "x"
         }
     ]}],
     "content_list": [
@@ -976,7 +978,7 @@ champd_up_round_1 = CustomContentWindow("WorldChampions", "WorldChampionsRound",
 
 def champd_up_round_import(values):
     new_values = values
-    new_values["linkedPrompt"] = "|".join(values["linkedPrompts"])
+    new_values["linkedPrompts"] = "|".join(values["linkedPrompts"])
     return new_values
 
 def champd_up_round_filter(values):
@@ -992,7 +994,7 @@ champd_up_round_2 = CustomContentWindow("WorldChampions", "WorldChampionsSecondH
             "default_value": "The Champion of <ANYPLAYER>",
             "param_name": "contest"
         }
-    ]}, {"text": "A shorter description: ", "input": [
+    ]}, {"text": "A shorter description (that doesn't include the word \"Champion\"): ", "input": [
         {
             "type": sg.InputText,
             "default_value": "<ANYPLAYER>'s Champion",
