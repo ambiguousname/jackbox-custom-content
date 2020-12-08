@@ -31,6 +31,8 @@ otherwise you're going to have to uninstall and reinstall your entire game if so
 - Select the "sample_custom_content.json" file.
 - Click "Import".
 
+Just so you know, the sample custom content is meant to be played with other content in the mix (there isn't enough sample custom content to last a full game with 8 players). While you can use the "Only Custom" menu option to get rid of the game's own content files and play with only the sample content, it's not recommended.
+
 # Potential Questions/Problems
 
 ## Doesn't Quiplash 3 already have a way for you to make your own questions?
