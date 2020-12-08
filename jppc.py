@@ -8,7 +8,7 @@ from shutil import copyfile, rmtree
 # Test Quiplash 3 Content (Only Custom)
 # Test Blather Round content (Only Custom)
 # Sample content
-# Champ'd Up: Round 2 (8 left, 1 per player), Round 2.5 (8 left, 1 per player) (Missing audio)
+# Champ'd Up: Round 2 (8 left, 1 per player), Round 2.5 (6 left, 1 per player) (Missing audio)
 # Talking Points: Prompt (8 left, 1 per player), Picture (8 left, 3 per player (no way am I adding that much)), Transition (5 left, 3 per player (again, no way))
 # Quiplash 3: Round 1 Prompt (8 left, 1 per player), Round 2 Prompt (8 left, 1 per player), Round 3 Prompt (8 left, 1 per player), Safety Quip (5 left) (Missing audio)
 
@@ -126,12 +126,13 @@ class CustomContentWindow(object):
                         _id = existing_data["id"]
                     new_content = self.create_content(new_values, _id)
                     window.close()
-                    go_back = False
-                    if existing_data == None:
-                        go_back = True
+                    if not "Go Back" in existing_data:
+                        if existing_data == None:
+                            existing_data["Go Back"] = True
+                        else:
+                            existing_data["Go Back"] = False
                     existing_data = new_values
                     existing_data["id"] = new_content
-                    existing_data["Go Back"] = go_back
                     self.create_window(existing_data=existing_data)
                 if event == "Go Back":
                     window.close()
