@@ -8,7 +8,7 @@ from shutil import copyfile, rmtree
 # Test Quiplash 3 Content (Only Custom)
 # Test Blather Round content (Only Custom)
 # Sample content
-# Blather Round: Word (5 left, 1 per player)
+# Blather Round: Word (3 left, 1 per player)
 # Champ'd Up: Round 1 (7 left, 1 per player), Round 2 (8 left, 1 per player), Round 2.5 (8 left, 1 per player)
 # Talking Points: Prompt (8 left, 1 per player), Picture (8 left, 3 per player (no way am I adding that much)), Transition (5 left, 3 per player (again, no way))
 # Quiplash 3: Round 1 Prompt (8 left, 1 per player), Round 2 Prompt (8 left, 1 per player), Round 3 Prompt (8 left, 1 per player), Safety Quip (5 left)
@@ -96,7 +96,7 @@ class CustomContentWindow(object):
                         layout_item.append(new_input)
                 layout.append(layout_item)
             layout.append([sg.Button("Ok") if existing_data == None else sg.Button("Edit"), sg.Button("Make New Content") if existing_data != None else sg.Text(), sg.Button("Go Back") if existing_data == None or ("Go Back" in existing_data and existing_data["Go Back"] == True) else sg.Button("Exit")])
-            window = sg.Window(self.content_type if existing_data == None else existing_data["id"], layout)
+            window = sg.Window(self.content_type if existing_data == None else "Editing " + existing_data["id"], layout)
             while True:
                 event, values = window.read()
                 if event == sg.WIN_CLOSED or event == "Exit":
