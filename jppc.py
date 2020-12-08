@@ -8,7 +8,7 @@ from shutil import copyfile, rmtree
 # Test Quiplash 3 Content (Only Custom)
 # Test Blather Round content (Only Custom)
 # Sample content
-# Champ'd Up: Round 1 (6 left, 1 per player), Round 2 (8 left, 1 per player), Round 2.5 (8 left, 1 per player) (Missing audio)
+# Champ'd Up: Round 2 (8 left, 1 per player), Round 2.5 (8 left, 1 per player) (Missing audio)
 # Talking Points: Prompt (8 left, 1 per player), Picture (8 left, 3 per player (no way am I adding that much)), Transition (5 left, 3 per player (again, no way))
 # Quiplash 3: Round 1 Prompt (8 left, 1 per player), Round 2 Prompt (8 left, 1 per player), Round 3 Prompt (8 left, 1 per player), Safety Quip (5 left) (Missing audio)
 
@@ -79,7 +79,7 @@ class CustomContentWindow(object):
                     for index, input_type in enumerate(item["input"]):
                         new_kwargs = {}
                         if "kwargs" in input_type:
-                            new_kwargs = input_type["kwargs"]
+                            new_kwargs = input_type["kwargs"].copy()
                             for new_kwarg in new_kwargs:
                                 if (type(new_kwargs[new_kwarg]) == str and "existing_data" in new_kwargs[new_kwarg].split("|")) or input_type["type"] == sg.Checkbox:
                                     if existing_data != None:
@@ -122,7 +122,7 @@ class CustomContentWindow(object):
                                 file_path += directory + "/"
                         if "external content" in curr_path and os.path.realpath("./external content/") == os.path.realpath(new_path):
                             new_values[key] = file_path
-                    if existing_data != None:
+                    if existing_data != None and event != "Make New Content":
                         _id = existing_data["id"]
                     new_content = self.create_content(new_values, _id)
                     window.close()
@@ -130,8 +130,7 @@ class CustomContentWindow(object):
                     if existing_data == None:
                         go_back = True
                     existing_data = new_values
-                    if event != "Make New Content":
-                        existing_data["id"] = new_content
+                    existing_data["id"] = new_content
                     existing_data["Go Back"] = go_back
                     self.create_window(existing_data=existing_data)
                 if event == "Go Back":
