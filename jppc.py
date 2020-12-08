@@ -6,7 +6,7 @@ from shutil import copyfile, rmtree
 #TODO:
 # Test Champ'd Up Content (Only Custom)
 # Test Quiplash 3 Content (Only Custom)
-# Test Blather Round content (Adding, Editing, Importing, Only Custom)
+# Test Blather Round content (Only Custom)
 # Sample content
 # Blather Round: Word (5 left, 1 per player)
 # Champ'd Up: Round 1 (7 left, 1 per player), Round 2 (8 left, 1 per player), Round 2.5 (8 left, 1 per player)
@@ -294,7 +294,7 @@ class SelectionWindow():
 
 def edit_content_window(selected=None): #Selected goes unused because of how SelectWindow works.
     previous_window = content_type_mapping
-    if selected.split(" ")[1] == "All" and selected.split(" ")[2] == "Content":
+    if len(selected.split(" ")) >= 3 and selected.split(" ")[1] == "All" and selected.split(" ")[2] == "Content":
         previous_window = selected.split(" ")[0]
     elif selected != "All Games":
         for game in content_type_mapping:
@@ -307,7 +307,7 @@ def edit_content_window(selected=None): #Selected goes unused because of how Sel
         content = json.load(ids)
         content_list = []
         for item in content:
-            if content[item]["values"]["content_type"] == selected or selected == "All Games" or (selected == "All Content" and content[item]["values"]["content_type"] == content_type_mapping[selected.split(" ")[0]]):
+            if content[item]["values"]["content_type"] == selected or selected == "All Games" or (len(selected.split(" ")) >= 3 and selected.split(" ")[1] == "All" and selected.split(" ")[2] == "Content" and content[item]["values"]["game"] == selected.split(" ")[0]):
                 content_list.append(content[item]["id"] + ": " + content[item]["values"]["content_type"] + " - " + content[item]["values"]["descriptor_text"])
         layout = [[sg.Text("Choose Content to Edit/Delete:")], [sg.Listbox(content_list, key="content_selection", size=(100, 25), select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED)], [sg.Button("Edit"), sg.Button("Delete"), sg.Button("Show Folder"), sg.Button("Go Back")]]
         window = sg.Window("Choose Content to Edit/Delete", layout)
