@@ -9,7 +9,7 @@ from shutil import copyfile, rmtree
 # Test Blather Round content (Only Custom)
 # Sample content:
 # Champ'd Up (Missing audio)
-# Talking Points: Prompt (8 left, 1 per player), Picture (8 left, 3 per player (no way am I adding that much)), Transition (5 left, 3 per player (again, no way))
+# Talking Points: Picture (5 left, 3 per player (no way am I adding that much)), Transition (5 left, 3 per player (again, no way))
 # Quiplash 3: Round 1 Prompt (8 left, 1 per player), Round 2 Prompt (8 left, 1 per player), Round 3 Prompt (8 left, 1 per player), Safety Quip (5 left) (Missing audio)
 
 def id_gen(values): #id_gen needs a values dict to work with
