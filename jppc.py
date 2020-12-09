@@ -8,8 +8,8 @@ from shutil import copyfile, rmtree
 # Test Quiplash 3 Content (Only Custom)
 # Test Blather Round content (Only Custom)
 # Sample content:
-# Champ'd Up (Missing audio)
-# Quiplash 3 (Missing audio)
+# Champ'd Up (Missing audio, let's say 4 gets that) (Missing custom responses, let's say 4 gets that)
+# Quiplash 3 (Missing audio) (Missing custom responses)
 
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
@@ -986,6 +986,10 @@ champd_up_round_layout = {
 
 champd_up_round_1 = CustomContentWindow("WorldChampions", "WorldChampionsRound", "contest", champd_up_round_layout)
 
+champd_up_round_2_5_layout = champd_up_round_layout.copy()
+champd_up_round_2_5_layout["layout_list"].pop(4)
+champd_up_round_2_5_layout["layout_list"].pop(3)
+
 def champd_up_round_import(values):
     new_values = values
     new_values["linkedPrompts"] = "|".join(values["linkedPrompts"])
@@ -1082,7 +1086,7 @@ champd_up_round_2 = CustomContentWindow("WorldChampions", "WorldChampionsSecondH
     "import_filter": champd_up_round_import
 })
 
-champd_up_round_2_5 = CustomContentWindow("WorldChampions", "WorldChampionsSecondHalfB", "contest", champd_up_round_layout)
+champd_up_round_2_5 = CustomContentWindow("WorldChampions", "WorldChampionsSecondHalfB", "contest", champd_up_round_2_5_layout)
 
 champd_up = SelectionWindow("Champ'd Up Content Selection", ["Please select the type of content", ("Round 1 Prompt", "Round 2 Prompt", "Round 2.5 Prompt"), "champd_up_content_type"], {
     "Round 1 Prompt": champd_up_round_1.create_window,
