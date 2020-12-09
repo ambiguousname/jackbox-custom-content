@@ -9,8 +9,7 @@ from shutil import copyfile, rmtree
 # Test Blather Round content (Only Custom)
 # Sample content:
 # Champ'd Up (Missing audio)
-# Talking Points: Transition (5 left, 3 per player (again, no way))
-# Quiplash 3: Round 1 Prompt (8 left, 1 per player), Round 2 Prompt (8 left, 1 per player), Round 3 Prompt (8 left, 1 per player), Safety Quip (5 left) (Missing audio)
+# Quiplash 3 (Missing audio)
 
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
@@ -525,6 +524,11 @@ def round_filter(values):
     new_values["safetyQuips"] = values["safetyQuips"].split("|")
     return new_values
 
+def round_import(values):
+    new_values = values
+    new_values["safetyQuips"] = "|".join(values["safetyQuips"])
+    return new_values
+
 round_prompt_layout = {
     "previous_window": "quiplash_prompt",
     "layout_list": [{"text": "Prompt Text: ", "input": [
@@ -536,7 +540,7 @@ round_prompt_layout = {
         }
     ]}, {"text": "Safety Quips (separate by |):", "input": [
         {
-            "type": sg.InputText,
+            "type": sg.Multiline,
             "default_value": "learn how the prompt system works|learn how safety quips work|eat all my garbage",
             "param_name": "safetyQuips",
             "kwargs": {"size": (50, 1)}
@@ -605,7 +609,8 @@ round_prompt_layout = {
             "kwargs": {"adding_other_files": True}
         }}
     ],
-    "filter": round_filter
+    "filter": round_filter,
+    "import_filter": round_import
 }
 
 round_prompt_1 = CustomContentWindow("Quiplash3", "Quiplash3Round1Question", "prompt", round_prompt_layout)
@@ -639,7 +644,7 @@ round_prompt_final = CustomContentWindow("Quiplash3", "Quiplash3FinalQuestion", 
         }
     ]}, {"text": "Safety Quip(s) (separate by |):", "input": [
         {
-            "type": sg.InputText,
+            "type": sg.Multiline,
             "default_value": "learning|safety|quips|wait|sorry|what|what|is|love",
             "param_name": "safetyQuips"
         }
