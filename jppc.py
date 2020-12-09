@@ -9,7 +9,7 @@ from shutil import copyfile, rmtree
 # Test Blather Round content (Only Custom)
 # Sample content:
 # Champ'd Up (Missing audio)
-# Talking Points: Picture (5 left, 3 per player (no way am I adding that much)), Transition (5 left, 3 per player (again, no way))
+# Talking Points: Transition (5 left, 3 per player (again, no way))
 # Quiplash 3: Round 1 Prompt (8 left, 1 per player), Round 2 Prompt (8 left, 1 per player), Round 3 Prompt (8 left, 1 per player), Safety Quip (5 left) (Missing audio)
 
 def id_gen(values): #id_gen needs a values dict to work with
@@ -81,9 +81,12 @@ class CustomContentWindow(object):
                         if "kwargs" in input_type:
                             new_kwargs = input_type["kwargs"].copy()
                             for new_kwarg in new_kwargs:
-                                if (type(new_kwargs[new_kwarg]) == str and "existing_data" in new_kwargs[new_kwarg].split("|")) or input_type["type"] == sg.Checkbox:
+                                if (type(new_kwargs[new_kwarg]) == str and "existing_data" in new_kwargs[new_kwarg]) or input_type["type"] == sg.Checkbox:
                                     if existing_data != None:
-                                        new_kwargs[new_kwarg] = existing_data[input_type["param_name"]]
+                                        if type(new_kwargs[new_kwarg]) == str and len(new_kwargs[new_kwarg].split("|")) > 1:
+                                            new_kwargs[new_kwarg] = existing_data[new_kwargs[new_kwarg].split("|")[1]]
+                                        else:
+                                            new_kwargs[new_kwarg] = existing_data[input_type["param_name"]]
                                     else:
                                         new_kwargs[new_kwarg] = new_kwargs["regular_default"]
                         if "regular_default" in new_kwargs:
@@ -836,11 +839,13 @@ talking_points_prompt = CustomContentWindow("JackboxTalks", "JackboxTalksTitle",
 def talking_points_slide_transition_filter(values):
     new_values = values
     new_values["position"] = values["position"][0]
+    new_values["select_position"] = [values["position"]]
     return new_values
 
 def talking_points_slide_transition_import(values):
     new_values = values
-    new_values["position"] = list(values["position"])
+    new_values["select_position"] = [values["position"]]
+    new_values["position"] = ("middle", "end")
     return new_values
 
 talking_points_slide_transition = CustomContentWindow("JackboxTalks", "JackboxTalksSignpost", "signpost", {
@@ -856,7 +861,7 @@ talking_points_slide_transition = CustomContentWindow("JackboxTalks", "JackboxTa
         {
             "type": sg.Listbox,
             "default_value": ("middle", "end"),
-            "kwargs": {"default_values": "existing_data", "size": (20, 2), "regular_default": "middle"},
+            "kwargs": {"default_values": "existing_data|select_position", "size": (20, 2), "regular_default": "middle"},
             "param_name": "position",
             "position": "middle"
         }
@@ -872,7 +877,7 @@ talking_points_slide_transition = CustomContentWindow("JackboxTalks", "JackboxTa
         {"type": "json"}
     ],
     "filter": talking_points_slide_transition_filter,
-    "import": talking_points_slide_transition_import
+    "import_filter": talking_points_slide_transition_import
 })
 
 talking_points = SelectionWindow("Talking Points Content Selection", ["Please select the type of content", ("Picture", "Prompt", "Slide Transition"), "talking_points_content_type"], {
