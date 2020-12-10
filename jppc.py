@@ -3,13 +3,6 @@ import json
 import os
 from shutil import copyfile, rmtree
 
-#TODO:
-# Test Champ'd Up Content (Only Custom)
-# Test Quiplash 3 Content (Only Custom)
-# Test Blather Round content (Only Custom)
-# Sample content:
-# Quiplash 3 (Add audio, 4 left) (Add custom responses, 4 left)
-
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
     id_dict = None
