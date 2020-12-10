@@ -8,8 +8,7 @@ from shutil import copyfile, rmtree
 # Test Quiplash 3 Content (Only Custom)
 # Test Blather Round content (Only Custom)
 # Sample content:
-# Champ'd Up (Missing audio, let's say 4 gets that) (Missing custom responses, let's say 4 gets that)
-# Quiplash 3 (Missing audio) (Missing custom responses)
+# Quiplash 3 (Add audio, 4 left) (Add custom responses, 4 left)
 
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
@@ -986,9 +985,64 @@ champd_up_round_layout = {
 
 champd_up_round_1 = CustomContentWindow("WorldChampions", "WorldChampionsRound", "contest", champd_up_round_layout)
 
-champd_up_round_2_5_layout = champd_up_round_layout.copy()
-champd_up_round_2_5_layout["layout_list"].pop(4)
-champd_up_round_2_5_layout["layout_list"].pop(3)
+champd_up_round_2_5_layout = {
+    "previous_window": "champd_up",
+    "layout_list": [{"text": "Contest Name: ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "The Champion of <ANYPLAYER>'s Nightmares",
+            "param_name": "contest"
+        }
+    ]}, {"text": "A shorter description (that doesn't include the word \"Champion\"): ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "<ANYPLAYER>'s Nightmares",
+            "param_name": "gameText"
+        }
+    ]}, {"text": ".OGG file of you reading the contest name (recommended)", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "",
+            "param_name": "contest_path"
+        }, {
+            "type": sg.FileBrowse,
+            "default_value": "Browse",
+            "param_name": "contest_browse",
+            "kwargs": {
+                "file_types": [(".OGG", "*.ogg"), ("ALL Files", "*.*")]
+            }
+        }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Includes Player Name",
+            "kwargs": {"default": "existing_data", "regular_default": True},
+            "param_name": "includesPlayerName"
+        }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Includes Adult Content",
+            "kwargs": {"default": "existing_data", "regular_default": False},
+            "param_name": "x"
+        }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Content is US-Specific",
+            "kwargs": {"default": "existing_data", "regular_default": False},
+            "param_name": "us"
+        }
+    ]}],
+    "content_list": [
+        {"type": "json"},
+        {"type": "CustomData", "func": champd_up_data_jet, "kwargs": {}},
+        {"type": "files", "files": {
+            "args": [{"path": "param_name", "param_name": "contest_path", "name": "contest.ogg"}],
+            "kwargs": {"adding_other_files": True}
+        }}
+    ]
+}
 
 def champd_up_round_import(values):
     new_values = values
