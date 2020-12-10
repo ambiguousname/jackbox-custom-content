@@ -32,6 +32,7 @@ Before installing, the sample custom content does contain some adult... jokes (I
 - Select the "Import/Reimport Content" option.
 - Select the "sample_custom_content.json" file.
 - Click "Import".
+- To view your new content, click on "View/Edit Content", then click "All Games".
 
 Just so you know, the sample custom content is meant to be played with other content in the mix (there isn't enough sample custom content to last a full game with 8 players). While you can use the "Only Custom" menu option to get rid of the game's own content files and play with only the sample content, it's not recommended.
 
