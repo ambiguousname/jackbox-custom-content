@@ -3,12 +3,6 @@ import json
 import os
 from shutil import copyfile, rmtree
 
-#TODO:
-# Test importing content when you already have existing content
-# Test importing content with non-existent custom files (like a .JPG or .OGG)
-# Test Champ'd Up content
-# Edit content by game?
-
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
     id_dict = None
@@ -57,56 +51,90 @@ class CustomContentWindow(object):
                 new_content.add_custom_files(data, **kwargs)
         if window_suppress == False:
             sg.Popup("Content Created, ID: " + new_content.id)
+        return new_content.id
 
     def create_window(self, *args, **kwargs):
         existing_data = None
-        if "existing_data" in kwargs:
+        if "existing_data" in kwargs and kwargs["existing_data"] != None:
             existing_data = kwargs["existing_data"]
             if "import_filter" in self.window_layout:
                 existing_data = self.window_layout["import_filter"](kwargs["existing_data"])
         if self.window_layout and "layout_list" in self.window_layout:
+            self.file_browse_keys = []
             layout = []
             for item in self.window_layout["layout_list"]:
                 layout_item = []
                 if "text" in item:
                     layout_item.append(sg.Text(item["text"]))
                 if "input" in item:
-                    for input_type in item["input"]:
+                    for index, input_type in enumerate(item["input"]):
                         new_kwargs = {}
                         if "kwargs" in input_type:
-                            new_kwargs = input_type["kwargs"]
-                            for item in new_kwargs:
-                                if type(new_kwargs[item]) == str and "existing_data" in new_kwargs[item].split("|"):
+                            new_kwargs = input_type["kwargs"].copy()
+                            for new_kwarg in new_kwargs:
+                                if (type(new_kwargs[new_kwarg]) == str and "existing_data" in new_kwargs[new_kwarg]) or input_type["type"] == sg.Checkbox:
                                     if existing_data != None:
-                                        new_kwargs[item] = existing_data[input_type["param_name"]]
+                                        if type(new_kwargs[new_kwarg]) == str and len(new_kwargs[new_kwarg].split("|")) > 1:
+                                            new_kwargs[new_kwarg] = existing_data[new_kwargs[new_kwarg].split("|")[1]]
+                                        else:
+                                            new_kwargs[new_kwarg] = existing_data[input_type["param_name"]]
                                     else:
-                                        new_kwargs[item] = new_kwargs["regular_default"]
+                                        new_kwargs[new_kwarg] = new_kwargs["regular_default"]
                         if "regular_default" in new_kwargs:
                             new_kwargs.pop("regular_default")
+                        if input_type["type"] == sg.FileBrowse:
+                            self.file_browse_keys.append(item["input"][index - 1]["param_name"])
                         exclude = [sg.FileBrowse, sg.Checkbox]
                         new_input = input_type["type"](input_type["default_value"] if existing_data == None or input_type["type"] in exclude else existing_data[input_type["param_name"]], key=input_type["param_name"], **new_kwargs)
                         layout_item.append(new_input)
                 layout.append(layout_item)
-            layout.append([sg.Button("Ok"), sg.Button("Go Back") if existing_data == None else sg.Button("Exit")])
-            window = sg.Window(self.content_type if existing_data == None else existing_data["id"], layout)
+            layout.append([sg.Button("Ok") if existing_data == None else sg.Button("Edit"), sg.Button("Make New Content") if existing_data != None else sg.Text(), sg.Button("Go Back") if existing_data == None or ("Go Back" in existing_data and existing_data["Go Back"] == True) else sg.Button("Exit")])
+            window = sg.Window(self.content_type if existing_data == None else "Editing " + existing_data["id"], layout)
             while True:
                 event, values = window.read()
                 if event == sg.WIN_CLOSED or event == "Exit":
                     break
-                if event == "Ok":
+                if event == "Ok" or event == "Edit" or event == "Make New Content":
                     new_values = values
+                    for value in new_values:
+                        if type(new_values[value]) == str:
+                            new_values[value] = new_values[value].replace("\n", "")
                     if "filter" in self.window_layout:
                         new_values = self.window_layout["filter"](new_values)
                     _id = None
-                    if existing_data != None:
+                    for key in self.file_browse_keys:
+                        curr_path = new_values[key].split("/")
+                        new_path = ""
+                        file_path = "./external content/"
+                        looking_for_external = True
+                        for directory in curr_path:
+                            if looking_for_external == True:
+                                new_path += directory + "/"
+                                if directory == "external content":
+                                    looking_for_external = False
+                            else:
+                                file_path += directory + "/"
+                        if "external content" in curr_path and os.path.realpath("./external content/") == os.path.realpath(new_path):
+                            new_values[key] = file_path
+                    if existing_data != None and event != "Make New Content":
                         _id = existing_data["id"]
-                    self.create_content(new_values, _id)
+                    new_content = self.create_content(new_values, _id)
+                    window.close()
+                    go_back = True
+                    if existing_data != None and not "Go Back" in existing_data:
+                        go_back = False
+                    elif existing_data != None and "Go Back" in existing_data:
+                        go_back = existing_data["Go Back"]
+                    existing_data = new_values
+                    existing_data["Go Back"] = go_back
+                    existing_data["id"] = new_content
+                    self.create_window(existing_data=existing_data)
                 if event == "Go Back":
                     window.close()
                     window_mapping[self.window_layout["previous_window"]].run()
             window.close()
         else:
-            raise Exception("Did not Instantiate CustomContent with 'window_layout' kwarg.")
+            raise Exception("Did not Instantiate CustomContentWindow with 'window_layout' kwarg.")
 
 class CustomContent(object):
     def __init__(self, *args, **kwargs): #values, game, content_type, descriptor_text, _id=None
@@ -118,17 +146,27 @@ class CustomContent(object):
             self.id = id_gen(self.values)
         self.values.update({"id": self.id})
 
-    def write_to_json(self, p=None, delete=False): #Right now, add_custom_files doesn't support custom file paths. Only write_to_json supports custom paths for data.jet files.
+    def write_to_json(self, p=None, delete=False, data=None):
         path = "" 
         if p:
             path = p
         else:
             path = "./" + self.values["game"] + "/content/" + self.values["content_type"] + ".jet"
-        if os.path.exists(path): #Are we making a new .JSON file, or are we appending to an existing .JSON file?
+        if data != None:
+            if os.path.exists(path):
+                os.remove(path)
+            if delete == False:
+                custom_data = open(path, "w")
+                custom_data.write(json.dumps(data.values))
+                custom_data.close()
+        elif os.path.exists(path): #Are we making a new .JSON file, or are we appending to an existing .JSON file?
             jf = open(path, "r", encoding="utf-8")
             json_file = json.load(jf)
             if delete == True:
-                json_file["content"].remove(self.values)
+                if self.values in json_file["content"]:
+                    json_file["content"].remove(self.values)
+                else:
+                    sg.Popup("Sorry, that content doesn't appear to exist in the game's files. Try saving custom_content.json somewhere else, using the Reset All Custom Content feature, and then importing custom_content.json back in.")
             else:
                 #Work backwards. It's faster that way.
                 for i in range(len(json_file["content"]) - 1, -1, -1):
@@ -168,7 +206,7 @@ class CustomContent(object):
             path = kwargs["path"]
         else:
             path = "./" + self.values["game"] + "/content/" + self.values["content_type"] + "/" + self.id + "/"
-        if os.path.exists(path) and not ("path" in kwargs and ("adding_other_files" in kwargs and kwargs["adding_other_files"] == True)): #If there's a folder here, but we're not selecting a custom path
+        if os.path.exists(path) and not ("adding_other_files" in kwargs and kwargs["adding_other_files"] == True): #If there's a folder here, but we're not selecting a custom path
             rmtree(path)
         if not ("delete" in kwargs and kwargs["delete"] == True):
             if not (os.path.exists(path)):
@@ -182,12 +220,15 @@ class CustomContent(object):
                     if file_path == "param_name":
                         file_path = self.values[file["param_name"]]
                     if(os.path.exists(file_path)): #Only add this if the file's path exists.
+                        file_path = os.path.realpath(file_path)
                         copyfile(file_path, path + "/" + name) #From shutil
+                    elif file_path != "./" and file_path != "":
+                        sg.Popup("The file: " + file_path + " does not exist. Custom content added anyway (please edit content #: " + self.id + " in the view/edit content menu.")
                 else: #If we're going to be writing a custom file from like a .JSON or whatever.
                     if isinstance(file, CustomContent):
                         if os.path.exists(path + "data.jet"):
                             os.remove(path + "data.jet")
-                        file.write_to_json(path + "data.jet")
+                        file.write_to_json(path + "data.jet", False, args[0])
                     elif 'str' in file: #Just making sure there are no files that have an empty path. "str" is if a file has specific data that we're writing.
                         f = open(path + file['name'], "w+")
                         f.write(file['str'])
@@ -224,25 +265,44 @@ class SelectionWindow():
             if event == sg.WIN_CLOSED or event == "Exit":
                 break
             if event == "Ok":
-                window.close()
-                func = self.selector.get(values[self.list_key][0])
-                func(values[self.list_key][0]) #What we need the "inputs" argument for. 
-                break
+                if len(values[self.list_key]) == 1 and values[self.list_key][0] in self.selector:
+                    window.close()
+                    func = self.selector.get(values[self.list_key][0])
+                    func(values[self.list_key][0]) #What we need the "inputs" argument for. 
+                    break
+                elif "all" in self.selector and len(values[self.list_key]) == 1:
+                    window.close()
+                    func = self.selector.get("all")
+                    func(values[self.list_key][0])
+                    break
             if event == "Go Back" and self.previous_window:
                 window.close()
-                window_mapping[self.previous_window].run()
+                if hasattr(window_mapping[self.previous_window], "run"):
+                    window_mapping[self.previous_window].run()
+                else:
+                    window_mapping[self.previous_window]()
                 break
         window.close()
                 
 #Stuff for file management
 
-def edit_content(selected=None): #Selected goes unused because of how SelectWindow works.
+def edit_content_window(selected=None): #Selected goes unused because of how SelectWindow works.
+    previous_window = content_type_mapping
+    if len(selected.split(" ")) >= 3 and selected.split(" ")[1] == "All" and selected.split(" ")[2] == "Content":
+        previous_window = selected.split(" ")[0]
+    elif selected != "All Games":
+        for game in content_type_mapping:
+            for content_type in content_type_mapping[game]:
+                if content_type == selected:
+                    previous_window = game
+                    break
     if os.path.exists("./custom_content.json"):
         ids = open("./custom_content.json", 'r+')
         content = json.load(ids)
         content_list = []
         for item in content:
-            content_list.append(content[item]["id"] + ": " + content[item]["values"]["content_type"] + " - " + content[item]["values"]["descriptor_text"])
+            if content[item]["values"]["content_type"] == selected or selected == "All Games" or (len(selected.split(" ")) >= 3 and selected.split(" ")[1] == "All" and selected.split(" ")[2] == "Content" and content[item]["values"]["game"] == selected.split(" ")[0]):
+                content_list.append(content[item]["id"] + ": " + content[item]["values"]["content_type"] + " - " + content[item]["values"]["descriptor_text"])
         layout = [[sg.Text("Choose Content to Edit/Delete:")], [sg.Listbox(content_list, key="content_selection", size=(100, 25), select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED)], [sg.Button("Edit"), sg.Button("Delete"), sg.Button("Show Folder"), sg.Button("Go Back")]]
         window = sg.Window("Choose Content to Edit/Delete", layout)
         while True:
@@ -268,7 +328,7 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
                     content_type_mapping[existing_data["game"]][existing_data["content_type"]].create_window(existing_data=existing_data)
                 window.close()
                 ids.close()
-                edit_content()
+                edit_content_window(selected)
                 break
             if event == "Delete":
                 for item in values["content_selection"]:
@@ -291,22 +351,72 @@ def edit_content(selected=None): #Selected goes unused because of how SelectWind
                 window.close()
                 ids.close()
                 sg.Popup("Content deleted!")
-                edit_content() #To update the list of content
+                edit_content_window(selected) #To update the list of content
                 break
             if event == "Go Back":
                 ids.close()
                 window.close()
-                main_window.run()
+                if selected == "All Games":
+                    edit_content()
+                else:
+                    game_content_select(previous_window)
                 break
         ids.close()
         window.close()
     else:
         sg.Popup("Sorry, no content to edit.")
-        main_window.run()
+        if selected == "All Games":
+            edit_content()
+        else:
+            game_content_select(previous_window)
 
-def import_content(selected=None):
+def game_content_select(selected=None):
+    layout_list = tuple(content_type_mapping[selected].keys()) + tuple([selected + " All Content"])
+    select_window = SelectionWindow("Select content type to view/edit for " + selected + ".", ["Select content type to view/edit for " + selected + ".", layout_list, "edit_content_type_selector"], {
+        "all": edit_content_window
+    }, "edit_content")
+    select_window.run()
+        
+def edit_content(selected=None):
+    layout_list = tuple(content_type_mapping.keys()) + tuple(["All Games"])
+    select_window = SelectionWindow("Select a game to view/edit content for.", ["Select game to view/edit content for.", layout_list, "edit_content_selector"], {
+        "all": game_content_select,
+        "All Games": edit_content_window
+    }, "main_window")
+    select_window.run()
+
+def import_content(path="./custom_content.json"):
+    if os.path.exists(path):
+        new_ids = open(path, "r")
+        new_content = json.load(new_ids)
+        new_ids.close()
+        is_copying = False
+        if not os.path.exists("./custom_content.json"):
+            copyfile(path, "./custom_content.json")
+            is_copying = True
+        if os.path.realpath(path) == os.path.realpath("./custom_content.json"):
+            is_copying = True
+        ids = open("./custom_content.json", "r+")
+        content = json.load(ids)
+        content_keys = list(content.keys())
+        content_keys.sort()
+        latest_id = 100000 if is_copying == True else int(content_keys[-1]) + 1
+        for i in new_content:
+            content_id = str(latest_id + int(i) - 100000)
+            n_c = new_content[i]
+            content[content_id] = n_c
+            n_c["id"] = content_id
+            n_c["values"]["id"] = content_id
+            content_type_mapping[n_c["values"]["game"]][n_c["values"]["content_type"]].create_content(n_c["values"], content_id, True) #Will bug you with popups rn.
+        ids.seek(0)
+        ids.truncate()
+        ids.write(json.dumps(content))
+        ids.close()
+
+def import_content_window(selected=None):
     layout = [[sg.Text("To share content for import, share custom_content.json (from the same folder as Jackbox Party Pack Custom.exe). NOTE: See the readme for importing files like .OGGs or .JPGs.")],
-    [sg.Text("If that file has been shared with you, select it here: "), sg.InputText(key="custom-files"), sg.FileBrowse(file_types=((".JSON", "*.json"), ("ALL Types", "*.*")))], [sg.Button("Import"), sg.Button("Go Back")]]
+    [sg.Text("If you've restored your game's files to their original condition, select custom_content.json to reimport.")],
+    [sg.Text("If that file has been shared with you, select it here.: "), sg.InputText(key="custom-files"), sg.FileBrowse(file_types=((".JSON", "*.json"), ("ALL Types", "*.*")))], [sg.Button("Import"), sg.Button("Go Back")]]
     window = sg.Window("Select File to Import", layout)
     while True:
         event, values = window.read()
@@ -314,29 +424,7 @@ def import_content(selected=None):
             break
         if event == "Import":
             if os.path.exists(values["custom-files"]) and os.path.splitext(values["custom-files"])[1].lower() == ".json":
-                new_ids = open(values["custom-files"], "r")
-                new_content = json.load(new_ids)
-                new_ids.close()
-                is_copying = False
-                if not os.path.exists("./custom_content.json"):
-                    copyfile(values["custom-files"], "./custom_content.json")
-                    is_copying = True
-                ids = open("./custom_content.json", "r+")
-                content = json.load(ids)
-                content_keys = list(content.keys())
-                content_keys.sort()
-                latest_id = 100000 if is_copying == True else int(content_keys[-1]) + 1
-                for i in new_content:
-                    content_id = str(latest_id + int(i) - 100000)
-                    n_c = new_content[i]
-                    content[content_id] = n_c
-                    n_c["id"] = content_id
-                    n_c["values"]["id"] = content_id
-                    content_type_mapping[n_c["values"]["game"]][n_c["values"]["content_type"]].create_content(n_c["values"], content_id, True) #Will bug you with popups rn.
-                ids.seek(0)
-                ids.truncate()
-                ids.write(json.dumps(content))
-                ids.close()
+                import_content(values["custom-files"])
                 sg.Popup("Custom content imported. View the files in the edit menu.")
             else:
                 sg.Popup("That file doesn't exist, or it isn't a .json file.")
@@ -365,10 +453,29 @@ def game_content_del(game, content_type):
             jet_file.write(json.dumps(json_file))
             jet_file.close()
 
+def del_by_content(game):
+    layout = [[sg.Text("Again, are you absolutely sure you want to do this?")],
+    [sg.Text("Please select the content type(s) you'd like to remove: "), sg.Listbox(([item for item in content_type_mapping[game]]), size=(50, 4), key="content_choice", select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE)], [sg.Checkbox("I am absolutely sure I want to do this. Please delete the non-custom content types I've selected.", key="sure")],
+    [sg.Button("Ok"), sg.Button("Go Back")]]
+    window = sg.Window("Delete content types", layout)
+    while True:
+        event, values = window.read()
+        if event == sg.WIN_CLOSED:
+            break
+        if event == "Go Back":
+            window.close()
+            del_all_else()
+            break
+        if event == "Ok":
+            if values["sure"] == True:
+                for content_type in values["content_choice"]:
+                    game_content_del(game, content_type)
+            sg.Popup("Non-Custom Content deleted for: " + str(values["content_choice"]))
+
 def del_all_else(selected=None):
     layout = [[sg.Text("Are you absolutely sure you want to do this?")], [sg.Text("This option will effectively delete all the game's content files so that you can only play with your own custom content. Please make sure you have backups.")],
-    [sg.Text("Please select the game(s) whose content you'd like to remove: "), sg.Listbox(("Quiplash3", "JackboxTalks"), size=(50, 4), key="game_choice", select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE)], [sg.Checkbox("I am absolutely sure I want to do this. Please delete all non-custom content.", key="sure")], [sg.Button("Ok"), sg.Button("Go Back")]]
-    window = sg.Window("Delete all non-custom content", layout)
+    [sg.Text("Please select the game whose content you'd like to remove: "), sg.Listbox(([item for item in content_type_mapping]), size=(50, 4), key="game_choice", select_mode=sg.LISTBOX_SELECT_MODE_BROWSE)], [sg.Checkbox("I am absolutely sure I want to do this. Please delete all non-custom content for the game I have selected.", key="sure")], [sg.Button("Ok"), sg.Button("Remove Non-Custom Content By Type"), sg.Button("Go Back")]]
+    window = sg.Window("Delete non-custom content", layout)
     while True:
         event, values = window.read()
         if event == sg.WIN_CLOSED:
@@ -382,34 +489,12 @@ def del_all_else(selected=None):
                 for game in values["game_choice"]:
                     for content_type in content_type_mapping[game]:
                         game_content_del(game, content_type)
-                sg.Popup("Content deleted for: " + str(values["game_choice"]))
+                sg.Popup("Non-Custom Content deleted for: " + str(values["game_choice"]))
+        if event == "Remove Non-Custom Content By Type":
+            window.close()
+            for game in values["game_choice"]:
+                del_by_content(game)
     window.close()
-
-def all_content_reset(selected=None):
-    if os.path.exists("./custom_content.json"):
-        layout = [[sg.Text("This feature is to be used if you restored your game's files to their original condition (which means that now all your custom content is no longer in the game).")],
-        [sg.Text("Please make a backup of your custom_content.json file, then import it after the reset to ensure all your custom content stays with you after the reset.")], [sg.Checkbox("I understand what I am about to do.", key="understand")],
-        [sg.Button("Ok"), sg.Button("Cancel")]]
-        window = sg.Window("Reset all custom content", layout)
-        while True:
-            event, values = window.read()
-            if event == sg.WIN_CLOSED:
-                break
-            if event == "Cancel":
-                window.close()
-                main_window.run()
-                break
-            if event == "Ok":
-                if values["understand"] == True:
-                    os.remove("./custom_content.json")
-                    sg.Popup("Content reset.")
-                    window.close()
-                    main_window.run()
-                    break
-        window.close()
-    else:
-        sg.Popup("Sorry, you don't have any custom content to reset.")
-        main_window.run()
 
 
 #Stuff for Quiplash 3
@@ -431,6 +516,11 @@ def round_filter(values):
     new_values["safetyQuips"] = values["safetyQuips"].split("|")
     return new_values
 
+def round_import(values):
+    new_values = values
+    new_values["safetyQuips"] = "|".join(values["safetyQuips"])
+    return new_values
+
 round_prompt_layout = {
     "previous_window": "quiplash_prompt",
     "layout_list": [{"text": "Prompt Text: ", "input": [
@@ -442,7 +532,7 @@ round_prompt_layout = {
         }
     ]}, {"text": "Safety Quips (separate by |):", "input": [
         {
-            "type": sg.InputText,
+            "type": sg.Multiline,
             "default_value": "learn how the prompt system works|learn how safety quips work|eat all my garbage",
             "param_name": "safetyQuips",
             "kwargs": {"size": (50, 1)}
@@ -511,7 +601,8 @@ round_prompt_layout = {
             "kwargs": {"adding_other_files": True}
         }}
     ],
-    "filter": round_filter
+    "filter": round_filter,
+    "import_filter": round_import
 }
 
 round_prompt_1 = CustomContentWindow("Quiplash3", "Quiplash3Round1Question", "prompt", round_prompt_layout)
@@ -545,7 +636,7 @@ round_prompt_final = CustomContentWindow("Quiplash3", "Quiplash3FinalQuestion", 
         }
     ]}, {"text": "Safety Quip(s) (separate by |):", "input": [
         {
-            "type": sg.InputText,
+            "type": sg.Multiline,
             "default_value": "learning|safety|quips|wait|sorry|what|what|is|love",
             "param_name": "safetyQuips"
         }
@@ -714,13 +805,6 @@ talking_points_prompt = CustomContentWindow("JackboxTalks", "JackboxTalksTitle",
             "param_name": "title",
             "kwargs": {"size": (75, 1)}
         }
-    ]}, {"input": [
-        {
-            "type": sg.Checkbox,
-            "default_value": "Contains adult content",
-            "kwargs": {"default": "existing_data", "regular_default": False},
-            "param_name": "x"
-        }
     ]}, {"text": "Safety Answers (separate by |): ", "input": [
         {
             "type": sg.Multiline,
@@ -734,6 +818,13 @@ talking_points_prompt = CustomContentWindow("JackboxTalks", "JackboxTalksTitle",
             "kwargs": {"size": (100, 5)},
             "param_name": "signposts"
         }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Contains adult content",
+            "kwargs": {"default": "existing_data", "regular_default": False},
+            "param_name": "x"
+        }
     ]}],
     "content_list": [
         {"type": "json"}
@@ -745,11 +836,13 @@ talking_points_prompt = CustomContentWindow("JackboxTalks", "JackboxTalksTitle",
 def talking_points_slide_transition_filter(values):
     new_values = values
     new_values["position"] = values["position"][0]
+    new_values["select_position"] = [values["position"]]
     return new_values
 
 def talking_points_slide_transition_import(values):
     new_values = values
-    new_values["position"] = list(values["position"])
+    new_values["select_position"] = [values["position"]]
+    new_values["position"] = ("middle", "end")
     return new_values
 
 talking_points_slide_transition = CustomContentWindow("JackboxTalks", "JackboxTalksSignpost", "signpost", {
@@ -765,7 +858,7 @@ talking_points_slide_transition = CustomContentWindow("JackboxTalks", "JackboxTa
         {
             "type": sg.Listbox,
             "default_value": ("middle", "end"),
-            "kwargs": {"default_values": "existing_data", "size": (20, 2), "regular_default": "middle"},
+            "kwargs": {"default_values": "existing_data|select_position", "size": (20, 2), "regular_default": "middle"},
             "param_name": "position",
             "position": "middle"
         }
@@ -781,7 +874,7 @@ talking_points_slide_transition = CustomContentWindow("JackboxTalks", "JackboxTa
         {"type": "json"}
     ],
     "filter": talking_points_slide_transition_filter,
-    "import": talking_points_slide_transition_import
+    "import_filter": talking_points_slide_transition_import
 })
 
 talking_points = SelectionWindow("Talking Points Content Selection", ["Please select the type of content", ("Picture", "Prompt", "Slide Transition"), "talking_points_content_type"], {
@@ -792,6 +885,17 @@ talking_points = SelectionWindow("Talking Points Content Selection", ["Please se
 
 # Champ'd Up Stuff
 
+def champd_up_data_jet(values):
+    data = CustomData()
+    data.add_data("B", "true" if values["contest_path"] != "" else "false", "HasContestAudio") 
+    data.add_data("A", "contest", "ContestAudio")
+    data.add_data("S", values["contest"], "ContestText") #Included even though there might not be response audio
+    data.add_data("S", values["gameText"], "GameText")
+    data.add_data("B", "true" if values["response_path"] != "" else "false", "HasResponseAudio")
+    data.add_data("A", "response", "ResponseAudio") #I think this is asking for the file name of the audio. I think I can leave this in if the audio doesn't exist, because some prompts don't have response audio, but we include the above line. 
+    data.add_data("S", values["response_transcript"], "ResponseText")
+    return data
+
 champd_up_round_layout = {
     "previous_window": "champd_up",
     "layout_list": [{"text": "Contest Name: ", "input": [
@@ -800,7 +904,7 @@ champd_up_round_layout = {
             "default_value": "The Champion of <ANYPLAYER>'s Nightmares",
             "param_name": "contest"
         }
-    ]}, {"text": "A shorter description: ", "input": [
+    ]}, {"text": "A shorter description (that doesn't include the word \"Champion\"): ", "input": [
         {
             "type": sg.InputText,
             "default_value": "<ANYPLAYER>'s Nightmares",
@@ -833,6 +937,13 @@ champd_up_round_layout = {
             }
         }
     ]},
+    {"text": "Transcript of your reaction: ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "",
+            "param_name": "response_transcript"
+        }
+    ]},
     {"input": [
         {
             "type": sg.Checkbox,
@@ -857,7 +968,7 @@ champd_up_round_layout = {
     ]}],
     "content_list": [
         {"type": "json"},
-        {"type": "CustomData"},
+        {"type": "CustomData", "func": champd_up_data_jet, "kwargs": {}},
         {"type": "files", "files": {
             "args": [{"path": "param_name", "param_name": "contest_path", "name": "contest.ogg"}],
             "kwargs": {"adding_other_files": True}
@@ -867,9 +978,68 @@ champd_up_round_layout = {
 
 champd_up_round_1 = CustomContentWindow("WorldChampions", "WorldChampionsRound", "contest", champd_up_round_layout)
 
+champd_up_round_2_5_layout = {
+    "previous_window": "champd_up",
+    "layout_list": [{"text": "Contest Name: ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "The Champion of <ANYPLAYER>'s Nightmares",
+            "param_name": "contest"
+        }
+    ]}, {"text": "A shorter description (that doesn't include the word \"Champion\"): ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "<ANYPLAYER>'s Nightmares",
+            "param_name": "gameText"
+        }
+    ]}, {"text": ".OGG file of you reading the contest name (recommended)", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "",
+            "param_name": "contest_path"
+        }, {
+            "type": sg.FileBrowse,
+            "default_value": "Browse",
+            "param_name": "contest_browse",
+            "kwargs": {
+                "file_types": [(".OGG", "*.ogg"), ("ALL Files", "*.*")]
+            }
+        }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Includes Player Name",
+            "kwargs": {"default": "existing_data", "regular_default": True},
+            "param_name": "includesPlayerName"
+        }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Includes Adult Content",
+            "kwargs": {"default": "existing_data", "regular_default": False},
+            "param_name": "x"
+        }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Content is US-Specific",
+            "kwargs": {"default": "existing_data", "regular_default": False},
+            "param_name": "us"
+        }
+    ]}],
+    "content_list": [
+        {"type": "json"},
+        {"type": "CustomData", "func": champd_up_data_jet, "kwargs": {}},
+        {"type": "files", "files": {
+            "args": [{"path": "param_name", "param_name": "contest_path", "name": "contest.ogg"}],
+            "kwargs": {"adding_other_files": True}
+        }}
+    ]
+}
+
 def champd_up_round_import(values):
     new_values = values
-    new_values["linkedPrompt"] = "|".join(values["linkedPrompts"])
+    new_values["linkedPrompts"] = "|".join(values["linkedPrompts"])
     return new_values
 
 def champd_up_round_filter(values):
@@ -885,7 +1055,7 @@ champd_up_round_2 = CustomContentWindow("WorldChampions", "WorldChampionsSecondH
             "default_value": "The Champion of <ANYPLAYER>",
             "param_name": "contest"
         }
-    ]}, {"text": "A shorter description: ", "input": [
+    ]}, {"text": "A shorter description (that doesn't include the word \"Champion\"): ", "input": [
         {
             "type": sg.InputText,
             "default_value": "<ANYPLAYER>'s Champion",
@@ -923,8 +1093,13 @@ champd_up_round_2 = CustomContentWindow("WorldChampions", "WorldChampionsSecondH
                 "file_types": [(".OGG", "*.ogg"), ("ALL Files", "*.*")]
             }
         }
-    ]},
-    {"input": [
+    ]}, {"text": "Transcript of your reaction: ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "",
+            "param_name": "response_transcript"
+        }
+    ]}, {"input": [
         {
             "type": sg.Checkbox,
             "default_value": "Includes Player Name",
@@ -948,7 +1123,7 @@ champd_up_round_2 = CustomContentWindow("WorldChampions", "WorldChampionsSecondH
     ]}],
     "content_list": [
         {"type": "json"},
-        {"type": "CustomData"},
+        {"type": "CustomData", "func": champd_up_data_jet, "kwargs": {}},
         {"type": "files", "files": {
             "args": [{"path": "param_name", "param_name": "contest_path", "name": "contest.ogg"}],
             "kwargs": {"adding_other_files": True}
@@ -958,30 +1133,240 @@ champd_up_round_2 = CustomContentWindow("WorldChampions", "WorldChampionsSecondH
     "import_filter": champd_up_round_import
 })
 
-champd_up_round_2_5 = CustomContentWindow("WorldChampions", "WorldChampionsSecondHalfB", "contest", champd_up_round_layout)
+champd_up_round_2_5 = CustomContentWindow("WorldChampions", "WorldChampionsSecondHalfB", "contest", champd_up_round_2_5_layout)
 
 champd_up = SelectionWindow("Champ'd Up Content Selection", ["Please select the type of content", ("Round 1 Prompt", "Round 2 Prompt", "Round 2.5 Prompt"), "champd_up_content_type"], {
     "Round 1 Prompt": champd_up_round_1.create_window,
     "Round 2 Prompt": champd_up_round_2.create_window,
     "Round 2.5 Prompt": champd_up_round_2_5.create_window
+}, "create_content")
+
+#Blather Round stuff
+
+def blather_round_word_filter(values):
+    new_values = values
+    new_values["alternateSpellings"] = values["alternateSpellings"].split("|")
+    new_values["forbiddenWords"] = values["forbiddenWords"].split("|")
+    tailored_words = []
+    old_tailored_words = values["tailoredWords"].split("|")
+    for i in range(0, len(old_tailored_words), 2):
+        tailored_words.append({"list": old_tailored_words[i], "word": old_tailored_words[i + 1]})
+    new_values["tailoredWords"] = tailored_words
+    return new_values
+
+def blather_round_word_import(values):
+    new_values = values
+    new_values["alternateSpellings"] = "|".join(values["alternateSpellings"])
+    new_values["forbiddenWords"] = "|".join(values["forbiddenWords"])
+    tailored_words_str = ""
+    for index, item in enumerate(values["tailoredWords"]):
+        tailored_words_str += item["list"] + "|" + item["word"] + ("|" if index < len(values["tailoredWords"]) - 1 else "")
+    new_values["tailoredWords"] = tailored_words_str
+    return new_values
+
+def blather_round_word_data_jet(values):
+    data = CustomData()
+    data.add_data("S", values["password"], "Password")
+    data.add_data("S", values["category"], "Category")
+    if values["subcategory"] != "":
+        data.add_data("S", values["subcategory"], "Subcategory")
+    data.add_data("S", values["difficulty"], "Difficulty")
+    data.add_data("S", "|".join(values["forbiddenWords"]), "ForbiddenWords")
+    data.add_data("S", "|".join(values["alternateSpellings"]), "AlternateSpellings")
+    return data
+
+blather_round_word = CustomContentWindow("BlankyBlank", "BlankyBlankPasswords", "password", {
+    "previous_window": "blather_round",
+    "layout_list": [{"text": "Word/Phrase to use: ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "R'lyeh",
+            "param_name": "password"
+        }
+    ]}, {"text": "Alternate spellings (separate by |): ", "input": [
+        {
+            "type": sg.Multiline,
+            "default_value": "Rlyeh|Ryleh|R'yleh|R'leyh|Rehly|Rl'yeh|Ry'leh|Relyh|Rly'eh",
+            "param_name": "alternateSpellings"
+        }
+    ]}, {"text": "Word/Phrase Category: ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "place",
+            "param_name": "category"
+        }
+    ]}, {"text": "Subcategory (optional): ", "input":[
+        {
+            "type": sg.InputText,
+            "default_value": "city",
+            "param_name": "subcategory"
+        }
+    ]}, {"text": "Difficulty (easy, medium, or hard): ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "hard",
+            "param_name": "difficulty"
+        }
+    ]}, {"text": "Forbidden Words (separate by |): ", "input": [
+        {
+            "type": sg.Multiline,
+            "default_value": "",
+            "param_name": "forbiddenWords"
+        }
+    ]}, {"text": "Tailored Words (separate by |): ", "input": [
+        {
+            "type": sg.Multiline,
+            "default_value": "<nature-places>|underwater|<nature-places>|sea|<abstract-concept>|insanity|<abstract-concept>|evil|<genre>|horror|<genre>|fiction",
+            "param_name": "tailoredWords"
+        }
+    ]}, {"input": [
+        {
+            "type": sg.Checkbox,
+            "default_value": "Content is US-Specific",
+            "kwargs": {"default": "existing_data", "regular_default": False},
+            "param_name": "us"
+        }
+    ]}],
+    "content_list": [
+        {"type": "json"},
+        {"type": "CustomData", "func": blather_round_word_data_jet, "kwargs": {}}
+    ],
+    "filter": blather_round_word_filter,
+    "import_filter": blather_round_word_import
 })
+
+def blather_round_category_filter(values):
+    new_values = values
+    new_values["structures"] = values["structures"].split("|")
+    return new_values
+
+def blather_round_category_import(values):
+    new_values = values
+    new_values["structures"] = "|".join(values["structures"])
+    return new_values
+
+def blather_round_category_data_jet(values):
+    data = CustomData()
+    data.add_data("S", values["category"], "Category")
+    data.add_data("S", "|".join(values["structures"]), "Structures")
+    return data
+
+blather_round_category = CustomContentWindow("BlankyBlank", "BlankyBlankSentenceStructures", "category", {
+    "previous_window": "blather_round",
+    "layout_list": [{"text": "Broad Category Name: ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "art",
+            "param_name": "category"
+        }
+    ]}, {"text": "Sentence Structures (separate by |): ", "input": [
+        {
+            "type": sg.Multiline,
+            "default_value": "It's <article-1> <art-adjective-simple> <art-noun-simple>.|It <art-verb-simple> <article-2> <art-noun-simple>.|Talk about <art-adjective-complex>!|It <art-verb-simple> <article-2> <art-noun-complex>.|Oh, <art-noun-complex>!|Quite simply, it's <article-1> <art-adjective-complex> <art-noun-complex>.",
+            "param_name": "structures",
+            "kwargs": {"size": (50, 10)}
+        }
+    ]}],
+    "content_list": [
+        {"type": "json"},
+        {"type": "CustomData", "func": blather_round_category_data_jet, "kwargs": {}}
+    ],
+    "filter": blather_round_category_filter,
+    "import_filter": blather_round_category_import
+})
+
+def blather_round_descriptor_filter(values):
+    new_values = values
+    new_values["amount"] = ""
+    new_values["optional"] = False
+    words_list = values["words"].split("|")
+    new_words = []
+    next_true = False
+    for item in words_list:
+        if item == "T":
+            next_true = True
+        else:
+            new_words.append({"word": item, "alwaysChoose": next_true})
+            if next_true == True:
+                next_true = False
+    new_values["words"] = new_words
+    return new_values
+
+def blather_round_descriptor_import(values):
+    new_values = values
+    words_str = ""
+    for index, item in enumerate(new_values["words"]):
+        if item["alwaysChoose"] == True:
+            words_str += ("|" if index != 0 else "") + "T|"
+        words_str += item["word"] + ("|" if index < len(new_values["words"]) - 1 else "")
+    new_values["words"] = words_str
+    return new_values
+
+def blather_round_descriptor_data_jet(values):
+    data = CustomData()
+    data.add_data("S", values["name"], "Name")
+    data.add_data("B", values["optional"], "Optional")
+    data.add_data("S", values["amount"], "Amount")
+    data.add_data("S", values["maxChoices"], "MaxChoices")
+    data.add_data("S", values["placeholder"], "Placeholder")
+    return data
+
+blather_round_descriptor = CustomContentWindow("BlankyBlank", "BlankyBlankWordLists", "name", {
+    "previous_window": "blather_round",
+    "layout_list": [{"text": "Descriptor name (hyphenate, please): ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "hyphenated-descriptor (Please read README)",
+            "param_name": "name"
+        }
+    ]}, {"text": "Words List: ", "input": [
+        {
+            "type": sg.Multiline,
+            "default_value": "list|of|separated|T|words|or|sentences",
+            "param_name": "words",
+            "kwargs": {"size": (50, 5)}
+        }
+    ]}, {"text": "Maximum number of choices (leave blank for none): ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "",
+            "param_name": "maxChoices"
+        }
+    ]}, {"text": "Placeholder text (blank, blanks, or blanky): ", "input": [
+        {
+            "type": sg.InputText,
+            "default_value": "blank",
+            "param_name": "placeholder"
+        }
+    ]}],
+    "content_list": [
+        {"type": "json"},
+        {"type": "CustomData", "func": blather_round_descriptor_data_jet, "kwargs": {}}
+    ],
+    "filter": blather_round_descriptor_filter,
+    "import_filter": blather_round_descriptor_import
+})
+
+blather_round = SelectionWindow("Blather 'Round Content Selection", ["Please select the type of content (Read Readme)", ("Word", "Category", "Descriptors"), "blather_round_content_type"], {
+    "Word": blather_round_word.create_window,
+    "Category": blather_round_category.create_window,
+    "Descriptors": blather_round_descriptor.create_window
+}, "create_content")
 
 #Main Menu stuff
 
-create_content = SelectionWindow("Select a game", ["Select a game.", ("Champ'd Up", "Quiplash 3", "Talking Points"), "game"],{
-    "Blather Round": None,
-    "Devils and the Details": None,
+create_content = SelectionWindow("Select a game", ["Select a game.", ("Blather 'Round", "Champ'd Up", "Quiplash 3", "Talking Points"), "game"],{
+    "Blather 'Round": blather_round.run,
     "Talking Points": talking_points.run,
     "Quiplash 3": quiplash_3.run,
     "Champ'd Up": champd_up.run
 }, "main_window")
 
-main_window = SelectionWindow("Select an option", ["Please select an option.", ("Create Custom Content", "View/Edit Content", "Import Content", "Only Use Custom Content", "Reset All Custom Content"), "option"], {
+main_window = SelectionWindow("Select an option", ["Please select an option.", ("Create Custom Content", "View/Edit Content", "Import/Reimport Content", "Only Use Custom Content"), "option"], {
     "Create Custom Content": create_content.run,
     "View/Edit Content": edit_content,
-    "Import Content": import_content,
-    "Only Use Custom Content": del_all_else,
-    "Reset All Custom Content": all_content_reset
+    "Import/Reimport Content": import_content_window,
+    "Only Use Custom Content": del_all_else
 })
 
 window_mapping = { #Used for backing out of stuff.
@@ -990,20 +1375,27 @@ window_mapping = { #Used for backing out of stuff.
     "create_content": create_content,
     "main_window": main_window,
     "talking_points": talking_points,
-    "champd_up": champd_up
+    "champd_up": champd_up,
+    "blather_round": blather_round,
+    "edit_content": edit_content
 }
 
 content_type_mapping = { #Used in editing content to change data.
-    "Quiplash3":{
-        "Quiplash3Round1Question": round_prompt_1,
-        "Quiplash3Round2Question": round_prompt_2,
-        "Quiplash3FinalQuestion": round_prompt_final,
-        "Quiplash3SafetyQuips": safety_quip
+    "BlankyBlank": {
+        "BlankyBlankPasswords": blather_round_word,
+        "BlankyBlankSentenceStructures": blather_round_category,
+        "BlankyBlankWordLists": blather_round_descriptor 
     },
     "JackboxTalks":{
         "JackboxTalksPicture": talking_points_picture,
         "JackboxTalksTitle": talking_points_prompt,
         "JackboxTalksSignpost": talking_points_slide_transition
+    },
+    "Quiplash3":{
+        "Quiplash3Round1Question": round_prompt_1,
+        "Quiplash3Round2Question": round_prompt_2,
+        "Quiplash3FinalQuestion": round_prompt_final,
+        "Quiplash3SafetyQuips": safety_quip
     },
     "WorldChampions": {
         "WorldChampionsRound": champd_up_round_1,
