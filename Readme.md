@@ -25,6 +25,8 @@ otherwise you're going to have to uninstall and reinstall your entire game if so
 - Run jppc.py in the terminal of your choice.
 
 ## To add the sample custom content:
+Before installing, the sample custom content does contain some adult... jokes (I wrote them very late in the evening, the level of comedy will vary significantly)? So be warned if you want to import it.
+
 - Add Jackbox Party Pack Custom.exe or jppc.py to the "games" directory of the Jackbox Party Pack 7 folder.
 - Run jppc.py or Jackbox Party Pack Custom.exe
 - Select the "Import/Reimport Content" option.
