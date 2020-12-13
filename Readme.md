@@ -122,6 +122,8 @@ Additionally, you may have to edit imported content for Champ'd Up, since certai
 
 This is not at all recommended. If you have less than a certain amount of content for the game to pull from, the game will not continue. It's better to mix in your custom content with the existing content. If you still want to only use custom content for your game, you can use the "Only Use Custom Content" option from the main menu to delete all existing game content.
 
+WARNING: This feature is not at all recommended for 'Blather Round. I haven't yet found a scenario where 'Blather Round works with Only Custom Content.
+
 # Making custom content for Blather Round
 
 NOTE: For reasons you'll see in a second, it's not recommended that you use the "Only Custom Content" option for Blather 'Round.

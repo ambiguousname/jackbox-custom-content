@@ -3,6 +3,13 @@ import json
 import os
 from shutil import copyfile, rmtree
 
+#TODO:
+# Add warning if the .EXE file isn't in the ./games/ folder.
+# Test Quiplash 3 Custom Responses
+# Test Champ'd Up
+# Test Talking Points
+# Test Blather 'Round
+
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
     id_dict = None
@@ -1147,6 +1154,8 @@ def blather_round_word_filter(values):
     new_values = values
     new_values["alternateSpellings"] = values["alternateSpellings"].split("|")
     new_values["forbiddenWords"] = values["forbiddenWords"].split("|")
+    if new_values["forbiddenWords"] == [""]:
+        new_values["forbiddenWords"] = []
     tailored_words = []
     old_tailored_words = values["tailoredWords"].split("|")
     for i in range(0, len(old_tailored_words), 2):
