@@ -22,7 +22,7 @@ otherwise you're going to have to uninstall and reinstall your entire game if so
 ## Otherwise:
 - [Install Python 3.9+](https://www.python.org/)
 - Clone this repository
-- Move "jppc.py" to the "games" directory of your Jackbox Party Pack 7 install folder. (For steam on Windows: C:\Program Files (x86)\Steam\steamapps\common\The Jackbox Party Pack 7\games)
+- Move "jppc.py" to the "games" directory of your Jackbox Party Pack 7 install folder (You can look up where the game is stored yourself, you're very smart).
 - Run jppc.py in the terminal of your choice.
 
 ## To add the sample custom content:
