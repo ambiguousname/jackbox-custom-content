@@ -4,11 +4,9 @@ import os
 from shutil import copyfile, rmtree
 
 #TODO:
-# Add warning if the .EXE file isn't in the ./games/ folder.
 # Test Quiplash 3 Custom Responses
 # Test Champ'd Up
 # Test Talking Points
-# Test Blather 'Round
 
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
@@ -1413,4 +1411,7 @@ content_type_mapping = { #Used in editing content to change data.
     }
 }
 
-main_window.run()
+if os.path.realpath("../games") == os.getcwd() and os.path.exists("./PartyPack") and os.path.exists("./Everyday"): #Checks to see if we're in the right folder.
+    main_window.run()
+else:
+    sg.Popup("File not in The Jackbox Party Pack 7/games folder. Please see the installation instructions of the Readme for folder location.")
