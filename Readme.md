@@ -14,12 +14,13 @@ otherwise you're going to have to uninstall and reinstall your entire game if so
 
 # Install instructions
 
-## If you don't have python installed and are running on Windows:
+## If you're running on Windows:
 - Go to the releases page and download the .ZIP file: https://github.com/ambiguousname/jackbox-custom-content/releases
 - Extract the contents of the .ZIP file into the "games" directory of your Jackbox Party Pack 7 install folder. (For steam on Windows: C:\Program Files (x86)\Steam\steamapps\common\The Jackbox Party Pack 7\games)
 - Run "Jackbox Party Pack Custom.exe".
 
-## If you do have python installed:
+## Otherwise:
+- [Install Python 3.9+](https://www.python.org/)
 - Clone this repository
 - Move "jppc.py" to the "games" directory of your Jackbox Party Pack 7 install folder. (For steam on Windows: C:\Program Files (x86)\Steam\steamapps\common\The Jackbox Party Pack 7\games)
 - Run jppc.py in the terminal of your choice.
@@ -89,9 +90,9 @@ Delete everything from your Jackbox Party Pack 7/games folder, then find the "Ve
 
 If the .EXE is too slow for you, you can just follow the steps for cloning the repository and using the .PY file.
 
-## I don't have Windows, and I don't want to install python
+## I don't have Windows, and I don't want to install Python
 
-As of right now, you're just going to have to install python and install jppc.py on your OS of choice. I haven't figured out how to make distributables for other OSes yet.
+As of right now, you're just going to have to install Python and install jppc.py on your OS of choice. I'm using PyInstaller to compile my code, and PyInstaller is not able to cross-compile.
 
 ### Important note if you've clicked "verify integrity of game files..."
 
