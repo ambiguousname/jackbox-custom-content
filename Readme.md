@@ -15,8 +15,8 @@ otherwise you're going to have to uninstall and reinstall your entire game if so
 # Install instructions
 
 ## If you're running on Windows:
-- Go to the releases page and download the .ZIP file: https://github.com/ambiguousname/jackbox-custom-content/releases
-- Extract the contents of the .ZIP file into the "games" directory of your Jackbox Party Pack 7 install folder. (For steam on Windows: C:\Program Files (x86)\Steam\steamapps\common\The Jackbox Party Pack 7\games)
+- Go to the [releases](https://github.com/ambiguousname/jackbox-custom-content/releases) page and download the .ZIP file.
+- Extract the contents of the .ZIP file into the "games" directory of your Jackbox Party Pack 7 install folder. (For Steam on Windows that's typically C:\Program Files (x86)\Steam\steamapps\common\The Jackbox Party Pack 7\games)
 - Run "Jackbox Party Pack Custom.exe".
 
 ## Otherwise:
