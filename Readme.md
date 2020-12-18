@@ -58,7 +58,7 @@ Additionally, you may have to edit imported content for Champ'd Up, since certai
 This is not at all recommended. If you have less than a certain amount of content for the game to pull from, the game will not continue. It's better to mix in your custom content with the existing content. If you still want to only use custom content for your game, you can use the "Only Use Custom Content" option from the main menu to delete all existing game content.
 
 This option isn't recommended for any game unless that game has at least the number of content described here:
-- Blather 'Round - At least 36 Words
+- Blather 'Round - At least 36 Words. 12 Words of "easy" difficulty, 12 of "medium" difficulty, and 12 of "hard" difficulty.
 - Champ'd Up - At least 8 Round 1 Prompts, 8 Round 2 Prompts, 8 Round 2.5 Prompts
 - Quiplash 3 - At least 8 Round 1 Prompts, 8 Round 2 Prompts, 1 Round 3 Prompt
 - Talking Points - At least 24 Prompts, 24 Pictures, 24 Slide Transitions

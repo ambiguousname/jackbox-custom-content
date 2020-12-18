@@ -1306,7 +1306,7 @@ def blather_round_descriptor_import(values):
     words_str = ""
     for index, item in enumerate(new_values["words"]):
         if item["alwaysChoose"] == True:
-            words_str += ("|" if index != 0 else "") + "T|"
+            words_str += "T|"
         words_str += item["word"] + ("|" if index < len(new_values["words"]) - 1 else "")
     new_values["words"] = words_str
     return new_values
