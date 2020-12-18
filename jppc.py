@@ -4,9 +4,11 @@ import os
 from shutil import copyfile, rmtree
 
 #TODO:
+# Double check Blather Round response-sentences.
 # Test Quiplash 3 Custom Responses
 # Test Champ'd Up
 # Test Talking Points
+# Way of telling if custom content exists (For Only Custom Content and View/Edit Content.)
 
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
