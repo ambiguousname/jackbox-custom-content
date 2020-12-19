@@ -3,6 +3,9 @@ import json
 import os
 from shutil import copyfile, rmtree
 
+#TODO:
+#Indicator if there's no custom content in the games files (For View/Edit content)
+
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
     id_dict = None
@@ -993,7 +996,7 @@ champd_up_round_layout = {
         {"type": "json"},
         {"type": "CustomData", "func": champd_up_data_jet, "kwargs": {}},
         {"type": "files", "files": {
-            "args": [{"path": "param_name", "param_name": "contest_path", "name": "contest.ogg"}],
+            "args": [{"path": "param_name", "param_name": "contest_path", "name": "contest.ogg"}, {"path": "param_name", "param_name": "response_path", "name": "response.ogg"}],
             "kwargs": {"adding_other_files": True}
         }}
     ]
@@ -1054,7 +1057,7 @@ champd_up_round_2_5_layout = {
         {"type": "json"},
         {"type": "CustomData", "func": champd_up_data_jet, "kwargs": {}},
         {"type": "files", "files": {
-            "args": [{"path": "param_name", "param_name": "contest_path", "name": "contest.ogg"}],
+            "args": [{"path": "param_name", "param_name": "contest_path", "name": "contest.ogg"}, {"path": "param_name", "param_name": "response_path", "name": "response.ogg"}],
             "kwargs": {"adding_other_files": True}
         }}
     ]
@@ -1148,7 +1151,7 @@ champd_up_round_2 = CustomContentWindow("WorldChampions", "WorldChampionsSecondH
         {"type": "json"},
         {"type": "CustomData", "func": champd_up_data_jet, "kwargs": {}},
         {"type": "files", "files": {
-            "args": [{"path": "param_name", "param_name": "contest_path", "name": "contest.ogg"}],
+            "args": [{"path": "param_name", "param_name": "contest_path", "name": "contest.ogg"}, {"path": "param_name", "param_name": "response_path", "name": "response.ogg"}],
             "kwargs": {"adding_other_files": True}
         }}
     ],
