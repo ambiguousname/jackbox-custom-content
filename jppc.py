@@ -3,11 +3,6 @@ import json
 import os
 from shutil import copyfile, rmtree
 
-#TODO:
-# Record Quiplash 3 (With custom responses)
-# Record Champ'd Up
-# Record Talking Points
-
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
     id_dict = None
@@ -478,8 +473,31 @@ def del_by_content(game):
             sg.Popup("Non-Custom Content deleted for: " + str(values["content_choice"]))
 
 def del_all_else(selected=None):
-    layout = [[sg.Text("Are you absolutely sure you want to do this?")], [sg.Text("This option will effectively delete all the game's content files so that you can only play with your own custom content. Please make sure you have backups.")],
-    [sg.Text("Please select the game whose content you'd like to remove: "), sg.Listbox(([item for item in content_type_mapping]), size=(50, 4), key="game_choice", select_mode=sg.LISTBOX_SELECT_MODE_BROWSE)], [sg.Checkbox("I am absolutely sure I want to do this. Please delete all non-custom content for the game I have selected.", key="sure")], [sg.Button("Ok"), sg.Button("Remove Non-Custom Content By Type"), sg.Button("Go Back")]]
+    # Detect if Only Custom has already been used:
+    games = [item for item in content_type_mapping]
+    deleted_set = set()
+    for game in games:
+        for c_t in content_type_mapping[game]:
+            c_type = content_type_mapping[game][c_t]
+            for file_export in c_type.window_layout["content_list"]:
+                if file_export["type"] == "json":
+                    path = "./" + c_type.game + "/content/" + c_type.content_type + ".jet"
+                    if os.path.exists(path):
+                        c_type_json = open(path, "r", encoding="utf-8")
+                        c_type_json_read = json.load(c_type_json)
+                        c_type_json.close()
+                        contains_non_custom = False
+                        for content_item in c_type_json_read["content"]:
+                            if int(content_item["id"]) < 100000:
+                                contains_non_custom = True
+                                break
+                        if contains_non_custom == False:
+                            deleted_set.add(c_t)
+    deleted_text = ""
+    if len(deleted_set) != 0:
+        deleted_text = "The following non-custom content types have already been removed: \n" + "\n".join(deleted_set)
+    layout = [[sg.Text("Are you absolutely sure you want to do this?")], [sg.Text(deleted_text)], [sg.Text("This option will effectively delete all the game's content files so that you can only play with your own custom content. Please make sure you have backups.")],
+    [sg.Text("Please select the game whose content you'd like to remove: "), sg.Listbox((games), size=(50, 4), key="game_choice", select_mode=sg.LISTBOX_SELECT_MODE_BROWSE)], [sg.Checkbox("I am absolutely sure I want to do this. Please delete all non-custom content for the game I have selected.", key="sure")], [sg.Button("Ok"), sg.Button("Remove Non-Custom Content By Type"), sg.Button("Go Back")]]
     window = sg.Window("Delete non-custom content", layout)
     while True:
         event, values = window.read()
