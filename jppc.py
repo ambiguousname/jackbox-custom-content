@@ -3,9 +3,6 @@ import json
 import os
 from shutil import copyfile, rmtree
 
-#TODO:
-#Indicator if there's no custom content in the games files (For View/Edit content)
-
 def id_gen(values): #id_gen needs a values dict to work with
     ids = None #Start IDs from 100k (to make it distingusihable from other IDs), go from there.
     id_dict = None
@@ -444,16 +441,16 @@ def game_content_del(game, content_type):
         if file_type == "json": #WE ONLY NEED THE .JSON FILE TO DELETE, IDIOT!
             path = "./" + game + "/content/" + content_type + ".jet"
             jet_file = open(path, "r", encoding="utf-8")
-            json_file = json.load(jet_file)
+            n_json_file = json.load(jet_file)
             new_content_list = []
-            for content_piece in json_file["content"]:
+            for content_piece in n_json_file["content"]:
                 if int(content_piece["id"]) >= 100000:
                     new_content_list.append(content_piece)
-            json_file["content"] = new_content_list
+            n_json_file["content"] = new_content_list
             jet_file.close()
             jet_file = open(path, "w")
             jet_file.truncate()
-            jet_file.write(json.dumps(json_file))
+            jet_file.write(json.dumps(n_json_file))
             jet_file.close()
 
 def del_by_content(game):
@@ -499,8 +496,8 @@ def del_all_else(selected=None):
     deleted_text = ""
     if len(deleted_set) != 0:
         deleted_text = "The following non-custom content types have already been removed: \n" + "\n".join(deleted_set)
-    layout = [[sg.Text("Are you absolutely sure you want to do this?")], [sg.Text(deleted_text)], [sg.Text("This option will effectively delete all the game's content files so that you can only play with your own custom content. Please make sure you have backups.")],
-    [sg.Text("Please select the game whose content you'd like to remove: "), sg.Listbox((games), size=(50, 4), key="game_choice", select_mode=sg.LISTBOX_SELECT_MODE_BROWSE)], [sg.Checkbox("I am absolutely sure I want to do this. Please delete all non-custom content for the game I have selected.", key="sure")], [sg.Button("Ok"), sg.Button("Remove Non-Custom Content By Type"), sg.Button("Go Back")]]
+    layout = [[sg.Text("Are you absolutely sure you want to do this?")], [sg.Text("This option will effectively delete all the game's content files so that you can only play with your own custom content. Please make sure you have backups.")],
+    [sg.Text(deleted_text)], [sg.Text("Please select the game whose content you'd like to remove: "), sg.Listbox((games), size=(50, 4), key="game_choice", select_mode=sg.LISTBOX_SELECT_MODE_BROWSE)], [sg.Checkbox("I am absolutely sure I want to do this. Please delete all non-custom content for the game I have selected.", key="sure")], [sg.Button("Ok"), sg.Button("Remove Non-Custom Content By Type"), sg.Button("Go Back")]]
     window = sg.Window("Delete non-custom content", layout)
     while True:
         event, values = window.read()
@@ -1390,7 +1387,7 @@ create_content = SelectionWindow("Select a game", ["Select a game.", ("Blather '
     "Champ'd Up": champd_up.run
 }, "main_window")
 
-main_window = SelectionWindow("Select an option", ["Please select an option.", ("Create Custom Content", "View/Edit Content", "Import/Reimport Content", "Only Use Custom Content"), "option"], {
+main_window = SelectionWindow("Select an option", ["Please click on an option, then click OK.", ("Create Custom Content", "View/Edit Content", "Import/Reimport Content", "Only Use Custom Content"), "option"], {
     "Create Custom Content": create_content.run,
     "View/Edit Content": edit_content,
     "Import/Reimport Content": import_content_window,

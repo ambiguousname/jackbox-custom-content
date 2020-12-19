@@ -18,12 +18,14 @@ otherwise you're going to have to uninstall and reinstall your entire game if so
 - Go to the [releases](https://github.com/ambiguousname/jackbox-custom-content/releases) page and download the .ZIP file.
 - Extract the contents of the .ZIP file into the "games" directory of your Jackbox Party Pack 7 install folder. (For Steam on Windows that's typically C:\Program Files (x86)\Steam\steamapps\common\The Jackbox Party Pack 7\games)
 - Run "Jackbox Party Pack Custom.exe".
+- Please read the rest of this Readme for clearer instructions if you ever get confused.
 
 ## Otherwise:
 - [Install Python 3.9+](https://www.python.org/)
 - Clone this repository
 - Move "jppc.py" to the "games" directory of your Jackbox Party Pack 7 install folder (You can look up where the game is stored yourself, you're very smart).
 - Run jppc.py in the terminal of your choice.
+- Please read the rest of this Readme for clearer instructions if you ever get confused.
 
 ## To add the sample custom content:
 Before installing, the sample custom content does contain some adult... jokes (I wrote them very late in the evening, the level of comedy will vary significantly)? So be warned if you want to import it.
@@ -37,6 +39,19 @@ Before installing, the sample custom content does contain some adult... jokes (I
 
 Just so you know, the sample custom content is meant to be played with other content in the mix (there isn't enough sample custom content to last a full game with 8 players). While you can use the "Only Custom" menu option to get rid of the game's own content files and play with only the sample content, it's not recommended.
 
+## Common things to watch out for:
+### Tags
+
+The \<BLANK\> tag is used in prompts to signify a fill in the blank question. Like with `My <BLANK> is too big!`.
+
+The \<ANYPLAYER\> tag is used to signify that this prompt uses the name of some random player in the game, like with `Hey, <ANYPLAYER> has a problem of too much <BLANK>.`. To use the \<ANYPLAYER\> tag, you should also check the checkbox that says "Includes Player Name", otherwise the \<ANYPLAYER\> tag won't work.
+
+### Custom Files
+
+You'll often see a "Browse" button for some games, which allows you to add your own custom files (like .OGG or .JPG files) for the game. These are entirely optional, but if you're going to make a custom file, please save your custom files into a folder called "external content" located in the same file as jppc.py or Jackbox Content Custom.exe. This way, if you're going to share your content with someone else, the software will recognize that you want this content to be shared with other people. Just make sure to share both "custom_content.json" and the "external content" folder (and make sure they're in the same location).
+
+If you're confused about anything else, please read this Readme. Please.
+
 # Features
 
 ## Editing content
@@ -47,7 +62,9 @@ If you want to change specific parts of your content or delete content, you're g
 
 If you've made changes to content, but you want to save those changes to a new piece of content (rather than editing the existing piece of content), push this button to make your changes into a new piece of content.
 
-## Importing content
+## Importing content and/or Sharing Content
+
+If you copy the external_content.json file that appears in the same folder as jppc.py or Jackbox Party Pack Custom.exe and send those files to someone else, they can then import that content, using the "Import/Reimport Content" option.
 
 The import content feature will only import certain custom files like .JPGs or .OGGs if those files are stored in the folder ./external content/, if that folder is in the same location as jppc.py or Jackbox Party Pack Custom.exe. 
 
@@ -78,6 +95,13 @@ There's a delete option in "View/Edit Content". You can select multiple pieces o
 If you're using Steam, go to the Jackbox Party Pack 7 in your Steam Library. Right click on the game's icon or name, click "Properties".
 In the popup window, click on "Local Files". Then click "Verify integrity of game files..." That should fix everything.
 
+### Important note if you've clicked "verify integrity of game files..."
+
+That means all your custom prompts have been removed from the game. To get your custom prompts back, you'll have to follow a couple of steps.
+1. Use the "Import/Reimport" option available in the menu
+2. Select "custom_content.json" from the file browser.
+3. Import.
+
 ## EVERYTHING'S STILL BROKEN
 
 Uninstall and reinstall the Jackbox Party Pack 7
@@ -93,13 +117,6 @@ If the .EXE is too slow for you, you can just follow the steps for cloning the r
 ## I don't have Windows, and I don't want to install Python
 
 As of right now, you're just going to have to install Python and install jppc.py on your OS of choice. I'm using PyInstaller to compile my code, and PyInstaller is not able to cross-compile.
-
-### Important note if you've clicked "verify integrity of game files..."
-
-That means all your custom prompts have been removed from the game. To get your custom prompts back, you'll have to follow a couple of steps.
-1. Use the "Import/Reimport" option available in the menu
-2. Select "custom_content.json" from the file browser.
-3. Import.
 
 ## Why does this program sometimes use weird names for each game/content?
 
