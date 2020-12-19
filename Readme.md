@@ -11,6 +11,7 @@ otherwise you're going to have to uninstall and reinstall your entire game if so
 
 ![Talking Points](https://raw.githubusercontent.com/ambiguousname/jackbox-custom-content/main/screenshots/TalkingPoints2.PNG)
 ![Quiplash3](https://raw.githubusercontent.com/ambiguousname/jackbox-custom-content/main/screenshots/Quiplash3.PNG)
+![Demo](https://youtu.be/4YO2SM21eIo)
 
 # Install instructions
 
