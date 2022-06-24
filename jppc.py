@@ -102,20 +102,6 @@ class CustomContentWindow(object):
                     if "filter" in self.window_layout:
                         new_values = self.window_layout["filter"](new_values)
                     _id = None
-                    for key in self.file_browse_keys:
-                        curr_path = new_values[key].split("/")
-                        new_path = ""
-                        file_path = "./external content/"
-                        looking_for_external = True
-                        for directory in curr_path:
-                            if looking_for_external == True:
-                                new_path += directory + "/"
-                                if directory == "external content":
-                                    looking_for_external = False
-                            else:
-                                file_path += directory + "/"
-                        if "external content" in curr_path and os.path.realpath("./external content/") == os.path.realpath(new_path):
-                            new_values[key] = file_path
                     if existing_data != None and event != "Make New Content":
                         _id = existing_data["id"]
                     new_content = self.create_content(new_values, _id)
@@ -205,7 +191,7 @@ class CustomContent(object):
         if "path" in kwargs:
             path = kwargs["path"]
         else:
-            path = "./" + self.values["game"] + "/content/" + self.values["content_type"] + "/" + self.id + "/"
+            path = "./" + self.values["game"] + "/content/" + self.values["content_type"] + "/" + self.id
         if os.path.exists(path) and not ("adding_other_files" in kwargs and kwargs["adding_other_files"] == True): #If there's a folder here, but we're not selecting a custom path
             rmtree(path)
         if not ("delete" in kwargs and kwargs["delete"] == True):
@@ -219,11 +205,11 @@ class CustomContent(object):
                         name = self.id + file["extension"]
                     if file_path == "param_name":
                         file_path = self.values[file["param_name"]]
-                    if(os.path.exists(file_path)): #Only add this if the file's path exists.
+                    if(os.path.exists(file_path) and os.path.isfile(file_path)): #Only add this if the file's path exists.
                         file_path = os.path.realpath(file_path)
                         copyfile(file_path, path + "/" + name) #From shutil
                     elif file_path != "./" and file_path != "":
-                        sg.Popup("The file: " + file_path + " does not exist. Custom content added anyway (please edit content #: " + self.id + " in the view/edit content menu.")
+                        sg.Popup("The file: " + file_path + " does not exist. Custom content added anyway (please edit content #: " + self.id + " in the view/edit content menu).")
                 else: #If we're going to be writing a custom file from like a .JSON or whatever.
                     if isinstance(file, CustomContent):
                         if os.path.exists(path + "data.jet"):
