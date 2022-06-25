@@ -1,0 +1,9 @@
+[package]
+name = "jackbox-custom-content"
+version = "2.0.0"
+edition = "2022"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+iced = "0.4"
