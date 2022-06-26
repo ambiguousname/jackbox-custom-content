@@ -1,17 +1,23 @@
-const PATH : String = String::from("./Quiplash3/content/");
+const GAME_NAME : String = String::from("Quiplash3");
+// TODO: Change
+const PATH : String = format!("../games/{}/content/", GAME_NAME);
 
-mod quiplash3 {
-    pub struct round1_question;
+use crate::util::{file_to_json};
+use crate::content::{Content, ContentCategory};
 
-    fn load_round_question(path : String) -> Vector<&Content> {
-        let list_path = Path::new(path + ".jet");
-        
+pub struct Round1Question;
+
+fn load_round_question(path : String, content_name : String) -> Vec<Content> {
+    let content_list = file_to_json<Value>(format!("{}{}{}.jet", PATH, GAME_NAME, content_name));
+}
+
+impl ContentCategory for Round1Question {
+    const CONTENT_NAME : String = String::from("Round1Question");
+    fn load_content() -> Vec<Content> {
+        load_round_question(PATH, Round1Question::CONTENT_NAME)
     }
 
-    impl ContentCategory for round1_question {
-        const LOCAL_PATH : String = PATH + String::from("/Round1Question/");
-        fn load_content() -> Vector<&Content> {
-            load_round_question(LOCAL_PATH)
-        } 
+    fn save_as_json(content: &Content) -> String {
+        String::from("")
     }
 }

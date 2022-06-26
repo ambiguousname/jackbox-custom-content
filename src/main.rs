@@ -1,4 +1,9 @@
+use content::ContentCategory;
 use fltk::{app, button::Button, frame::Frame, prelude::*, window::Window};
+
+pub mod util;
+pub mod content;
+pub mod quiplash3;
 
 fn main() {
     let app = app::App::default();
@@ -13,6 +18,8 @@ fn main() {
     wind.make_resizable(true);
     wind.end();
     wind.show();
+
+    let content = quiplash3::Round1Question::load_content();
 
     but.set_callback(move |_| frame.set_label("Hello World!")); // the closure capture is mutable borrow to our button
     
