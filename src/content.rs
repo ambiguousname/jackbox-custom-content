@@ -1,5 +1,8 @@
 use serde_json::Value;
 
+// TODO: Change
+pub const GAME_DIR: &str = "../games/";
+
 pub struct Content
 {
     id: u32,
@@ -9,8 +12,8 @@ pub struct Content
 
 // Trait for each of the different content categories (Like Quiplash3Round1Question or Quiplash3SafetyQuips).
 // Defines functions specific to each category, and what to do in those cases.
-pub trait ContentCategory {
-    const CONTENT_NAME : String;
+pub trait ContentCategory<'a> {
+    const CONTENT_NAME : &'a str;
     fn load_content() -> Vec<Content>;
     fn save_as_json(content: &Content) -> String;
 }
