@@ -3,25 +3,18 @@ const GAME_NAME : &str = "Quiplash3";
 use crate::util::{file_to_json};
 use crate::content::{Content, ContentCategory, GAME_DIR};
 
-pub struct Round1Question;
+// Let's break down what needs to happen to create or modify a question, in reverse:
+// 4. Create/modify the .JET file containing the specific question information (can just copy/modify create_quiplash_data_jet behavior from jppc.py)
+// 3. Show a window for the user to create/modify a question, with a list of all current questions. (Starts getting specific to the category)
+// 2. Load the master .JET file for the question type to get ALL questions of that type.
+// 1. Have the player select a content type.
 
-fn load_round_question(content_name : &str) -> Vec<Content> {
-    let content_list = file_to_json(format!("{}{}/{}{}.jet", GAME_DIR, GAME_NAME, GAME_NAME, content_name));
-    let vector: Vec<Content> = Vec::new();
-    for item in content_list["content"].as_array().iter() {
-        
+trait Quiplash3RoundQuestion : ContentCategory {
+    fn render_window(&self) {
+
     }
+};
+
+pub trait Quiplash3Round1Question : Quiplash3RoundQuestion {
     
-    vector
-}
-
-impl<'a> ContentCategory<'a> for Round1Question {
-    const CONTENT_NAME : &'a str = "Round1Question";
-    fn load_content() -> Vec<Content> {
-        load_round_question(Round1Question::CONTENT_NAME)
-    }
-
-    fn save_as_json(content: &Content) -> String {
-        String::from("")
-    }
-}
+};

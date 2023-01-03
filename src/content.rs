@@ -8,26 +8,25 @@ pub struct Content
     id: u32,
     // This is to easily convert to and from JSON/JET format.
     values: Value,
-}
+};
 
-// Trait for each of the different content categories (Like Quiplash3Round1Question or Quiplash3SafetyQuips).
-// Defines functions specific to each category, and what to do in those cases.
-pub trait ContentCategory<'a> {
-    const CONTENT_NAME : &'a str;
-    fn load_content() -> Vec<Content>;
-    fn save_as_json(content: &Content) -> String;
-}
+pub trait ContentCategory {
+    fn load_content(&mut self) {
+        // Load the .JET master file to list ALL content of type content_name.
+        let content_list = file_to_json(format!("{}{}/content/{}{}.jet", GAME_DIR, GAME_NAME, GAME_NAME, content_name));
+        self.master_jet: Vec<Content> = Vec::new();
+        for item in content_list["content"].as_array().iter() {
+            self.master_jet.push(item);
+        }
+    };
+    fn save_as_json(&self) {
+        
+    };
+    fn render_window(&self);
+};
 
-pub struct ContentWindow
-{
-    // Name of the window:
+struct ContentCategoryDat {
     name: String,
-    // List of content types that can be edited in the content window.
-    // So for Quiplash 3, this would be Quiplash3FinalQuestion, Quiplash3Round1Question, Quiplash3Round2Question, and Quiplash3SafetyQuips.
-    // Each "allowed_content" has an associated procedure for loading and displaying (hence a HashMap).
-    allowed_content: Vec<String>,
-}
-
-pub fn test(){
-    println!("Hello!");
-}
+    master_jet: Vec<Content>,
+    category_type: dyn ContentCategory,
+};
