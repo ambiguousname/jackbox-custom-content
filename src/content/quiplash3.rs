@@ -1,6 +1,5 @@
 const GAME_NAME : &str = "Quiplash3";
 
-use crate::util::{file_to_json};
 use crate::content::{Content, ContentCategory, GAME_DIR};
 
 // Let's break down what needs to happen to create or modify a question, in reverse:
@@ -13,8 +12,14 @@ trait Quiplash3RoundQuestion : ContentCategory {
     fn render_window(&self) {
 
     }
-};
+}
 
-pub trait Quiplash3Round1Question : Quiplash3RoundQuestion {
-    
-};
+// pub trait Quiplash3Round1Question : Quiplash3RoundQuestion;
+fn save_as_json(&self) {
+    json!({
+        full_custom_dat!([
+            ["B", "", "HasJokeAudio"]
+        ]);
+    });
+    super::ContentCategory::save_as_json(&self);
+}

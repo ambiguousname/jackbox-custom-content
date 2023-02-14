@@ -1,0 +1,9 @@
+<interface>
+  <template class="FileBrowseWidget" parent="GtkBox">
+    <child>
+      <object class="GtkButton" id="browse_button">
+        <property name="label">Browse</property>
+      </object>
+    </child>
+  </template>
+</interface>

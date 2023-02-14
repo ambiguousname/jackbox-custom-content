@@ -1,27 +1,44 @@
-use content::ContentCategory;
-use fltk::{app, button::Button, frame::Frame, prelude::*, window::Window};
+// use content::ContentCategory;
+use gtk::prelude::*;
+use gtk::{Application, ApplicationWindow, ResponseType, FileChooserDialog, FileChooserAction};
 
-pub mod util;
-pub mod content;
-pub mod quiplash3;
+// mod util;
+// mod content;
+mod widgets;
 
+// Woah, GTK uses CSS. That's cool!
 fn main() {
-    let app = app::App::default();
-    let mut wind = Window::default()
-    .with_size(400, 400)
-    .with_label("Jackbox Custom Content")
-    .center_screen();
 
-    let mut frame = Frame::new(0, 0, 400, 200, "Select an Option:");
-    let mut but = Button::new(160, 210, 80, 40, "Click me!");
-    
-    wind.make_resizable(true);
-    wind.end();
-    wind.show();
+    let app = Application::builder()
+        .application_id("Jackbox.Custom.Content")
+        .build();
 
-    let content = quiplash3::Round1Question::load_content();
+    app.connect_activate(|app| {
+        let browser = widgets::FileBrowseWidget::new();
+        // We create the main window.
+        let win = ApplicationWindow::builder()
+            .application(app)
+            .title("Jackbox 7 Custom Content")
+            .child(&browser)
+            .build();
+            
+        let file_chooser = FileChooserDialog::new(Some("Select the folder for the Jackbox Party Pack 7"), Some(&win), FileChooserAction::SelectFolder, &[("Ok", ResponseType::Ok), ("Cancel", ResponseType::Cancel)]);
 
-    but.set_callback(move |_| frame.set_label("Hello World!")); // the closure capture is mutable borrow to our button
-    
-    app.run().unwrap();
+        file_chooser.connect("response", true, |args| {
+            let response_type = ResponseType::from(args[1].get::<i32>().unwrap());
+            let this = args[0].get::<FileChooserDialog>().unwrap();
+            if response_type == ResponseType::Ok {
+                
+            }
+            if response_type == ResponseType::Ok || response_type == ResponseType::Cancel {
+                this.close();
+            }
+            None
+        });
+
+        // Don't forget to make all widgets visible.
+        win.present();
+    });
+
+    app.run();
 }
