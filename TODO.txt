@@ -1,0 +1,2 @@
+- Figure out UI
+- Replace templates with resources: https://gtk-rs.org/gtk4-rs/stable/latest/book/composite_templates.html

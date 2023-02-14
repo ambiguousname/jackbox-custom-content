@@ -1,5 +1,5 @@
 use gtk::subclass::prelude::*;
-use gtk::{glib, CompositeTemplate, Button, prelude::*};
+use gtk::{glib, CompositeTemplate, Button, Entry, prelude::*};
 
 mod imp {
 	use super::*;
@@ -9,6 +9,8 @@ mod imp {
     pub struct FileBrowseWidget {
         #[template_child(id="browse_button")]
         pub button: TemplateChild<Button>,
+        #[template_child(id="folder_location")]
+        pub entry: TemplateChild<Entry>,
     }
 
     #[glib::object_subclass]
@@ -27,7 +29,7 @@ mod imp {
     }
 
     impl ObjectImpl for FileBrowseWidget {
-        
+
     }
     impl WidgetImpl for FileBrowseWidget {}
     impl BoxImpl for FileBrowseWidget {}
