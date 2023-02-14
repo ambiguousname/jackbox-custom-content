@@ -5,7 +5,7 @@ mod imp {
 	use super::*;
 
     #[derive(Default, CompositeTemplate)]
-    #[template(file="filebrowse.ui")]
+    #[template(resource="/templates/widgets/filebrowse.ui")]
     pub struct FileBrowseWidget {
         #[template_child(id="browse_button")]
         pub button: TemplateChild<Button>,

@@ -4,17 +4,18 @@ use gtk::{Application, ApplicationWindow, ResponseType, FileChooserDialog, FileC
 
 // mod util;
 // mod content;
-mod widgets;
+mod templates;
+use templates::filebrowse::FileBrowseWidget;
 
-// Woah, GTK uses CSS. That's cool!
 fn main() {
+    templates::load_resources();
 
     let app = Application::builder()
         .application_id("Jackbox.Custom.Content")
         .build();
 
     app.connect_activate(|app| {
-        let browser = widgets::FileBrowseWidget::new();
+        let browser = FileBrowseWidget::new();
         // We create the main window.
         let win = ApplicationWindow::builder()
             .application(app)
