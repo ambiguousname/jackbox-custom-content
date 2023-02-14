@@ -2,5 +2,6 @@
 <gresources>
   <gresource prefix="/templates/">
     <file compressed="true" preprocess="xml-stripblanks">widgets/filebrowse.ui</file>
+	<file compressed="true" preprocess="xml-stripblanks">windows/mainmenu.ui</file>
   </gresource>
 </gresources>

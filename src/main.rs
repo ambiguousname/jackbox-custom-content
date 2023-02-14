@@ -5,7 +5,7 @@ use gtk::{Application, ApplicationWindow, ResponseType, FileChooserDialog, FileC
 // mod util;
 // mod content;
 mod templates;
-use templates::filebrowse::FileBrowseWidget;
+use templates::mainmenu::MainMenuWindow;
 
 fn main() {
     templates::load_resources();
@@ -15,15 +15,10 @@ fn main() {
         .build();
 
     app.connect_activate(|app| {
-        let browser = FileBrowseWidget::new();
         // We create the main window.
-        let win = ApplicationWindow::builder()
-            .application(app)
-            .title("Jackbox 7 Custom Content")
-            .child(&browser)
-            .build();
+        let win = MainMenuWindow::new(app);
             
-        let file_chooser = FileChooserDialog::new(Some("Select the folder for the Jackbox Party Pack 7"), Some(&win), FileChooserAction::SelectFolder, &[("Ok", ResponseType::Ok), ("Cancel", ResponseType::Cancel)]);
+        /*let file_chooser = FileChooserDialog::new(Some("Select the folder for the Jackbox Party Pack 7"), Some(&win), FileChooserAction::SelectFolder, &[("Ok", ResponseType::Ok), ("Cancel", ResponseType::Cancel)]);
 
         file_chooser.connect("response", true, |args| {
             let response_type = ResponseType::from(args[1].get::<i32>().unwrap());
@@ -35,7 +30,7 @@ fn main() {
                 this.close();
             }
             None
-        });
+        });*/
 
         // Don't forget to make all widgets visible.
         win.present();

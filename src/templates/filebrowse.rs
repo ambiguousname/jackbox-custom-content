@@ -28,9 +28,7 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for FileBrowseWidget {
-
-    }
+    impl ObjectImpl for FileBrowseWidget {}
     impl WidgetImpl for FileBrowseWidget {}
     impl BoxImpl for FileBrowseWidget {}
 }
