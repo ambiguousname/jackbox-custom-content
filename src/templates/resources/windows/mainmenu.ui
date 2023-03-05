@@ -2,12 +2,85 @@
 <interface>
 	<template class="MainMenuWindow" parent="GtkApplicationWindow">
 		<property name="title" translatable="yes">Jackbox Party Pack 7 Custom Content</property>
-		<property name="margin-top">12</property>
-        <property name="margin-bottom">12</property>
-        <property name="margin-start">12</property>
-        <property name="margin-end">12</property>  
+		<property name="resizable">0</property>
 		<child>
-			<object class="FileBrowseWidget" id="mainfilebrowse"></object>
+			<object class="GtkGrid">
+				<child>
+					<object class="GtkStackSidebar">
+						<property name="stack">stack</property>
+						<property name="halign">center</property>
+						<layout>
+							<property name="column">0</property>
+							<property name="row">0</property>
+						</layout>
+					</object>
+				</child>
+				<child>
+					<object class="GtkStack" id="stack">
+						<property name="transition-type">crossfade</property>
+						<child>
+							<object class="GtkStackPage">
+								<property name="name">page1</property>
+								<property name="title">Main Settings</property>
+								<property name="child">
+									<object class="GtkBox">
+										<property name="margin-top">30</property>
+										<property name="margin-bottom">30</property>
+										<property name="margin-start">12</property>
+										<property name="margin-end">12</property>
+										<property name="valign">center</property>
+										<property name="halign">center</property>
+										<child>
+											<object class="FileBrowseWidget" id="mainfilebrowse">
+											</object>
+										</child>
+										<child>
+											<object class="GtkButton">
+												<property name="label">Import Custom Content JSON</property>
+											</object>
+										</child>
+										<child>
+											<object class="GtkLabel">
+												<property name="label">Only use Custom Content</property>
+											</object>
+										</child>
+									</object>
+								</property>
+							</object>
+						</child>
+						<child>
+							<object class="GtkStackPage">
+								<property name="name">allgames</property>
+								<property name="title">All Games</property>
+								<property name="child">
+									<object class="GtkLabel">
+										<property name="label">All Games</property>
+										<property name="halign">center</property>
+                    					<property name="valign">center</property>
+									</object>
+								</property>
+							</object>
+						</child>
+						<child>
+							<object class="GtkStackPage">
+								<property name="name">quiplash3</property>
+								<property name="title">Quiplash 3</property>
+								<property name="child">
+									<object class="GtkLabel">
+										<property name="label">Quiplash 3</property>
+										<property name="halign">center</property>
+                    					<property name="valign">center</property>
+									</object>
+								</property>
+							</object>
+						</child>
+						<layout>
+							<property name="column">1</property>
+							<property name="row">0</property>
+						</layout>
+					</object>
+				</child>
+			</object>
 		</child>
 	</template>
 </interface>
