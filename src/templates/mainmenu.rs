@@ -7,9 +7,10 @@ use glib::Object;
 
 // Lists:
 use gtk::{ColumnView, ColumnViewColumn, SingleSelection, SignalListItemFactory, ListItem};
-use super::{contentobj::ContentObject, contentcol::ContentCol};
+use super::content::{contentobj::ContentObject, contentcol::ContentCol};
 //use crate::templates::filebrowse::FileBrowseWidget;
 
+// region: Boilerplate definitions
 mod imp {
 	use super::*;
 
@@ -22,6 +23,7 @@ mod imp {
 		pub content_list: RefCell<Option<gio::ListStore>>, 
 	}
 
+	// region: Boring Subclass Defs
 	#[glib::object_subclass]
 	impl ObjectSubclass for MainMenuWindow {
 		const NAME: &'static str = "JCCMainMenuWindow";
@@ -49,19 +51,21 @@ mod imp {
     impl WidgetImpl for MainMenuWindow {}
 	impl WindowImpl for MainMenuWindow {}
 	impl ApplicationWindowImpl for MainMenuWindow {}
+	// endregion
 }
 
 glib::wrapper! {
 	pub struct MainMenuWindow(ObjectSubclass<imp::MainMenuWindow>) @extends gtk::ApplicationWindow, gtk::Window, gtk::Widget,
 	@implements gio::ActionGroup, gio::ActionMap, gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Native, gtk::Root, gtk::ShortcutManager;
 }
+// endregion
 
 impl MainMenuWindow {
 	pub fn new(app: &Application) -> Self {
 		Object::builder().property("application", app).build()
 	}
 	
-	pub fn new_content(&self){
+	pub fn add_content(&self){
 		let test_content = ContentObject::new(false);
 		self.content_list().append(&test_content);
 	}
@@ -74,6 +78,7 @@ impl MainMenuWindow {
 			.expect("Could not get content_list")
 	}
 
+	// region: Setup code
 	fn setup_content_list(&self) {
 		let model = gio::ListStore::new(ContentObject::static_type());
 
@@ -121,4 +126,5 @@ impl MainMenuWindow {
 		self.imp().content_columns.insert_column(0, &enabled_col);
 		self.imp().content_columns.insert_column(1, &game_col);
 	}
+	// endregion
 }

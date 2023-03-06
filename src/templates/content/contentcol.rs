@@ -8,6 +8,7 @@ use once_cell::sync::Lazy;
 
 use super::contentobj::ContentObject;
 
+// region: Initial ContentCol definitions (Contains definitions for adding properties)
 mod imp {
 	use super::*;
 
@@ -23,6 +24,8 @@ mod imp {
 		type Type = super::ContentCol;
 		type ParentType = gtk::Box;
 	}
+
+	// region: Property creation
 
 	impl ObjectImpl for ContentCol {
 		fn properties() -> &'static [glib::ParamSpec] {
@@ -54,11 +57,14 @@ mod imp {
 	}
     impl WidgetImpl for ContentCol {}
     impl BoxImpl for ContentCol {}
+	// endregion
 }
 
 glib::wrapper!{
 	pub struct ContentCol(ObjectSubclass<imp::ContentCol>) @extends gtk::Box, gtk::Widget, @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Orientable;
 }
+
+// endregion
 
 impl ContentCol {
 	pub fn new(child_widget : Widget) -> Self {
@@ -74,7 +80,7 @@ impl ContentCol {
 		.expect("Could not get child_widget")
 	}
 
-	// Connecting content_object data to visible things:
+	// region: Bindings for connecting content_object data to visible things:
 	pub fn bind(&self, content_object: &ContentObject){
 		let widget = self.child_widget();
 
@@ -92,4 +98,5 @@ impl ContentCol {
 			binding.unbind();
 		}
 	}
+	// endregion
 }

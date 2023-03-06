@@ -28,6 +28,7 @@ mod imp {
 		type Type = super::ContentObject;
 	}
 
+	// region: Property definitions
 	impl ObjectImpl for ContentObject {
 		fn properties() -> &'static [ParamSpec] {
 			static PROPERTIES : Lazy<Vec<ParamSpec>> = Lazy::new(|| {
@@ -55,6 +56,7 @@ mod imp {
 			}
 		}
 	}
+	// endregion
 }
 
 glib::wrapper!{
