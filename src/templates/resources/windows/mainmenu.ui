@@ -3,32 +3,7 @@
 	<template class="JCCMainMenuWindow" parent="GtkApplicationWindow">
 		<property name="title" translatable="yes">Jackbox Party Pack 7 Custom Content</property>
 		<child>
-			<object class="GtkGrid">
-				<child>
-					<object class="GtkColumnView" id="content_columns">
-						<property name="halign">center</property>
-						<child>
-							<object class="GtkColumnViewColumn">
-								<property name="title">Enabled</property>
-							</object>
-						</child>
-						<child>
-							<object class="GtkColumnViewColumn">
-								<property name="title">Game</property>
-							</object>
-						</child>
-						<child>
-							<object class="GtkColumnViewColumn">
-								<property name="title">Content Type</property>
-							</object>
-						</child>
-					</object>
-				</child>
-				<child>
-					<object class="GtkListView" id="content_list">
-						
-					</object>
-				</child>
+			<object class="GtkColumnView" id="content_columns">
 			</object>
 		</child>
 	</template>

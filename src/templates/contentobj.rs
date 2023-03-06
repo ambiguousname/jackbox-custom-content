@@ -1,10 +1,12 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use glib::Object;
 use gtk::glib;
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
+
+use glib::{Object, Value, ParamSpec, ParamSpecBoolean, once_cell};
+use once_cell::sync::Lazy;
 
 #[derive(Default)]
 pub struct ContentData {
@@ -26,9 +28,43 @@ mod imp {
 		type Type = super::ContentObject;
 	}
 
-	impl ObjectImpl for ContentObject {}
+	impl ObjectImpl for ContentObject {
+		fn properties() -> &'static [ParamSpec] {
+			static PROPERTIES : Lazy<Vec<ParamSpec>> = Lazy::new(|| {
+				vec![
+					ParamSpecBoolean::builder("enabled").build(),
+				]
+			});
+			PROPERTIES.as_ref()
+		}
+
+		fn set_property(&self, _id: usize, _value: &Value, _pspec: &ParamSpec) {
+			match _pspec.name() {
+				"enabled" => {
+					let input_value = _value.get().expect("Value should be of type `bool`.");
+					self.data.borrow_mut().enabled = input_value;
+				},
+				_ => unimplemented!(),
+			}
+		}
+
+		fn property(&self, _id: usize, _pspec: &ParamSpec) -> Value {
+			match _pspec.name() {
+				"enabled" => self.data.borrow().enabled.to_value(),
+				_ => unimplemented!(),
+			}
+		}
+	}
 }
 
 glib::wrapper!{
 	pub struct ContentObject(ObjectSubclass<imp::ContentObject>);
+}
+
+impl ContentObject {
+	pub fn new(enabled: bool) -> Self{
+		Object::builder()
+		.property("enabled", enabled)
+		.build()
+	}
 }
