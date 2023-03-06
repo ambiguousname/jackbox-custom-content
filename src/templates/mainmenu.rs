@@ -7,7 +7,7 @@ use glib::Object;
 
 // Lists:
 use gtk::{ColumnView, ColumnViewColumn, SingleSelection, SignalListItemFactory, ListItem};
-use super::{contentobj::ContentObject, contentrow::ContentRow};
+use super::{contentobj::ContentObject, contentcol::ContentCol};
 //use crate::templates::filebrowse::FileBrowseWidget;
 
 mod imp {
@@ -88,7 +88,8 @@ impl MainMenuWindow {
 
 		factory.connect_setup(move |_, list_item| {
 
-			let content_row = ContentRow::new();
+			let widget = gtk::Label::new(Some("Test"));
+			let content_row = ContentCol::new(gtk::Widget::from(widget));
 			list_item.downcast_ref::<ListItem>().expect("Should be `ListItem`.")
 			.set_child(Some(&content_row));
 		});
@@ -102,7 +103,7 @@ impl MainMenuWindow {
 
 			let content_row = list_item.downcast_ref::<ListItem>().expect("Should be `ListItem`.")
 			.child()
-			.and_downcast::<ContentRow>().expect("Child should be `ContentRow`.");
+			.and_downcast::<ContentCol>().expect("Child should be `ContentCol`.");
 
 			content_row.bind(&content_object);
 		});
@@ -110,7 +111,7 @@ impl MainMenuWindow {
 		factory.connect_unbind(move |_, list_item| {
 			let content_row = list_item.downcast_ref::<ListItem>().expect("Should be `ListItem`.")
 			.child()
-			.and_downcast::<ContentRow>().expect("Child should be `ContentRow`.");
+			.and_downcast::<ContentCol>().expect("Child should be `ContentCol`.");
 
 			content_row.unbind();
 		});

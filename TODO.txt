@@ -1,1 +1,2 @@
 - Build main menu UI: https://gtk-rs.org/gtk4-rs/stable/latest/book/composite_templates.html
+- Automate ContentCol.rs to handle creation, find one place to be able to define the columns.
