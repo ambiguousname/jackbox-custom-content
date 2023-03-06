@@ -4,6 +4,21 @@
 		<property name="title" translatable="yes">Jackbox Party Pack 7 Custom Content</property>
 		<child>
 			<object class="GtkColumnView" id="content_columns">
+				<child>
+					<object class="GtkColumnViewColumn">
+						<property name="title">Enabled</property>
+					</object>
+				</child>
+				<child>
+					<object class="GtkColumnViewColumn">
+						<property name="title">Game</property>
+					</object>
+				</child>
+				<child>
+					<object class="GtkColumnViewColumn">
+						<property name="title">Content</property>
+					</object>
+				</child>
 			</object>
 		</child>
 	</template>

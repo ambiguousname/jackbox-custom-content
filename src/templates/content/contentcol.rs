@@ -27,34 +27,7 @@ mod imp {
 
 	// region: Property creation
 
-	impl ObjectImpl for ContentCol {
-		fn properties() -> &'static [glib::ParamSpec] {
-			static PROPERTIES : Lazy<Vec<ParamSpec>> = Lazy::new(|| {
-				vec![
-					ParamSpecObject::builder::<Widget>("child-widget").build(),
-				]
-			});
-			PROPERTIES.as_ref()
-		}
-
-		fn set_property(&self, _id: usize, _value: &glib::Value, _pspec: &ParamSpec) {
-			match _pspec.name() {
-				"child-widget" => {
-					let input_value = _value.get().expect("Value should be of type `Widget`.");
-					self.child_widget.borrow_mut().replace(input_value);
-					self.obj().append(&self.obj().child_widget());
-				},
-				_ => unimplemented!(),
-			}
-		}
-
-		fn property(&self, _id: usize, _pspec: &ParamSpec) -> glib::Value {
-			match _pspec.name() {
-				"child-widget" => self.child_widget.borrow().clone().expect("Could not get mut child_widget.").to_value(),
-				_ => unimplemented!(),
-			}
-		}
-	}
+	impl ObjectImpl for ContentCol {}
     impl WidgetImpl for ContentCol {}
     impl BoxImpl for ContentCol {}
 	// endregion
@@ -68,9 +41,10 @@ glib::wrapper!{
 
 impl ContentCol {
 	pub fn new(child_widget : Widget) -> Self {
-		Object::builder()
-		.property("child-widget", child_widget)
-		.build()
+		let o : Self = Object::builder().build();
+		o.set_child_widget(child_widget);
+		o.append(&o.child_widget());
+		o
 	}
 
 	fn child_widget(&self) -> Widget {
@@ -78,6 +52,13 @@ impl ContentCol {
 		.child_widget
 		.borrow().clone()
 		.expect("Could not get child_widget")
+	}
+
+	fn set_child_widget(&self, value : Widget) {
+		self.imp()
+		.child_widget
+		.borrow_mut()
+		.replace(value);
 	}
 
 	// region: Bindings for connecting content_object data to visible things:
