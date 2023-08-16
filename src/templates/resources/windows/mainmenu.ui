@@ -14,37 +14,43 @@
 			</object>
 		</child>
 		<child>
-			<object class="GtkColumnView" id="content_columns">
+			<object class="GtkBox">
+				<property name="halign">center</property>
 				<child>
-					<object class="GtkColumnViewColumn">
-						<property name="title">Enabled</property>
+					<object class="GtkColumnView" id="content_columns">
+						<child>
+							<object class="GtkColumnViewColumn">
+								<property name="title">Enabled</property>
+							</object>
+						</child>
+						<child>
+							<object class="GtkColumnViewColumn">
+								<property name="title">Game</property>
+							</object>
+						</child>
+						<child>
+							<object class="GtkColumnViewColumn">
+								<property name="title">Content</property>
+							</object>
+						</child>
 					</object>
 				</child>
+				<!--If we need to select the Jackbox Party Pack 7 folder instead. -->
 				<child>
-					<object class="GtkColumnViewColumn">
-						<property name="title">Game</property>
-					</object>
-				</child>
-				<child>
-					<object class="GtkColumnViewColumn">
-						<property name="title">Content</property>
-					</object>
-				</child>
-			</object>
-		</child>
-		<!--If we need to select the Jackbox Party Pack 7 folder instead. -->
-		<child>
-			<object class="GtkBox" id="folder_box">
-				<property name="orientation">vertical</property>
-				<property name="spacing">12</property>
-				<child>
-					<object class="GtkLabel">
-						<property name="label">Jackbox Party Pack 7 folder not detected.</property>
-					</object>
-				</child>
-				<child>
-					<object class="GtkButton" id="start_file_selection">
-						<property name="label">Choose Folder...</property>
+					<object class="GtkBox" id="folder_box">
+						<property name="visible">false</property>
+						<property name="orientation">vertical</property>
+						<property name="spacing">12</property>
+						<child>
+							<object class="GtkLabel">
+								<property name="label">Jackbox Party Pack 7 folder not detected.</property>
+							</object>
+						</child>
+						<child>
+							<object class="GtkButton" id="start_file_selection">
+								<property name="label">Choose Folder...</property>
+							</object>
+						</child>
 					</object>
 				</child>
 			</object>

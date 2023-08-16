@@ -4,9 +4,11 @@ use gtk::Application;
 
 // mod util;
 // mod content;
+#[allow(unused_parens)]
 mod templates;
 use templates::mainmenu::MainMenuWindow;
 
+#[allow(unused_parens)]
 fn main() {
     templates::load_resources();
 
@@ -17,22 +19,11 @@ fn main() {
     app.connect_activate(|app| {
         // We create the main window.
         let win = MainMenuWindow::new(app);
-        win.toggle_content_columns(false);
 
-        //win.add_content();
-        /*let file_chooser = FileChooserDialog::new(Some("Select the folder for the Jackbox Party Pack 7"), Some(&win), FileChooserAction::SelectFolder, &[("Ok", ResponseType::Ok), ("Cancel", ResponseType::Cancel)]);
-
-        file_chooser.connect("response", true, |args| {
-            let response_type = ResponseType::from(args[1].get::<i32>().unwrap());
-            let this = args[0].get::<FileChooserDialog>().unwrap();
-            if response_type == ResponseType::Ok {
-                
-            }
-            if response_type == ResponseType::Ok || response_type == ResponseType::Cancel {
-                this.close();
-            }
-            None
-        });*/
+        if (win.jackbox_folder().is_none()) {
+            win.toggle_content_columns_visibility(false);
+            win.toggle_folder_visibility(true);
+        }
 
         // Don't forget to make all widgets visible.
         win.present();

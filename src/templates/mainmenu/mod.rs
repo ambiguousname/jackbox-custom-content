@@ -88,7 +88,7 @@ impl MainMenuWindow {
 		self.content_list().append(&test_content);
 	}
 	
-	pub fn toggle_content_columns(&self, visible: bool) {
+	pub fn toggle_content_columns_visibility(&self, visible: bool) {
 		self.imp().content_columns.set_visible(visible);
 	}
 	// endregion

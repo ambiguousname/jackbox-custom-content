@@ -1,17 +1,17 @@
 use gtk::subclass::prelude::*;
-use gtk::prelude::{ObjectExt, GtkWindowExt, WidgetExt, FileExt};
+use gtk::prelude::{GtkWindowExt, WidgetExt};
 use gtk::traits::{ButtonExt, FileChooserExt, DialogExt};
-use gtk::{ApplicationWindow, ResponseType, FileChooserDialog, FileChooserAction};
+use gtk::{ResponseType, FileChooserDialog, FileChooserAction};
 
 use gtk::glib;
-use glib::{clone, Value};
+use glib::clone;
 
 use crate::MainMenuWindow;
 
 impl MainMenuWindow {
 
-    fn jackbox_folder(&self) -> gtk::gio::File {
-        self.imp().jackbox_folder.borrow().clone().expect("Could not get jackbox folder.")
+    pub fn jackbox_folder(&self) -> Option<gtk::gio::File> {
+        self.imp().jackbox_folder.borrow().clone()
     }
 
     fn set_folder_name(&self, file_chooser : &FileChooserDialog, response_type : ResponseType) {
@@ -20,10 +20,14 @@ impl MainMenuWindow {
                 let folder = file_chooser.file();
                 self.imp().jackbox_folder.replace(folder.clone());
                 //println!("{}", self.jackbox_folder().path().expect("Could not get path name.").display());
+                if (!self.imp().content_columns.is_visible()) {
+                    self.toggle_content_columns_visibility(true);
+                    self.toggle_folder_visibility(false);
+                }
             }
         }
         if (response_type == ResponseType::Ok || response_type == ResponseType::Cancel) {
-            file_chooser.close();
+            file_chooser.set_visible(false);
         }
     }
 
