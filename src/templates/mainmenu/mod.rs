@@ -5,14 +5,18 @@ use gtk::subclass::prelude::*;
 use gtk::{prelude::*, glib, Application, CompositeTemplate, gio};
 use glib::Object;
 
+
 // Lists:
-use gtk::{ColumnView, ColumnViewColumn, SingleSelection, SignalListItemFactory, ListItem};
+use gtk::{ColumnView, ColumnViewColumn, SingleSelection, SignalListItemFactory, ListItem, Button};
 use super::content::{contentobj::ContentObject, contentcol::ContentCol};
 //use crate::templates::filebrowse::FileBrowseWidget;
 
+mod folder_selection;
+
 // region: Boilerplate definitions
 mod imp {
-	use super::*;
+
+use super::*;
 
 	#[derive(Default, CompositeTemplate)]
 	#[template(resource="/templates/windows/mainmenu.ui")]
@@ -20,7 +24,17 @@ mod imp {
 		// Important lesson: unless you specify templates in the struct definition here, you'll get an error.
 		#[template_child(id="content_columns")]
 		pub content_columns: TemplateChild<ColumnView>,
+		#[template_child(id="new_content")]
+		pub menu_button: TemplateChild<Button>,
+		
+		#[template_child(id="start_file_selection")]
+		pub folder_choose : TemplateChild<Button>,
+		#[template_child(id="folder_box")]
+		pub folder_box : TemplateChild<gtk::Box>,
+		pub jackbox_folder : RefCell<Option<gio::File>>,
+
 		pub content_list: RefCell<Option<gio::ListStore>>, 
+
 	}
 
 	// region: Boring Subclass Defs
@@ -46,6 +60,8 @@ mod imp {
 			let obj = self.obj();
 			obj.setup_content_list();
 			obj.setup_factory();
+
+			obj.setup_folder_selection();
 		}
 	}
     impl WidgetImpl for MainMenuWindow {}
@@ -65,10 +81,17 @@ impl MainMenuWindow {
 		Object::builder().property("application", app).build()
 	}
 	
+	
+	// region: Public content management
 	pub fn add_content(&self){
 		let test_content = ContentObject::new(false);
 		self.content_list().append(&test_content);
 	}
+	
+	pub fn toggle_content_columns(&self, visible: bool) {
+		self.imp().content_columns.set_visible(visible);
+	}
+	// endregion
 
 	fn content_list(&self) -> gio::ListStore {
 		self.imp()
@@ -128,4 +151,5 @@ impl MainMenuWindow {
 		}
 	}
 	// endregion
+
 }

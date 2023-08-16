@@ -21,7 +21,7 @@ pub struct Content<'a>
 }
 
 pub trait ContentLoader {
-    fn save_as_json(&self) {
+    fn serialize(&self) {
         format!("{}{}/content/{}{}.jet", GAME_DIR, self.category.game_name, self.category.game_name, self.category.name);
     }
 }

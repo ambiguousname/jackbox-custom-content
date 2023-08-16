@@ -15,11 +15,11 @@ trait Quiplash3RoundQuestion : ContentCategory {
 }
 
 // pub trait Quiplash3Round1Question : Quiplash3RoundQuestion;
-fn save_as_json(&self) {
+/*fn save_as_json(&self) {
     json!({
         full_custom_dat!([
             ["B", "", "HasJokeAudio"]
         ]);
     });
     super::ContentCategory::save_as_json(&self);
-}
+}*/

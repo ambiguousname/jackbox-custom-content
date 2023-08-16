@@ -1,6 +1,6 @@
 // use content::ContentCategory;
 use gtk::prelude::*;
-use gtk::{Application, ApplicationWindow, ResponseType, FileChooserDialog, FileChooserAction};
+use gtk::Application;
 
 // mod util;
 // mod content;
@@ -17,9 +17,9 @@ fn main() {
     app.connect_activate(|app| {
         // We create the main window.
         let win = MainMenuWindow::new(app);
+        win.toggle_content_columns(false);
 
-        win.add_content();
-        win.add_content();
+        //win.add_content();
         /*let file_chooser = FileChooserDialog::new(Some("Select the folder for the Jackbox Party Pack 7"), Some(&win), FileChooserAction::SelectFolder, &[("Ok", ResponseType::Ok), ("Cancel", ResponseType::Cancel)]);
 
         file_chooser.connect("response", true, |args| {

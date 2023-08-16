@@ -2,6 +2,17 @@
 <interface>
 	<template class="JCCMainMenuWindow" parent="GtkApplicationWindow">
 		<property name="title" translatable="yes">Jackbox Party Pack 7 Custom Content</property>
+		<child type="titlebar">
+			<object class="GtkHeaderBar">
+				<child type="end">
+					<object class="GtkButton" id="new_content">
+						<property name="label">New Content</property>
+						<property name="icon-name">list-add-symbolic</property>
+						<property name="tooltip-text">Add new content</property>
+					</object>
+				</child>
+			</object>
+		</child>
 		<child>
 			<object class="GtkColumnView" id="content_columns">
 				<child>
@@ -17,6 +28,23 @@
 				<child>
 					<object class="GtkColumnViewColumn">
 						<property name="title">Content</property>
+					</object>
+				</child>
+			</object>
+		</child>
+		<!--If we need to select the Jackbox Party Pack 7 folder instead. -->
+		<child>
+			<object class="GtkBox" id="folder_box">
+				<property name="orientation">vertical</property>
+				<property name="spacing">12</property>
+				<child>
+					<object class="GtkLabel">
+						<property name="label">Jackbox Party Pack 7 folder not detected.</property>
+					</object>
+				</child>
+				<child>
+					<object class="GtkButton" id="start_file_selection">
+						<property name="label">Choose Folder...</property>
 					</object>
 				</child>
 			</object>
