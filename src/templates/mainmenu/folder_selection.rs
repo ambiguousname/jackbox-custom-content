@@ -1,5 +1,5 @@
 use gtk::subclass::prelude::*;
-use gtk::prelude::{ObjectExt, GtkWindowExt, WidgetExt};
+use gtk::prelude::{ObjectExt, GtkWindowExt, WidgetExt, FileExt};
 use gtk::traits::{ButtonExt, FileChooserExt, DialogExt};
 use gtk::{ApplicationWindow, ResponseType, FileChooserDialog, FileChooserAction};
 
@@ -15,11 +15,11 @@ impl MainMenuWindow {
     }
 
     fn set_folder_name(&self, file_chooser : &FileChooserDialog, response_type : ResponseType) {
-
         if response_type == ResponseType::Ok {
             if (file_chooser.file().is_some()) {
-                let folder = file_chooser.file().clone().expect("Could not find jackbox folder.");
-                self.jackbox_folder().clone_from(&folder);
+                let folder = file_chooser.file();
+                self.imp().jackbox_folder.replace(folder.clone());
+                //println!("{}", self.jackbox_folder().path().expect("Could not get path name.").display());
             }
         }
         if (response_type == ResponseType::Ok || response_type == ResponseType::Cancel) {
