@@ -3,13 +3,15 @@ use std::cell::RefCell;
 // Template construction:
 use gtk::subclass::prelude::*;
 use gtk::{prelude::*, glib, Application, CompositeTemplate, gio};
-use glib::Object;
+use glib::{clone, Object};
 
 
 // Lists:
 use gtk::{ColumnView, ColumnViewColumn, SingleSelection, SignalListItemFactory, ListItem, Button};
 use super::content::{contentobj::ContentObject, contentcol::ContentCol};
 //use crate::templates::filebrowse::FileBrowseWidget;
+
+use super::content_creation::ContentCreationDialog;
 
 mod folder_selection;
 
@@ -19,6 +21,7 @@ mod imp {
 use super::*;
 
 	#[derive(Default, CompositeTemplate)]
+	// TODO: Move content columns to their own template.
 	#[template(resource="/templates/windows/mainmenu.ui")]
 	pub struct MainMenuWindow {
 		// Important lesson: unless you specify templates in the struct definition here, you'll get an error.
@@ -33,7 +36,11 @@ use super::*;
 		pub folder_box : TemplateChild<gtk::Box>,
 		pub jackbox_folder : RefCell<Option<gio::File>>,
 
-		pub content_list: RefCell<Option<gio::ListStore>>, 
+		pub content_list : RefCell<Option<gio::ListStore>>, 
+
+		#[template_child(id="new_content")]
+		pub new_content : TemplateChild<Button>,
+		pub content_creation_dialog: RefCell<Option<ContentCreationDialog>>,
 
 	}
 
@@ -60,6 +67,8 @@ use super::*;
 			let obj = self.obj();
 			obj.setup_content_list();
 			obj.setup_factory();
+
+			obj.setup_add_content();
 
 			obj.setup_folder_selection();
 		}
@@ -99,6 +108,18 @@ impl MainMenuWindow {
 			.borrow()
 			.clone()
 			.expect("Could not get content_list")
+	}
+
+	fn setup_add_content(&self) {
+		let dialog = ContentCreationDialog::new(self);
+
+
+		self.imp().content_creation_dialog.replace(Some(dialog)); 
+		
+		self.imp().new_content.connect_clicked(clone!(@weak self as window => move |_| {
+			let d = window.imp().content_creation_dialog.borrow().clone().expect("Could not get content creation dialog.");
+			d.present();
+		}));
 	}
 
 	// region: Setup code (create list store and set up factories)

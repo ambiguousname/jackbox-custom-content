@@ -20,11 +20,6 @@ fn main() {
         // We create the main window.
         let win = MainMenuWindow::new(app);
 
-        if (win.jackbox_folder().is_none()) {
-            win.toggle_content_columns_visibility(false);
-            win.toggle_folder_visibility(true);
-        }
-
         // Don't forget to make all widgets visible.
         win.present();
     });

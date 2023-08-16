@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+    <template class="JCCContentCreationDialog" parent="GtkDialog">
+		<property name="title" translatable="yes">Jackbox Party Pack 7 Custom Content</property>
+    </template>
+</interface>

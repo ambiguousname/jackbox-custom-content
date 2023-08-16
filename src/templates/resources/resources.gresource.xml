@@ -4,5 +4,6 @@
     <file compressed="true" preprocess="xml-stripblanks">widgets/filebrowse.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">widgets/contentrow.ui</file>
 	  <file compressed="true" preprocess="xml-stripblanks">windows/mainmenu.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">windows/content_creation.ui</file>
   </gresource>
 </gresources>
