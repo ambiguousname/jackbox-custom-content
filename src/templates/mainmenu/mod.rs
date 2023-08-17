@@ -12,6 +12,8 @@ use super::content::{contentobj::ContentObject, contentcol::ContentCol};
 //use crate::templates::filebrowse::FileBrowseWidget;
 
 use super::content_creation::ContentCreationDialog;
+use std::vec::Vec;
+use crate::content::GameContent;
 
 mod folder_selection;
 
@@ -88,6 +90,13 @@ glib::wrapper! {
 impl MainMenuWindow {
 	pub fn new(app: &Application) -> Self {
 		Object::builder().property("application", app).build()
+	}
+
+	pub fn add_game_info(&self, games : Vec<GameContent>) {
+		let d = self.imp().content_creation_dialog.borrow().clone().expect("Could not get dialog.");
+		for game in games {
+			d.add_game_type(game);
+		}
 	}
 	
 	

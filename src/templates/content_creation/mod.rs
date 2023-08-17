@@ -1,14 +1,18 @@
 use gtk::subclass::prelude::*;
-use gtk::{prelude::*, glib, Window, CompositeTemplate, gio, ResponseType};
+use gtk::{prelude::*, glib, Window, CompositeTemplate, gio, ResponseType, Stack, Label};
 use glib::Object;
 
+use crate::content::GameContent;
+
 mod imp {
+
     use super::*;
 
     #[derive(Default, CompositeTemplate)]
     #[template(resource="/templates/windows/content_creation.ui")]
     pub struct ContentCreationDialog {
-        
+        #[template_child(id="content_stack")]
+        pub content_stack : TemplateChild<Stack>,
     }
 
     #[glib::object_subclass]
@@ -51,5 +55,10 @@ impl ContentCreationDialog {
 
         this.add_button("Create", ResponseType::Ok);
         this
+    }
+
+    pub fn add_game_type(&self, game : GameContent) {
+        let w = Label::new(Some("Test"));
+        self.imp().content_stack.add_titled(&w, Some(game.game_id), game.name);
     }
 }

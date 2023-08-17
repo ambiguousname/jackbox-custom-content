@@ -11,18 +11,9 @@
                     </object>
                 </child>
                 <child>
+                    <!-- Data will be added by content_creation -->
                     <object class="GtkStack" id="content_stack">
-                        <child>
-                            <object class="GtkStackPage">
-                                <property name="name">Test</property>
-                                <property name="title">In the beginning…</property>
-                                <property name="child">
-                                    <object class="GtkLabel">
-                                        <property name="label">AJ</property>
-                                    </object>
-                                </property>
-                            </object>
-                        </child>
+                        
                     </object>
                 </child>
             </object>
