@@ -1,6 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
     <template class="JCCContentCreationDialog" parent="GtkDialog">
-		<property name="title" translatable="yes">Jackbox Party Pack 7 Custom Content</property>
+		<property name="title" translatable="yes">Add New Content</property>
+        <child>
+            <object class="GtkBox">
+                <property name="orientation">horizontal</property>
+                <child>
+                    <object class="GtkStackSidebar">
+                        <property name="stack">content_stack</property>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkStack" id="content_stack">
+                        <child>
+                            <object class="GtkStackPage">
+                                <property name="name">Test</property>
+                                <property name="title">In the beginning…</property>
+                                <property name="child">
+                                    <object class="GtkLabel">
+                                        <property name="label">AJ</property>
+                                    </object>
+                                </property>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+            </object>
+        </child>
     </template>
 </interface>

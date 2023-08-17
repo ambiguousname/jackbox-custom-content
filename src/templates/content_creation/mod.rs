@@ -1,5 +1,5 @@
 use gtk::subclass::prelude::*;
-use gtk::{prelude::*, glib, Window, CompositeTemplate, gio};
+use gtk::{prelude::*, glib, Window, CompositeTemplate, gio, ResponseType};
 use glib::Object;
 
 mod imp {
@@ -43,8 +43,13 @@ glib::wrapper! {
 
 impl ContentCreationDialog {
     pub fn new(parent: &impl IsA<Window>) -> Self {
-        Object::builder().property("transient-for", parent)
+        let this : Self = Object::builder()
+        .property("transient-for", parent)
         .property("hide-on-close", true)
-        .build()
+        .property("use-header-bar", 1)
+        .build();
+
+        this.add_button("Create", ResponseType::Ok);
+        this
     }
 }
