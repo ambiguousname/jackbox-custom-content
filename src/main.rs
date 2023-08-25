@@ -2,6 +2,8 @@
 use gtk::prelude::*;
 use gtk::Application;
 
+use std::sync::Arc;
+
 // mod util;
 // mod content;
 #[allow(unused_parens)]
@@ -9,18 +11,27 @@ mod templates;
 use templates::mainmenu::MainMenuWindow;
 
 mod content;
+mod config;
+use config::Config;
 
 #[allow(unused_parens)]
 fn main() {
     templates::load_resources();
 
+    // TODO: Load config.
+    let config : Arc<Config> = Arc::new(Config {
+        folder: None,
+    });
+
+
     let app = Application::builder()
         .application_id("Jackbox.Custom.Content")
         .build();
 
-    app.connect_activate(|app| {
+        let window_config = config.clone();
+    app.connect_activate(move |app| {
         // We create the main window.
-        let win = MainMenuWindow::new(app);
+        let win = MainMenuWindow::new(app, window_config);
 
         // TODO: Should be a ref cell?
         content::initialize_content(win.clone());

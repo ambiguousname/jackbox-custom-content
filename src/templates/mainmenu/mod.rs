@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, vec::Vec, sync::Arc};
 
 // Template construction:
 use gtk::subclass::prelude::*;
@@ -12,7 +12,6 @@ use super::content::{contentobj::ContentObject, contentcol::ContentCol};
 //use crate::templates::filebrowse::FileBrowseWidget;
 
 use super::content_creation::ContentCreationDialog;
-use std::vec::Vec;
 use crate::content::GameContent;
 
 mod folder_selection;
@@ -36,13 +35,14 @@ use super::*;
 		pub folder_choose : TemplateChild<Button>,
 		#[template_child(id="folder_box")]
 		pub folder_box : TemplateChild<gtk::Box>,
-		pub jackbox_folder : RefCell<Option<gio::File>>,
 
 		pub content_list : RefCell<Option<gio::ListStore>>, 
 
 		#[template_child(id="new_content")]
 		pub new_content : TemplateChild<Button>,
 		pub content_creation_dialog: RefCell<Option<ContentCreationDialog>>,
+
+		pub config : Arc<crate::Config>,
 
 	}
 
@@ -88,8 +88,10 @@ glib::wrapper! {
 // endregion
 
 impl MainMenuWindow {
-	pub fn new(app: &Application) -> Self {
-		Object::builder().property("application", app).build()
+	pub fn new(app: &Application, config: Arc<crate::Config>) -> Self {
+		let this : MainMenuWindow = Object::builder().property("application", app).build();
+		this.imp().config = config;
+		this
 	}
 
 	pub fn add_game_info(&self, games : Vec<GameContent>) {

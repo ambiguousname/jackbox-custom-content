@@ -11,11 +11,7 @@ use glib::clone;
 use crate::MainMenuWindow;
 
 impl MainMenuWindow {
-    pub(super) fn jackbox_folder(&self) -> Option<gtk::gio::File> {
-        self.imp().jackbox_folder.borrow().clone()
-    }
-
-    pub fn verify_folder(&self, folder_opt : Option<gtk::gio::File>) -> Result<gtk::gio::File, &'static str> {
+    fn verify_folder(&self, folder_opt : Option<gtk::gio::File>) -> Result<gtk::gio::File, &'static str> {
         let mut folder = folder_opt.expect("Could not get folder.");
         // First, verify base path.
         let mut path = folder.path().expect("Could not get folder pathname.");
@@ -50,12 +46,10 @@ impl MainMenuWindow {
 
     fn set_folder(&self, file_chooser : &FileChooserDialog, response_type : ResponseType) {
         if response_type == ResponseType::Ok {
-            // TODO: Folder validation.
             if (file_chooser.file().is_some()) {
                 let folder = file_chooser.file();
                 let verified_folder = self.verify_folder(folder);
                 if (verified_folder.is_err()) {
-                    // TODO: Print dialogue box.
                     let dialg = MessageDialog::new(Some(file_chooser), gtk::DialogFlags::MODAL | gtk::DialogFlags::DESTROY_WITH_PARENT, gtk::MessageType::Error, gtk::ButtonsType::Ok, verified_folder.expect_err("Could not get error."));
                     dialg.set_title(Some("Error"));
                     dialg.connect_response(move |this, _| {
@@ -66,7 +60,7 @@ impl MainMenuWindow {
                 }
 
                 let folder_clone = verified_folder.expect("Could not get verified folder.");
-                self.imp().jackbox_folder.replace(Some(folder_clone));
+                self.imp().config.folder = Some(folder_clone);
                 //println!("{}", self.jackbox_folder().path().expect("Could not get path name.").display());
                 if (!self.imp().content_columns.is_visible()) {
                     self.toggle_creation_visibility(true);
@@ -89,9 +83,8 @@ impl MainMenuWindow {
 
         self.imp().folder_choose.connect_clicked(move |_| { file_chooser.present(); });
 
-        // TODO: Add grabbing folder from config.
         // TODO: Hide other menu buttons.
-        if (self.jackbox_folder().is_none()) {
+        if (self.imp().config.folder.is_none()) {
             self.toggle_creation_visibility(false);
             self.toggle_folder_visibility(true);
         }
