@@ -59,6 +59,9 @@ impl ContentCreationDialog {
 
     pub fn add_game_type(&self, game : GameContent) {
         let w = Label::new(Some("Test"));
+
+        //let model = gio::ListStore::new();
+        //let column_view = ColumnView::new();
         self.imp().content_stack.add_titled(&w, Some(game.game_id), game.name);
     }
 }

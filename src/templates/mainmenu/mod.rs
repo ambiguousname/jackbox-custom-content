@@ -106,8 +106,9 @@ impl MainMenuWindow {
 		self.content_list().append(&test_content);
 	}
 	
-	pub fn toggle_content_columns_visibility(&self, visible: bool) {
+	pub fn toggle_creation_visibility(&self, visible: bool) {
 		self.imp().content_columns.set_visible(visible);
+		self.imp().new_content.set_visible(visible);
 	}
 	// endregion
 
