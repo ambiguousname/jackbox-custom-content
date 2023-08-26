@@ -47,7 +47,7 @@ impl MainMenuWindow {
     fn set_folder(&self, file_chooser : &FileChooserDialog, response_type : ResponseType) {
         if response_type == ResponseType::Ok {
             if (file_chooser.file().is_some()) {
-                let folder = file_chooser.file();
+                let folder : Option<gtk::gio::File> = file_chooser.file();
                 let verified_folder = self.verify_folder(folder);
                 if (verified_folder.is_err()) {
                     let dialg = MessageDialog::new(Some(file_chooser), gtk::DialogFlags::MODAL | gtk::DialogFlags::DESTROY_WITH_PARENT, gtk::MessageType::Error, gtk::ButtonsType::Ok, verified_folder.expect_err("Could not get error."));
@@ -60,7 +60,15 @@ impl MainMenuWindow {
                 }
 
                 let folder_clone = verified_folder.expect("Could not get verified folder.");
-                self.imp().config.folder = Some(folder_clone);
+
+                let cfg = self.imp().config.borrow();
+                let writer = cfg.try_write();
+                
+                if (writer.is_err()) {
+                    println!("Could not get write lock on config.");
+                    return;
+                }
+                writer.unwrap().folder = Some(folder_clone);
                 //println!("{}", self.jackbox_folder().path().expect("Could not get path name.").display());
                 if (!self.imp().content_columns.is_visible()) {
                     self.toggle_creation_visibility(true);
@@ -84,7 +92,9 @@ impl MainMenuWindow {
         self.imp().folder_choose.connect_clicked(move |_| { file_chooser.present(); });
 
         // TODO: Hide other menu buttons.
-        if (self.imp().config.folder.is_none()) {
+        let cfg = self.imp().config.borrow();
+        let config_info = cfg.try_write();
+        if (config_info.is_ok() && config_info.unwrap().folder.is_none()) {
             self.toggle_creation_visibility(false);
             self.toggle_folder_visibility(true);
         }

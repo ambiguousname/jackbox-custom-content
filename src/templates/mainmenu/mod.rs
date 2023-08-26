@@ -1,4 +1,5 @@
-use std::{cell::RefCell, vec::Vec, sync::Arc};
+use std::borrow::BorrowMut;
+use std::{cell::RefCell, vec::Vec, sync::{Arc, RwLock}};
 
 // Template construction:
 use gtk::subclass::prelude::*;
@@ -42,7 +43,7 @@ use super::*;
 		pub new_content : TemplateChild<Button>,
 		pub content_creation_dialog: RefCell<Option<ContentCreationDialog>>,
 
-		pub config : Arc<crate::Config>,
+		pub config : RefCell<Arc<RwLock<crate::Config>>>,
 
 	}
 
@@ -88,9 +89,9 @@ glib::wrapper! {
 // endregion
 
 impl MainMenuWindow {
-	pub fn new(app: &Application, config: Arc<crate::Config>) -> Self {
+	pub fn new(app: &Application, config: Arc<RwLock<crate::Config>>) -> Self {
 		let this : MainMenuWindow = Object::builder().property("application", app).build();
-		this.imp().config = config;
+		this.imp().config.replace(config);
 		this
 	}
 

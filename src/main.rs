@@ -2,7 +2,7 @@
 use gtk::prelude::*;
 use gtk::Application;
 
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 // mod util;
 // mod content;
@@ -19,19 +19,18 @@ fn main() {
     templates::load_resources();
 
     // TODO: Load config.
-    let config : Arc<Config> = Arc::new(Config {
+    let config : Arc<RwLock<Config>> = Arc::new(RwLock::new(Config {
         folder: None,
-    });
+    }));
 
 
     let app = Application::builder()
         .application_id("Jackbox.Custom.Content")
         .build();
 
-        let window_config = config.clone();
     app.connect_activate(move |app| {
         // We create the main window.
-        let win = MainMenuWindow::new(app, window_config);
+        let win = MainMenuWindow::new(app, config.clone());
 
         // TODO: Should be a ref cell?
         content::initialize_content(win.clone());
