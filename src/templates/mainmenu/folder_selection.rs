@@ -1,7 +1,7 @@
 use std::ffi::OsStr;
 
 use gtk::subclass::prelude::*;
-use gtk::prelude::{GtkWindowExt, WidgetExt, FileExt};
+use gtk::prelude::{GtkWindowExt, WidgetExt, FileExt, SettingsExt};
 use gtk::traits::{ButtonExt, FileChooserExt, DialogExt};
 use gtk::{ResponseType, FileChooserDialog, FileChooserAction, MessageDialog};
 
@@ -61,14 +61,10 @@ impl MainMenuWindow {
 
                 let folder_clone = verified_folder.expect("Could not get verified folder.");
 
-                let cfg = self.imp().config.borrow();
-                let writer = cfg.try_write();
-                
-                if (writer.is_err()) {
-                    println!("Could not get write lock on config.");
-                    return;
-                }
-                writer.unwrap().folder = Some(folder_clone);
+                let path = folder_clone.path().expect("Could not get folder PathBuf.");
+                let path_str = path.to_str().expect("Could not get PathBuf str.");
+
+                self.config().set_string("game-folder", path_str).expect("Could not set folder setting.");
                 //println!("{}", self.jackbox_folder().path().expect("Could not get path name.").display());
                 if (!self.imp().content_columns.is_visible()) {
                     self.toggle_creation_visibility(true);
@@ -92,9 +88,8 @@ impl MainMenuWindow {
         self.imp().folder_choose.connect_clicked(move |_| { file_chooser.present(); });
 
         // TODO: Hide other menu buttons.
-        let cfg = self.imp().config.borrow();
-        let config_info = cfg.try_write();
-        if (config_info.is_ok() && config_info.unwrap().folder.is_none()) {
+        let folder = self.config().user_value("game-folder");
+        if (folder.is_none()) {
             self.toggle_creation_visibility(false);
             self.toggle_folder_visibility(true);
         }

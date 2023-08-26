@@ -1,10 +1,10 @@
-use std::borrow::BorrowMut;
-use std::{cell::RefCell, vec::Vec, sync::{Arc, RwLock}};
+use std::{cell::{RefCell, OnceCell}, vec::Vec};
 
 // Template construction:
 use gtk::subclass::prelude::*;
 use gtk::{prelude::*, glib, Application, CompositeTemplate, gio};
 use glib::{clone, Object};
+use gio::Settings;
 
 
 // Lists:
@@ -43,8 +43,7 @@ use super::*;
 		pub new_content : TemplateChild<Button>,
 		pub content_creation_dialog: RefCell<Option<ContentCreationDialog>>,
 
-		pub config : RefCell<Arc<RwLock<crate::Config>>>,
-
+		pub config : OnceCell<Settings>,
 	}
 
 	// region: Boring Subclass Defs
@@ -68,6 +67,7 @@ use super::*;
 			self.parent_constructed();
 
 			let obj = self.obj();
+			obj.setup_config();
 			obj.setup_content_list();
 			obj.setup_factory();
 
@@ -89,10 +89,8 @@ glib::wrapper! {
 // endregion
 
 impl MainMenuWindow {
-	pub fn new(app: &Application, config: Arc<RwLock<crate::Config>>) -> Self {
-		let this : MainMenuWindow = Object::builder().property("application", app).build();
-		this.imp().config.replace(config);
-		this
+	pub fn new(app: &Application) -> Self {
+		Object::builder().property("application", app).build()
 	}
 
 	pub fn add_game_info(&self, games : Vec<GameContent>) {
@@ -133,6 +131,15 @@ impl MainMenuWindow {
 			let d = window.imp().content_creation_dialog.borrow().clone().expect("Could not get content creation dialog.");
 			d.present();
 		}));
+	}
+
+	fn setup_config(&self) {
+		let cfg = Settings::new(crate::APP_ID);
+		self.imp().config.set(cfg).expect("Could not set config.");
+	}
+
+	fn config(&self) -> &Settings {
+		self.imp().config.get().expect("Could not get config.")
 	}
 
 	// region: Setup code (create list store and set up factories)
