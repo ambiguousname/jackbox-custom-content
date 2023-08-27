@@ -1,8 +1,27 @@
-use gtk::glib::subclass::Signal;
 use gtk::subclass::prelude::*;
-use gtk::{glib, Button, prelude::*, CssProvider};
-use std::cell::Cell;
+use gtk::{glib, prelude::*, CssProvider};
+use std::cell::RefCell;
 use std::sync::Once;
+use glib::subclass::Signal;
+
+const CSS : &str  = 
+"
+.selector .text-button {
+    border: 0.1px solid;
+    box-shadow: none;
+}
+
+.selector .text-button.highlight {
+    background: @theme_selected_bg_color;
+    color: @theme_selected_fg_color; /* Using built-in GTK theme colors. https://github.com/surajmandalcell/Gtk-Theming-Guide/blob/master/creating_gtk_themes.md */
+}
+
+";
+
+thread_local! {
+    static CSS_DAT : CssProvider = CssProvider::new();
+}
+static CSS_INIT : Once = Once::new();
 
 mod imp {
 
@@ -10,7 +29,7 @@ mod imp {
 
     #[derive(Default)]
     pub struct Selector {
-        pub current_select : Cell<Option<Button>>,
+        pub current_select : RefCell<Option<SelectorButton>>,
     }
 
     #[glib::object_subclass]
@@ -35,34 +54,6 @@ glib::wrapper! {
     pub struct Selector(ObjectSubclass<imp::Selector>) @extends gtk::Box, gtk::Widget, @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Orientable;
 }
 
-
-const CSS : &str  = 
-"
-.selector .text-button {
-    border: 0.1px solid;
-    box-shadow: none;
-}
-
-.selector .text-button.highlight {
-    background: @theme_selected_bg_color;
-    color: @theme_selected_fg_color; /* Using built-in GTK theme colors. https://github.com/surajmandalcell/Gtk-Theming-Guide/blob/master/creating_gtk_themes.md */
-}
-
-";
-
-thread_local! {
-    static CSS_DAT : CssProvider = CssProvider::new();
-}
-static CSS_INIT : Once = Once::new();
-
-#[glib::derived_properties]
-impl ObjectImpl for Button {
-    fn signals() -> &'static [glib::subclass::Signal] {
-        static SIGNALS: Vec<Signal> = vec![Signal::builder("selected").build()];
-        SIGNALS.as_ref()
-    }
-}
-
 impl Selector {
     pub fn new() -> Self {
         glib::Object::new(&[("orientation", &gtk::Orientation::Vertical)])
@@ -84,19 +75,7 @@ impl Selector {
     where 
         F: Fn(&[glib::Value]) -> Option<glib::Value> + Send + Sync + 'static,
     {
-        let button = Button::builder()
-        .label(name)
-        .build();
-
-        button.style_context().add_provider(&Selector::grab_css(), gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
-
-        button.connect_clicked(move |this| {
-            let selector_parent = this.parent().expect("Could not get button parent.").downcast::<Selector>().expect("Could not get Selector parent.");
-            let prev_selected = selector_parent.imp().current_select.take().expect("Could not get selected button.");
-            prev_selected.remove_css_class("highlight");
-            selector_parent.imp().current_select.replace(Some(this.clone()));
-            this.add_css_class("highlight");
-        });
+        let button = SelectorButton::new(name);
 
         button.connect("selected", false, callback);
 
@@ -109,10 +88,65 @@ impl Selector {
     }
 
     pub fn get_selected(&self) -> glib::GString {
-        self.imp().current_select.take().expect("Could not get currently selected.").label().expect("Could not get label.")
+        let b = self.imp().current_select.borrow().clone().expect("Could not get currently selected.");
+        b.property::<glib::GString>("label")
     }
 
     pub fn selected_callback(&self) {
-        self.imp().current_select.take().expect("Could not get currently selected").emit_by_name::<()>("selected", &[]);
+        self.imp().current_select.borrow().clone().expect("Could not get currently selected").emit_by_name::<()>("selected", &[]);
     }
 }
+
+// region: Selector Button custom definition
+
+mod button_imp {
+    use std::sync::OnceLock;
+
+    use super::*;
+
+    #[derive(Default)]
+    pub struct SelectorButton {}
+
+    #[glib::object_subclass]
+    impl ObjectSubclass for SelectorButton {
+        const NAME : &'static str = "JCCSelectorButton";
+        type Type = super::SelectorButton;
+        type ParentType = gtk::Button;
+    }
+    impl ObjectImpl for SelectorButton{
+        fn constructed(&self) {
+            self.parent_constructed();
+            self.obj().style_context().add_provider(&Selector::grab_css(), gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+        }
+        
+        fn signals() -> &'static [Signal] {
+            static SIGNALS : OnceLock<Vec<Signal>> = OnceLock::new();
+            SIGNALS.get_or_init(|| {
+                vec![Signal::builder("selected").build()]
+            })
+        }
+    }
+    impl WidgetImpl for SelectorButton{}
+    impl ButtonImpl for SelectorButton{
+        fn clicked(&self) {
+            self.parent_clicked();
+            let this = self.obj();
+            let selector_parent = this.parent().expect("Could not get button parent.").downcast::<Selector>().expect("Could not get Selector parent.");
+            let prev_selected = selector_parent.imp().current_select.take().expect("Could not get selected button.");
+            prev_selected.remove_css_class("highlight");
+            selector_parent.imp().current_select.replace(Some(this.clone()));
+            this.add_css_class("highlight");
+        }
+    }
+}
+
+glib::wrapper! {
+    pub struct SelectorButton(ObjectSubclass<button_imp::SelectorButton>) @extends gtk::Box, gtk::Widget, @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Orientable;
+}
+
+impl SelectorButton {
+    fn new(name : &str) -> Self {
+        glib::Object::new(&[("label", &name)])
+    }
+}
+// endregion
