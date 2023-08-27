@@ -1,8 +1,9 @@
 use gtk::subclass::prelude::*;
-use gtk::{prelude::*, glib, Window, CompositeTemplate, gio, ResponseType, StyleContext, Stack, Button, Widget, StackPage};
+use gtk::{prelude::*, glib, Window, CompositeTemplate, gio, ResponseType, Stack, Button};
 use glib::Object;
 
 use crate::content::{GameContent, self};
+use crate::main;
 use crate::templates::selector::Selector;
 
 mod imp {
@@ -58,7 +59,6 @@ impl ContentCreationDialog {
         button.connect_clicked(|button| {
             let window_parent = button.ancestor(Window::static_type()).expect("Could not get ancestor.").downcast::<ContentCreationDialog>().expect("Could not get Content Creation Dialog.");
 
-            let pages = window_parent.imp().content_stack.pages();
             let current_page = window_parent.imp().content_stack.visible_child().expect("No selected page.");
 
             let current_selector = current_page.downcast::<Selector>().expect("Could not get selector.");
@@ -71,8 +71,15 @@ impl ContentCreationDialog {
         let selector = Selector::new();
 
         for content_type in game.content_categories {
-            selector.add_selection(content_type.name, |_| -> Option<glib::Value> {
-                (content_type.open_window)();
+            let ptr = content_type.open_window;
+            // TODO: Fix so you can only add one bit of custom content at a time.
+            selector.add_selection(content_type.name, move |args| -> Option<glib::Value> {
+                let this : gtk::Widget = args[0].get().expect("Could not get self.");
+                let window : gtk::Root = this.root().expect("Could not get root.");
+                
+                let content_window = ptr();
+                content_window.set_property("transient-for", window);
+                content_window.present();
                 None
             });
         }

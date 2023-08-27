@@ -72,8 +72,7 @@ impl Selector {
     }
 
     pub fn add_selection<F>(&self, name : &str, callback : F) 
-    where 
-        F: Fn(&[glib::Value]) -> Option<glib::Value> + Send + Sync + 'static,
+    where F : Fn(&[glib::Value]) -> Option<glib::Value> + Send + Sync + 'static
     {
         let button = SelectorButton::new(name);
 
@@ -93,7 +92,7 @@ impl Selector {
     }
 
     pub fn selected_callback(&self) {
-        self.imp().current_select.borrow().clone().expect("Could not get currently selected").emit_by_name::<()>("selected", &[]);
+        self.imp().current_select.borrow().clone().expect("Could not get currently selected").emit_by_name::<()>("selected", &[&self]);
     }
 }
 
@@ -122,7 +121,7 @@ mod button_imp {
         fn signals() -> &'static [Signal] {
             static SIGNALS : OnceLock<Vec<Signal>> = OnceLock::new();
             SIGNALS.get_or_init(|| {
-                vec![Signal::builder("selected").build()]
+                vec![Signal::builder("selected").param_types([Selector::static_type()]).build()]
             })
         }
     }

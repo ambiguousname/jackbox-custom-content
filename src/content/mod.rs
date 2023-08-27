@@ -35,9 +35,10 @@ pub trait ContentLoader {
     fn render_window(&self);
 }*/
 
-pub struct ContentCategory {
+pub struct ContentCategory
+{
     pub name: &'static str,
-    pub open_window : fn(),
+    pub open_window : fn() -> gtk::Window,
 }
 
 pub struct GameContent {
