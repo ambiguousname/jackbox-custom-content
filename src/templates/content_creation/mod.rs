@@ -1,5 +1,5 @@
 use gtk::subclass::prelude::*;
-use gtk::{prelude::*, glib, Window, CompositeTemplate, gio, ResponseType, Stack, Button, Box};
+use gtk::{prelude::*, glib, Window, CompositeTemplate, gio, ResponseType, StyleContext, Stack, Button, Box};
 use glib::Object;
 
 use crate::content::GameContent;
