@@ -1,8 +1,8 @@
 use gtk::subclass::prelude::*;
-use gtk::{prelude::*, glib, Window, CompositeTemplate, gio, ResponseType, Stack, Label};
+use gtk::{prelude::*, glib, Window, CompositeTemplate, gio, ResponseType, Stack, Button, Box};
 use glib::Object;
 
-use crate::content::GameContent;
+use crate::content::{GameContent};
 
 mod imp {
 
@@ -58,10 +58,22 @@ impl ContentCreationDialog {
     }
 
     pub fn add_game_type(&self, game : GameContent) {
-        let w = Label::new(Some("Test"));
+        let game_type_selection = Box::new(gtk::Orientation::Vertical, 2);
+
+        game_type_selection.add_css_class("selector");
+        for content_type in game.content_categories {
+            let category_label = Button::builder()
+            .label(content_type.name)
+            .build();
+        
+            category_label.connect_clicked(move |this| {
+                this.add_css_class("highlight");
+            });
+            game_type_selection.append(&category_label);
+        }
 
         //let model = gio::ListStore::new();
         //let column_view = ColumnView::new();
-        self.imp().content_stack.add_titled(&w, Some(game.game_id), game.name);
+        self.imp().content_stack.add_titled(&game_type_selection, Some(game.game_id), game.name);
     }
 }

@@ -1,11 +1,15 @@
 mod categories;
 
-use super::GameContent;
+use categories::QUIPLASH_PROMPT;
+
+use super::{GameContent, ContentCategory};
+
+pub const QUIPLASH_CATEGORIES : [ContentCategory; 1] = [QUIPLASH_PROMPT];
 
 pub const GAME_INFO: GameContent = GameContent {
     game_id: "Quiplash3",
     name: "Quiplash 3",
-    content_categories: vec![],
+    content_categories: &QUIPLASH_CATEGORIES,
 };
 
 // Let's break down what needs to happen to create or modify a question, in reverse:

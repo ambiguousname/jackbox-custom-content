@@ -1,5 +1,5 @@
 use serde_json::Value;
-use std::vec::Vec;
+use std::marker::Sized;
 
 use super::templates::mainmenu::MainMenuWindow;
 
@@ -37,6 +37,7 @@ pub trait ContentLoader {
     }
     fn render_window(&self);
 }*/
+
 pub struct ContentCategory {
     pub name: &'static str,
 }
@@ -44,7 +45,7 @@ pub struct ContentCategory {
 pub struct GameContent {
     pub game_id: &'static str,
     pub name: &'static str,
-    pub content_categories: Vec<ContentCategory>,
+    pub content_categories: &'static [ContentCategory],
 }
 
 
