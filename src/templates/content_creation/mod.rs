@@ -1,8 +1,8 @@
 use gtk::subclass::prelude::*;
-use gtk::{prelude::*, glib, Window, CompositeTemplate, gio, ResponseType, StyleContext, Stack, Button, Box};
+use gtk::{prelude::*, glib, Window, CompositeTemplate, gio, ResponseType, StyleContext, Stack, Button, Widget, StackPage};
 use glib::Object;
 
-use crate::content::GameContent;
+use crate::content::{GameContent, self};
 use crate::templates::selector::Selector;
 
 mod imp {
@@ -54,7 +54,16 @@ impl ContentCreationDialog {
         .property("use-header-bar", 1)
         .build();
 
-        this.add_button("Create", ResponseType::Ok);
+        let button = this.add_button("Create", ResponseType::Ok).downcast::<Button>().expect("Could not get button.");
+        button.connect_clicked(|button| {
+            let window_parent = button.ancestor(Window::static_type()).expect("Could not get ancestor.").downcast::<ContentCreationDialog>().expect("Could not get Content Creation Dialog.");
+
+            let pages = window_parent.imp().content_stack.pages();
+            let current_page = window_parent.imp().content_stack.visible_child().expect("No selected page.");
+
+            let current_selector = current_page.downcast::<Selector>().expect("Could not get selector.");
+            current_selector.selected_callback();
+        });
         this
     }
 
@@ -62,11 +71,15 @@ impl ContentCreationDialog {
         let selector = Selector::new();
 
         for content_type in game.content_categories {
-            selector.add_selection(content_type.name);
+            selector.add_selection(content_type.name, |_| -> Option<glib::Value> {
+                (content_type.open_window)();
+                None
+            });
         }
 
         //let model = gio::ListStore::new();
         //let column_view = ColumnView::new();
+        // TODO: Custom signal for the page? 
         self.imp().content_stack.add_titled(&selector, Some(game.game_id), game.name);
     }
 }

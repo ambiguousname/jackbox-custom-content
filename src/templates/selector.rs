@@ -1,3 +1,4 @@
+use gtk::glib::subclass::Signal;
 use gtk::subclass::prelude::*;
 use gtk::{glib, Button, prelude::*, CssProvider};
 use std::cell::Cell;
@@ -54,6 +55,14 @@ thread_local! {
 }
 static CSS_INIT : Once = Once::new();
 
+#[glib::derived_properties]
+impl ObjectImpl for Button {
+    fn signals() -> &'static [glib::subclass::Signal] {
+        static SIGNALS: Vec<Signal> = vec![Signal::builder("selected").build()];
+        SIGNALS.as_ref()
+    }
+}
+
 impl Selector {
     pub fn new() -> Self {
         glib::Object::new(&[("orientation", &gtk::Orientation::Vertical)])
@@ -71,7 +80,10 @@ impl Selector {
         })
     }
 
-    pub fn add_selection(&self, name : &str) {
+    pub fn add_selection<F>(&self, name : &str, callback : F) 
+    where 
+        F: Fn(&[glib::Value]) -> Option<glib::Value> + Send + Sync + 'static,
+    {
         let button = Button::builder()
         .label(name)
         .build();
@@ -86,11 +98,21 @@ impl Selector {
             this.add_css_class("highlight");
         });
 
+        button.connect("selected", false, callback);
+
         if (self.first_child().is_none()) {
             button.add_css_class("highlight");
             self.imp().current_select.replace(Some(button.clone()));
         }
 
         self.append(&button);
+    }
+
+    pub fn get_selected(&self) -> glib::GString {
+        self.imp().current_select.take().expect("Could not get currently selected.").label().expect("Could not get label.")
+    }
+
+    pub fn selected_callback(&self) {
+        self.imp().current_select.take().expect("Could not get currently selected").emit_by_name::<()>("selected", &[]);
     }
 }

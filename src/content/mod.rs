@@ -37,6 +37,7 @@ pub trait ContentLoader {
 
 pub struct ContentCategory {
     pub name: &'static str,
+    pub open_window : fn(),
 }
 
 pub struct GameContent {
