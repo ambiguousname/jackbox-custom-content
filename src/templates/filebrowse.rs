@@ -15,7 +15,7 @@ mod imp {
 
     #[glib::object_subclass]
     impl ObjectSubclass for FileBrowseWidget {
-        const NAME: &'static str = "JCCFileBrowseWidget";
+        const NAME : &'static str = "JCCFileBrowseWidget";
         type Type = super::FileBrowseWidget;
         type ParentType = gtk::Box;
 

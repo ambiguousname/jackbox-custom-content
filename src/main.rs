@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use gtk::gdk::Display;
 // use content::ContentCategory;
 use gtk::prelude::*;
