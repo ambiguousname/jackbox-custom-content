@@ -69,4 +69,8 @@ impl ContentObject {
 		.property("enabled", enabled)
 		.build()
 	}
+
+	pub fn enabled(&self) -> bool {
+		self.property("enabled")
+	}
 }

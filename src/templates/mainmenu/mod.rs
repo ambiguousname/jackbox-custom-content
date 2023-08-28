@@ -1,18 +1,16 @@
+mod content_view;
+mod content_creation;
+
 use std::{cell::{RefCell, OnceCell}, vec::Vec};
 
 // Template construction:
 use gtk::subclass::prelude::*;
-use gtk::{prelude::*, glib, Application, CompositeTemplate, gio};
+use gtk::{prelude::*, glib, Application, CompositeTemplate, gio, Box, Button, Stack};
 use glib::{clone, Object};
 use gio::Settings;
 
-
-// Lists:
-use gtk::{ColumnView, ColumnViewColumn, SingleSelection, SignalListItemFactory, ListItem, Button};
-use super::content::{contentobj::ContentObject, contentcol::ContentCol};
-//use crate::templates::filebrowse::FileBrowseWidget;
-
-use super::content_creation::ContentCreationDialog;
+use content_creation::ContentCreationDialog;
+use content_view::ContentList;
 use crate::content::GameContent;
 
 mod folder_selection;
@@ -24,20 +22,18 @@ use super::*;
 
 	#[derive(Default, CompositeTemplate)]
 	// TODO: Move content columns to their own template.
-	#[template(resource="/templates/windows/mainmenu.ui")]
+	#[template(resource="/templates/mainmenu/mainmenu.ui")]
 	pub struct MainMenuWindow {
 		// Important lesson: unless you specify templates in the struct definition here, you'll get an error.
-		#[template_child(id="content_columns")]
-		pub content_columns: TemplateChild<ColumnView>,
-		#[template_child(id="new_content")]
-		pub menu_button: TemplateChild<Button>,
+		#[template_child(id="mod_selection")]
+		pub mod_selection : TemplateChild<Box>,
+		#[template_child(id="content_stack")]
+		pub content_stack : TemplateChild<Stack>,
 		
 		#[template_child(id="start_file_selection")]
 		pub folder_choose : TemplateChild<Button>,
 		#[template_child(id="folder_box")]
 		pub folder_box : TemplateChild<gtk::Box>,
-
-		pub content_list : RefCell<Option<gio::ListStore>>, 
 
 		#[template_child(id="new_content")]
 		pub new_content : TemplateChild<Button>,
@@ -67,9 +63,9 @@ use super::*;
 			self.parent_constructed();
 
 			let obj = self.obj();
+			obj.setup_stack();
+
 			obj.setup_config();
-			obj.setup_content_list();
-			obj.setup_factory();
 
 			obj.setup_add_content();
 
@@ -92,6 +88,17 @@ impl MainMenuWindow {
 	pub fn new(app: &Application) -> Self {
 		Object::builder().property("application", app).build()
 	}
+	
+	fn config(&self) -> &Settings {
+		self.imp().config.get().expect("Could not get config.")
+	}
+	
+	// region: Public content management
+	
+	pub fn toggle_creation_visibility(&self, visible: bool) {
+		self.imp().mod_selection.set_visible(visible);
+		self.imp().new_content.set_visible(visible);
+	}
 
 	pub fn add_game_info(&self, games : Vec<GameContent>) {
 		let d = self.imp().content_creation_dialog.borrow().clone().expect("Could not get dialog.");
@@ -99,26 +106,13 @@ impl MainMenuWindow {
 			d.add_game_type(game);
 		}
 	}
-	
-	
-	// region: Public content management
-	pub fn add_content(&self){
-		let test_content = ContentObject::new(false);
-		self.content_list().append(&test_content);
-	}
-	
-	pub fn toggle_creation_visibility(&self, visible: bool) {
-		self.imp().content_columns.set_visible(visible);
-		self.imp().new_content.set_visible(visible);
-	}
 	// endregion
 
-	fn content_list(&self) -> gio::ListStore {
-		self.imp()
-			.content_list
-			.borrow()
-			.clone()
-			.expect("Could not get content_list")
+	// region: Basic setup
+	fn setup_stack(&self) {
+		let stack = self.imp().content_stack.clone();
+		let all = ContentList::new();
+		stack.add_titled(&all, Some("all"), "All");
 	}
 
 	fn setup_add_content(&self) {
@@ -136,60 +130,6 @@ impl MainMenuWindow {
 	fn setup_config(&self) {
 		let cfg = Settings::new(crate::APP_ID);
 		self.imp().config.set(cfg).expect("Could not set config.");
-	}
-
-	fn config(&self) -> &Settings {
-		self.imp().config.get().expect("Could not get config.")
-	}
-
-	// region: Setup code (create list store and set up factories)
-	fn setup_content_list(&self) {
-		let model = gio::ListStore::new(ContentObject::static_type());
-
-		self.imp().content_list.replace(Some(model));
-
-		let content_list = SingleSelection::new(Some(&self.content_list()));
-		self.imp().content_columns.set_model(Some(&content_list));
-	}
-
-	fn setup_factory(&self) {
-		let columns = self.imp().content_columns.columns();
-		let len = columns.n_items();
-		for i in 0..len {
-			let column = columns.item(i).and_downcast::<ColumnViewColumn>().expect("Column should be `ColumnViewColumn`.");
-			
-			let factory = SignalListItemFactory::new();
-			factory.connect_setup(move |_, list_item| {
-				let widget = gtk::Label::new(Some("Test"));
-				let content_row = ContentCol::new(gtk::Widget::from(widget));
-				list_item.downcast_ref::<ListItem>().expect("Should be `ListItem`.")
-				.set_child(Some(&content_row));
-			});
-
-			factory.connect_bind(move |_, list_item| {
-				let content_object = list_item.downcast_ref::<ListItem>()
-					.expect("Should be ListItem")
-					.item()
-					.and_downcast::<ContentObject>()
-					.expect("Item should be `ContentObject`.");
-	
-				let content_row = list_item.downcast_ref::<ListItem>().expect("Should be `ListItem`.")
-				.child()
-				.and_downcast::<ContentCol>().expect("Child should be `ContentCol`.");
-	
-				content_row.bind(&content_object);
-			});
-	
-			factory.connect_unbind(move |_, list_item| {
-				let content_row = list_item.downcast_ref::<ListItem>().expect("Should be `ListItem`.")
-				.child()
-				.and_downcast::<ContentCol>().expect("Child should be `ContentCol`.");
-	
-				content_row.unbind();
-			});
-			
-			column.set_factory(Some(&factory));
-		}
 	}
 	// endregion
 

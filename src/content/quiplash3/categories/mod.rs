@@ -1,6 +1,7 @@
 use crate::content::ContentCategory;
 use gtk::{Window, Dialog};
 
+// TODO: Modify so this is static?
 fn prompt_window() -> Window {
     let window = Dialog::builder().title("Text").build();
     window.into()

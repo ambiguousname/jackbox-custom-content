@@ -3,8 +3,7 @@ use std::cell::RefCell;
 use gtk::subclass::prelude::*;
 use gtk::{glib, prelude::*};
 use gtk::Widget;
-use glib::{Object, Binding, BindingFlags, ParamSpec, ParamSpecObject, once_cell};
-use once_cell::sync::Lazy;
+use glib::{Object, Binding, BindingFlags, ParamSpec, ParamSpecObject};
 
 use super::contentobj::ContentObject;
 

@@ -2,8 +2,7 @@ use gtk::subclass::prelude::*;
 use gtk::{prelude::*, glib, Window, CompositeTemplate, gio, ResponseType, Stack, Button};
 use glib::Object;
 
-use crate::content::{GameContent, self};
-use crate::main;
+use crate::content::GameContent;
 use crate::templates::selector::Selector;
 
 mod imp {
@@ -11,9 +10,9 @@ mod imp {
     use super::*;
 
     #[derive(Default, CompositeTemplate)]
-    #[template(resource="/templates/windows/content_creation.ui")]
+    #[template(resource="/templates/mainmenu/content_creation/content_creation.ui")]
     pub struct ContentCreationDialog {
-        #[template_child(id="content_stack")]
+        #[template_child(id="game_select_stack")]
         pub content_stack : TemplateChild<Stack>,
     }
 
@@ -32,11 +31,7 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for ContentCreationDialog {
-        fn constructed(&self) {
-            self.parent_constructed();
-        }
-    }
+    impl ObjectImpl for ContentCreationDialog {}
     impl WidgetImpl for ContentCreationDialog {}
 	impl WindowImpl for ContentCreationDialog {}
     impl DialogImpl for ContentCreationDialog {}

@@ -1,3 +1,4 @@
+use gtk::glib::ExitCode;
 // use content::ContentCategory;
 use gtk::prelude::*;
 use gtk::Application;
@@ -13,7 +14,7 @@ mod content;
 const APP_ID : &str = "com.ambiguousname.JackboxCustomContent";
 
 #[allow(unused_parens)]
-fn main() -> Result<(), std::io::Error> {
+fn main() -> ExitCode {
     println!("Start");
     templates::load_resources();
     println!("Resources loaded.");
@@ -36,6 +37,5 @@ fn main() -> Result<(), std::io::Error> {
         win.present();
     });
 
-    app.run();
-    Ok(())
+    app.run()
 }

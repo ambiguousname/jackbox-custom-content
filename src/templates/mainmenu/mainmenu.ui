@@ -17,20 +17,14 @@
 			<object class="GtkBox">
 				<property name="halign">center</property>
 				<child>
-					<object class="GtkColumnView" id="content_columns">
+					<object class="GtkBox" id="mod_selection">
 						<child>
-							<object class="GtkColumnViewColumn">
-								<property name="title">Enabled</property>
+							<object class="GtkStackSidebar">
+								<property name="stack">content_stack</property>
 							</object>
 						</child>
 						<child>
-							<object class="GtkColumnViewColumn">
-								<property name="title">Game</property>
-							</object>
-						</child>
-						<child>
-							<object class="GtkColumnViewColumn">
-								<property name="title">Content</property>
+							<object class="GtkStack" id="content_stack">
 							</object>
 						</child>
 					</object>

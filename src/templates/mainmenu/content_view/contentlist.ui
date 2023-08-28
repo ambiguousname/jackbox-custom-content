@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+	<template class="JCCContentList" parent="GtkBox">
+        <property name="orientation">horizontal</property>
+        <child>
+            <object class="GtkColumnView" id="column_view">
+                <child>
+                    <object class="GtkColumnViewColumn">
+                        <property name="title">Enabled</property>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkColumnViewColumn">
+                        <property name="title">Game</property>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkColumnViewColumn">
+                        <property name="title">Content</property>
+                    </object>
+                </child>
+            </object>
+        </child>
+	</template>
+</interface>

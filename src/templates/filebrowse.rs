@@ -1,11 +1,11 @@
 use gtk::subclass::prelude::*;
-use gtk::{glib, CompositeTemplate, Button, Entry, prelude::*};
+use gtk::{glib, CompositeTemplate, Button, Entry};
 
 mod imp {
 	use super::*;
 
     #[derive(Default, CompositeTemplate)]
-    #[template(resource="/templates/widgets/filebrowse.ui")]
+    #[template(resource="/templates/filebrowse.ui")]
     pub struct FileBrowseWidget {
         #[template_child(id="browse_button")]
         pub button: TemplateChild<Button>,
@@ -39,6 +39,6 @@ glib::wrapper!{
 
 impl FileBrowseWidget {
 	pub fn new() -> Self {
-		glib::Object::new(&[])
+		glib::Object::new()
 	}
 }

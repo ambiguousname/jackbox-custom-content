@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<interface>
-	<template class="JCCContentRow" parent="GtkBox">
-		<child><object class="GtkCheckButton" id="enabled"></object></child>
-		<child><object class="GtkLabel" id="game"></object></child>
-		<child><object class="GtkLabel" id="content"></object></child>
-	</template>
-</interface>

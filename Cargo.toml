@@ -7,8 +7,9 @@ build="src/build.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-gtk = { version = "0.5.5", package = "gtk4"}
-serde_json = "1.0"
+gtk = { version = "0.6.6", package = "gtk4"}
+# TODO: Remove if gtk gets update with these new macros? Mostly looking for derived_properties for easier use.
+glib-macros = "0.18.0"
 
 [build-dependencies]
 glib-build-tools = "0.17.0"

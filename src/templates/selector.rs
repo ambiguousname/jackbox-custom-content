@@ -21,6 +21,7 @@ const CSS : &str  =
 thread_local! {
     static CSS_DAT : CssProvider = CssProvider::new();
 }
+
 static CSS_INIT : Once = Once::new();
 
 mod imp {
@@ -56,13 +57,13 @@ glib::wrapper! {
 
 impl Selector {
     pub fn new() -> Self {
-        glib::Object::new(&[("orientation", &gtk::Orientation::Vertical)])
+        glib::Object::builder().property("orientation", &gtk::Orientation::Vertical).build()
     }
 
     fn grab_css() -> CssProvider {
         CSS_INIT.call_once(|| {
             CSS_DAT.with(|provider| {
-                provider.load_from_data(CSS.as_bytes());
+                provider.load_from_data(CSS);
                 println!("Selector CSS loaded.");
             });
         });
@@ -145,7 +146,7 @@ glib::wrapper! {
 
 impl SelectorButton {
     fn new(name : &str) -> Self {
-        glib::Object::new(&[("label", &name)])
+        glib::Object::builder().property("label", &name).build()
     }
 }
 // endregion

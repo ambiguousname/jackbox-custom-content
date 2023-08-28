@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/content/">
+    <file compressed="true" preprocess="xml-stripblanks">quiplash3/categories/quiplash_prompt.ui</file>
+  </gresource>
+</gresources>

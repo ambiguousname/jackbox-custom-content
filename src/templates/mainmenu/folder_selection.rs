@@ -66,7 +66,7 @@ impl MainMenuWindow {
 
                 self.config().set_string("game-folder", path_str).expect("Could not set folder setting.");
                 //println!("{}", self.jackbox_folder().path().expect("Could not get path name.").display());
-                if (!self.imp().content_columns.is_visible()) {
+                if (!self.imp().mod_selection.is_visible()) {
                     self.toggle_creation_visibility(true);
                     self.toggle_folder_visibility(false);
                 }
