@@ -26,14 +26,14 @@ use super::*;
 	pub struct MainMenuWindow {
 		// Important lesson: unless you specify templates in the struct definition here, you'll get an error.
 		#[template_child(id="mod_selection")]
-		pub mod_selection : TemplateChild<Box>,
+		pub mod_selection : TemplateChild<gtk::Paned>,
 		#[template_child(id="content_stack")]
 		pub content_stack : TemplateChild<Stack>,
 		
 		#[template_child(id="start_file_selection")]
 		pub folder_choose : TemplateChild<Button>,
 		#[template_child(id="folder_box")]
-		pub folder_box : TemplateChild<gtk::Box>,
+		pub folder_box : TemplateChild<Box>,
 
 		#[template_child(id="new_content")]
 		pub new_content : TemplateChild<Button>,
@@ -63,6 +63,9 @@ use super::*;
 			self.parent_constructed();
 
 			let obj = self.obj();
+			// Not working for whatever reason with the mainmenu.ui property xml.
+			obj.imp().mod_selection.set_shrink_start_child(false);
+			obj.imp().mod_selection.set_shrink_end_child(false);
 			obj.setup_stack();
 
 			obj.setup_config();
@@ -125,6 +128,10 @@ impl MainMenuWindow {
 			let d = window.imp().content_creation_dialog.borrow().clone().expect("Could not get content creation dialog.");
 			d.present();
 		}));
+	}
+
+	fn reset_config(&self) {
+		self.config().reset("game-folder");
 	}
 
 	fn setup_config(&self) {
