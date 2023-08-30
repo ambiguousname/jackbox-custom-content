@@ -7,6 +7,7 @@
     <file compressed="true" preprocess="xml-stripblanks">mainmenu/content_view/contentlist.ui</file>
   </gresource>
   <gresource prefix="/content/">
+    <file compressed="true" preprocess="xml-stripblanks">quiplash3/categories/generic_round_prompt.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">quiplash3/categories/round_prompt.ui</file>
   </gresource>
 </gresources>

@@ -5,8 +5,7 @@
         <child>
             <object class="GtkNotebook">
                 <child>
-                    <object class="GtkLabel">
-                        <property name="label">Round 1</property>
+                    <object class="JCCQuiplashGenericRoundPrompt">
                     </object>
                 </child>
                 <child type="tab">
@@ -15,8 +14,7 @@
                     </object>
                 </child>
                 <child>
-                    <object class="GtkLabel">
-                        <property name="label">Round 2</property>
+                    <object class="JCCQuiplashGenericRoundPrompt">
                     </object>
                 </child>
                 <child type="tab">
@@ -25,8 +23,7 @@
                     </object>
                 </child>
                 <child>
-                    <object class="GtkLabel">
-                        <property name="label">Final Round</property>
+                    <object class="JCCQuiplashGenericRoundPrompt">
                     </object>
                 </child>
                 <child type="tab">

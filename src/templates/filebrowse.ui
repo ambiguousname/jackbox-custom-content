@@ -1,5 +1,5 @@
 <interface>
-  <template class="FileBrowseWidget" parent="GtkBox">
+  <template class="JCCFileBrowseWidget" parent="GtkBox">
     <child>
       <object class="GtkEntry" id="folder_location">
         <property name="placeholder-text">Location of the Jackbox Party Pack 7 executable</property>

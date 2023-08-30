@@ -122,8 +122,6 @@ impl MainMenuWindow {
 	fn setup_add_content(&self) {
 		let dialog = ContentCreationDialog::new(self);
 
-		println!("A {}", self.is::<gio::ActionMap>());
-
 		self.imp().content_creation_dialog.replace(Some(dialog)); 
 	}
 
