@@ -3,7 +3,7 @@ use std::{fs, path::PathBuf};
 
 #[allow(unused_parens)]
 fn main() {
-	glib_build_tools::compile_resources(&["src/templates/"], "src/templates/resources.gresource.xml", "resources.gresource");
+	glib_build_tools::compile_resources(&["src/templates/", "src/content/"], "src/resources.gresource.xml", "resources.gresource");
 
 	let o = Command::new("glib-compile-schemas").arg("./src").output().unwrap();
 	assert!(o.status.success(), "glib-compile-schemas failed with {} and stderr: {}\n", o.status, String::from_utf8_lossy(&o.stderr));

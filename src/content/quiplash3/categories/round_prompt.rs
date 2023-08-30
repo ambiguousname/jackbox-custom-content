@@ -17,7 +17,7 @@ pub struct QuiplashFinalRoundPrompt {}
 
 impl QuiplashRoundPrompt for QuiplashFinalRoundPrompt {}
 
-// TODO: Modify so this is static?
+// TODO: Modify so this is static (using round_prompt.ui)
 fn prompt_window() -> Window {
     let window = Dialog::builder().title("Quiplash Round Prompt").build();
     
