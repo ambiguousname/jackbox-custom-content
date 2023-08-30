@@ -1,39 +1,26 @@
+use std::collections::HashMap;
+
 use super::templates::mainmenu::MainMenuWindow;
 
 pub mod quiplash3;
 
-/*struct ContentCategoryDat {
-    name: String,
-    content_name: String,
-    master_jet: Vec<Content>,
-    category_type: dyn ContentCategory,
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+#[derive(Serialize, Deserialize)]
+pub struct ContentData {
+    // Unique identifier for the data:
+    id : i32,
+    // The relative path to the .jet file from the /games/ directory.
+    master_jet : &'static str,
+    properties : HashMap<&'static str, Value>,
 }
 
-pub struct Content<'a>
-{
-    id: u32,
-    // This is to easily convert to and from JSON/JET format.
-    values: Value,
-    category: &'a ContentCategoryDat,
+impl ContentData {
+    fn write_to_game(&self, games_path : &str) {
+        
+    }
 }
-
-pub trait ContentLoader {
-    fn serialize(&self) {
-        format!("{}{}/content/{}{}.jet", GAME_DIR, self.category.game_name, self.category.game_name, self.category.name);
-    }
-}*/
-
-/*pub trait ContentCategory {
-    fn load_content(&mut self) {
-        // Load the .JET master file to list ALL content of its type.
-        let content_list = file_to_vaues(format!("{}{}/content/{}{}.jet", GAME_DIR, self.game_name, self.game_name, self.name));
-        self.master_jet: Vec<Content> = Vec::new();
-        for item in content_list["content"].as_array().iter() {
-            self.master_jet.push(item);
-        }
-    }
-    fn render_window(&self);
-}*/
 
 pub struct ContentCategory
 {
@@ -42,7 +29,9 @@ pub struct ContentCategory
 }
 
 pub struct GameContent {
+    // Internal game ID (the relative folder from the /games/ directory)
     pub game_id: &'static str,
+    // The game's display name.
     pub name: &'static str,
     pub content_categories: &'static [ContentCategory],
 }
