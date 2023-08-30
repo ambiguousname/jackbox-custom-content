@@ -20,10 +20,11 @@ mod imp {
     impl ObjectSubclass for ContentCreationDialog {
         const NAME: &'static str = "JCCContentCreationDialog";
 		type Type = super::ContentCreationDialog;
-		type ParentType = gtk::Dialog;
+		type ParentType = gtk::Window;
 
 		fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
+			klass.bind_template_instance_callbacks();
         }
     
         fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
@@ -34,32 +35,29 @@ mod imp {
     impl ObjectImpl for ContentCreationDialog {}
     impl WidgetImpl for ContentCreationDialog {}
 	impl WindowImpl for ContentCreationDialog {}
-    impl DialogImpl for ContentCreationDialog {}
 }
 
 glib::wrapper! {
-    pub struct ContentCreationDialog(ObjectSubclass<imp::ContentCreationDialog>) @extends gtk::Dialog, gtk::Window, gtk::Widget,
+    pub struct ContentCreationDialog(ObjectSubclass<imp::ContentCreationDialog>) @extends gtk::Window, gtk::Widget,
 	@implements gio::ActionGroup, gio::ActionMap, gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Native, gtk::Root, gtk::ShortcutManager;
 }
 
+#[gtk::template_callbacks]
 impl ContentCreationDialog {
     pub fn new(parent: &impl IsA<Window>) -> Self {
         let this : Self = Object::builder()
         .property("transient-for", parent)
         .property("hide-on-close", true)
-        .property("use-header-bar", 1)
         .build();
-
-        let button = this.add_button("Create", ResponseType::Ok).downcast::<Button>().expect("Could not get button.");
-        button.connect_clicked(|button| {
-            let window_parent = button.ancestor(Window::static_type()).expect("Could not get ancestor.").downcast::<ContentCreationDialog>().expect("Could not get Content Creation Dialog.");
-
-            let current_page = window_parent.imp().content_stack.visible_child().expect("No selected page.");
-
-            let current_selector = current_page.downcast::<Selector>().expect("Could not get selector.");
-            current_selector.selected_callback();
-        });
         this
+    }
+
+	#[template_callback]
+    fn handle_create_clicked(&self, _button : &Button) {
+        let current_page = self.imp().content_stack.visible_child().expect("No selected page.");
+
+        let current_selector = current_page.downcast::<Selector>().expect("Could not get selector.");
+        current_selector.selected_callback();
     }
 
     pub fn add_game_type(&self, game : GameContent) {

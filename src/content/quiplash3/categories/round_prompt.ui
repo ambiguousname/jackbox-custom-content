@@ -1,6 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-    <template>
-        
+    <template class="JCCQuiplashRoundPrompt" parent="GtkWindow">
+		<property name="title" translatable="yes">Quiplash 3 Round Prompt</property>
+        <child>
+            <object class="GtkNotebook">
+                <child>
+                    <object class="GtkLabel">
+                        <property name="label">Round 1</property>
+                    </object>
+                </child>
+                <child type="tab">
+                    <object class="GtkLabel">
+                        <property name="label">Round 1</property>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkLabel">
+                        <property name="label">Round 2</property>
+                    </object>
+                </child>
+                <child type="tab">
+                    <object class="GtkLabel">
+                        <property name="label">Round 2</property>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkLabel">
+                        <property name="label">Final Round</property>
+                    </object>
+                </child>
+                <child type="tab">
+                    <object class="GtkLabel">
+                        <property name="label">Final Round</property>
+                    </object>
+                </child>
+            </object>
+        </child>
     </template>
 </interface>

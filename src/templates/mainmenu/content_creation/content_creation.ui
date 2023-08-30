@@ -1,7 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-    <template class="JCCContentCreationDialog" parent="GtkDialog">
+    <template class="JCCContentCreationDialog" parent="GtkWindow">
 		<property name="title" translatable="yes">Add New Content</property>
+        <child type="titlebar">
+			<object class="GtkHeaderBar">
+				<child type="end">
+					<object class="GtkButton" id="new_content">
+						<property name="label">Create</property>
+						<property name="tooltip-text">Create content</property>
+						<signal name="clicked" handler="handle_create_clicked" swapped="true"/>
+					</object>
+				</child>
+			</object>
+		</child>
         <child>
             <object class="GtkBox">
                 <property name="orientation">horizontal</property>
