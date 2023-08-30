@@ -27,8 +27,9 @@ use super::*;
 		// Important lesson: unless you specify templates in the struct definition here, you'll get an error.
 		#[template_child(id="mod_selection")]
 		pub mod_selection : TemplateChild<gtk::Paned>,
-		#[template_child(id="content_stack")]
-		pub content_stack : TemplateChild<Stack>,
+		
+		#[template_child(id="mod_stack")]
+		pub mod_stack : TemplateChild<Stack>,
 		
 		#[template_child(id="start_file_selection")]
 		pub folder_choose : TemplateChild<Button>,
@@ -113,7 +114,7 @@ impl MainMenuWindow {
 
 	// region: Basic setup
 	fn setup_stack(&self) {
-		let stack = self.imp().content_stack.clone();
+		let stack = self.imp().mod_stack.clone();
 		let all = ContentList::new();
 		stack.add_titled(&all, Some("all"), "All");
 	}
