@@ -1,7 +1,6 @@
 use gtk::gio;
 
 pub mod filebrowse;
-pub mod selector;
 pub mod mainmenu;
 
 

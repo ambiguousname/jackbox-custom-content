@@ -1,9 +1,10 @@
-use gtk::subclass::prelude::*;
-use gtk::{prelude::*, glib, Window, CompositeTemplate, gio, ResponseType, Stack, Button};
-use glib::Object;
+use gtk::{prelude::*, subclass::prelude::*, glib, Window, CompositeTemplate, gio, ListBox, Stack, Button};
+use glib::{clone, Object};
+use gio::{SimpleAction, SimpleActionGroup};
+
+use std::cell::RefCell;
 
 use crate::content::GameContent;
-use crate::templates::selector::Selector;
 
 mod imp {
 
@@ -14,6 +15,8 @@ mod imp {
     pub struct ContentCreationDialog {
         #[template_child(id="game_select_stack")]
         pub content_stack : TemplateChild<Stack>,
+
+        pub action_group : RefCell<Option<SimpleActionGroup>>,
     }
 
     #[glib::object_subclass]
@@ -32,14 +35,21 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for ContentCreationDialog {}
+    impl ObjectImpl for ContentCreationDialog {
+        fn constructed(&self) {
+            self.parent_constructed();
+            
+            let obj = self.obj();
+            obj.setup_action_group();
+        }
+    }
     impl WidgetImpl for ContentCreationDialog {}
 	impl WindowImpl for ContentCreationDialog {}
 }
 
 glib::wrapper! {
     pub struct ContentCreationDialog(ObjectSubclass<imp::ContentCreationDialog>) @extends gtk::Window, gtk::Widget,
-	@implements gio::ActionGroup, gio::ActionMap, gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Native, gtk::Root, gtk::ShortcutManager;
+	@implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Native, gtk::Root, gtk::ShortcutManager;
 }
 
 #[gtk::template_callbacks]
@@ -56,25 +66,48 @@ impl ContentCreationDialog {
     fn handle_create_clicked(&self, _button : &Button) {
         let current_page = self.imp().content_stack.visible_child().expect("No selected page.");
 
-        let current_selector = current_page.downcast::<Selector>().expect("Could not get selector.");
-        current_selector.selected_callback();
+        let selector : ListBox = current_page.downcast::<ListBox>().expect("Could not get ListBox.");
+
+        let row = selector.selected_row();
+        if row.is_none() {
+            return;
+        }
+
+        let selected = row.unwrap().child().expect("Could not get child.");
+        let window_name : String = selected.property("label");
+        let action_name = format!("{}-open-window", window_name);
+        
+        self.action_group().activate_action(&action_name, None);
+    }
+
+    fn setup_action_group(&self) {
+        let action_group = SimpleActionGroup::new();
+        self.imp().action_group.replace(Some(action_group));
+    }
+
+    fn action_group(&self) -> SimpleActionGroup {
+        self.imp().action_group.borrow().clone().expect("Could not get action group.")
     }
 
     pub fn add_game_type(&self, game : GameContent) {
-        let selector = Selector::new();
+        let selector = ListBox::new();
+        selector.set_selection_mode(gtk::SelectionMode::Single);
 
         for content_type in game.content_categories {
-            let ptr = content_type.open_window;
             // TODO: Fix so you can only add one bit of custom content at a time.
-            selector.add_selection(content_type.name, move |args| -> Option<glib::Value> {
-                let this : gtk::Widget = args[0].get().expect("Could not get self.");
-                let window : gtk::Root = this.root().expect("Could not get root.");
-                
-                let content_window = ptr();
+            let option = gtk::Label::new(Some(content_type.name));
+            let open = content_type.open_window;
+
+            let action_name = format!("{}-open-window", content_type.name);
+            let window_action = SimpleAction::new(&action_name, None);
+            window_action.connect_activate(clone!(@weak self as window => move |_, _| {
+                let content_window = open();
                 content_window.set_property("transient-for", window);
                 content_window.present();
-                None
-            });
+            }));
+            self.action_group().add_action(&window_action);
+            
+            selector.append(&option);
         }
 
         //let model = gio::ListStore::new();
