@@ -10,6 +10,7 @@ mod templates;
 use templates::mainmenu::MainMenuWindow;
 
 mod content;
+mod mod_manager;
 
 const APP_ID : &str = "com.ambiguousname.JackboxCustomContent";
 

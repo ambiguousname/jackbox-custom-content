@@ -9,6 +9,7 @@
 						<property name="label">New Content</property>
 						<property name="icon-name">list-add-symbolic</property>
 						<property name="tooltip-text">Add new content</property>
+						<signal name="clicked" handler="handle_create_content_clicked" swapped="true"/>
 					</object>
 				</child>
 			</object>
@@ -34,6 +35,7 @@
 										<property name="label">New Mod</property>
 										<property name="icon-name">folder-new-symbolic</property>
 										<property name="tooltip-text">Add new mod</property>
+										<signal name="clicked" handler="handle_new_mod" swapped="true"/>
 									</object>
 								</child>
 							</object>

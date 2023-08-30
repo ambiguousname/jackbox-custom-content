@@ -4,9 +4,8 @@ mod content_creation;
 use std::{cell::{RefCell, OnceCell}, vec::Vec};
 
 // Template construction:
-use gtk::subclass::prelude::*;
-use gtk::{prelude::*, glib, Application, CompositeTemplate, gio, Box, Button, Stack};
-use glib::{clone, Object};
+use gtk::{prelude::*, subclass::prelude::*, glib, Application, CompositeTemplate, gio, Box, Button, Stack};
+use glib::Object;
 use gio::Settings;
 
 use content_creation::ContentCreationDialog;
@@ -21,7 +20,6 @@ mod imp {
 use super::*;
 
 	#[derive(Default, CompositeTemplate)]
-	// TODO: Move content columns to their own template.
 	#[template(resource="/templates/mainmenu/mainmenu.ui")]
 	pub struct MainMenuWindow {
 		// Important lesson: unless you specify templates in the struct definition here, you'll get an error.
@@ -52,6 +50,7 @@ use super::*;
 
 		fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
+			klass.bind_template_instance_callbacks();
         }
     
         fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
@@ -88,6 +87,7 @@ glib::wrapper! {
 }
 // endregion
 
+#[gtk::template_callbacks]
 impl MainMenuWindow {
 	pub fn new(app: &Application) -> Self {
 		Object::builder().property("application", app).build()
@@ -124,11 +124,17 @@ impl MainMenuWindow {
 
 
 		self.imp().content_creation_dialog.replace(Some(dialog)); 
+	}
+
+	#[template_callback]
+	fn handle_create_content_clicked(&self, _button: &Button) {
+		let d = self.imp().content_creation_dialog.borrow().clone().expect("Could not get content creation dialog.");
+		d.present();
+	}
+
+	#[template_callback]
+	fn handle_new_mod(&self, _button : &Button) {
 		
-		self.imp().new_content.connect_clicked(clone!(@weak self as window => move |_| {
-			let d = window.imp().content_creation_dialog.borrow().clone().expect("Could not get content creation dialog.");
-			d.present();
-		}));
 	}
 
 	fn reset_config(&self) {
