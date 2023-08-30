@@ -93,6 +93,8 @@ impl ContentCreationDialog {
         let selector = ListBox::new();
         selector.set_selection_mode(gtk::SelectionMode::Single);
 
+        selector.set_hexpand(true);
+
         for content_type in game.content_categories {
             // TODO: Fix so you can only add one bit of custom content at a time.
             let option = gtk::Label::new(Some(content_type.name));
@@ -109,6 +111,10 @@ impl ContentCreationDialog {
             
             selector.append(&option);
         }
+
+        let row = selector.row_at_index(0).expect("Could not get first row.");
+
+        selector.select_row(Some(&row));
 
         //let model = gio::ListStore::new();
         //let column_view = ColumnView::new();
