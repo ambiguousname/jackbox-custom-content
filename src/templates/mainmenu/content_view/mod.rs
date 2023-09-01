@@ -4,52 +4,25 @@ pub mod contentobj;
 use contentobj::ContentObject;
 use contentcol::ContentCol;
 
-use gtk::subclass::prelude::*;
-use gtk::{prelude::*, glib, gio, ColumnView, ColumnViewColumn, CompositeTemplate, SignalListItemFactory, ListItem, SingleSelection};
-use glib::{Object, Properties};
+use gtk::{ColumnView, ColumnViewColumn, gio, SignalListItemFactory, ListItem, SingleSelection};
 
 use std::cell::RefCell;
 use glib_macros::derived_properties;
 
-mod imp {
-    use super::*;
+use crate::quick_template;
 
-    #[derive(Default, Properties, CompositeTemplate)]
-    #[properties(wrapper_type=super::ContentList)]
-    #[template(resource="/templates/mainmenu/content_view/contentlist.ui")]
-    pub struct ContentList {
-        #[template_child(id="column_view")]
-        pub column_view : TemplateChild<ColumnView>,
+quick_template!(ContentList, "/templates/mainmenu/content_view/contentlist.ui", gtk::Box, (gtk::Widget), (gtk::Orientable), props struct {
+    #[template_child(id="column_view")]
+    pub column_view : TemplateChild<ColumnView>,
 
-        #[property(get, set)]
-        pub model : RefCell<Option<gio::ListStore>>,
-    }
+    #[property(get, set)]
+    pub model : RefCell<Option<gio::ListStore>>,
+});
 
-    #[glib::object_subclass]
-    impl ObjectSubclass for ContentList {
-        const NAME : &'static str = "JCCContentList";
-        type Type = super::ContentList;
-        type ParentType = gtk::Box;
-
-        fn class_init(klass: &mut Self::Class) {
-            klass.bind_template();
-        }
-    
-        fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
-            obj.init_template();
-        }
-    }
-
-    // #[glib::derived_properties] is not included for some reason.
-    #[derived_properties]
-    impl ObjectImpl for ContentList {}
-    impl WidgetImpl for ContentList {}
-    impl BoxImpl for ContentList {}
-}
-
-glib::wrapper! {
-    pub struct ContentList(ObjectSubclass<imp::ContentList>) @extends gtk::Box, gtk::Widget, @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Scrollable;
-}
+#[derived_properties]
+impl ObjectImpl for imp::ContentList {}
+impl WidgetImpl for imp::ContentList {}
+impl BoxImpl for imp::ContentList {}
 
 impl ContentList {
     pub fn new() -> Self {
