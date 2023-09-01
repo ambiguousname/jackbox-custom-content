@@ -1,14 +1,13 @@
 use crate::{content::ContentCategory, quick_template};
-use gtk::{Window, prelude::StaticTypeExt};
+use gtk::Window;
 
 use super::prompt_util::QuiplashGenericRoundPrompt;
 
-
-quick_template!(QuiplashRoundPrompt, "/content/quiplash3/categories/round_prompt.ui", gtk::Window, (), (gtk::Native, gtk::Root, gtk::ShortcutManager), {
-    impl ObjectImpl for QuiplashRoundPrompt {}
-    impl WidgetImpl for QuiplashRoundPrompt {}
-    impl WindowImpl for QuiplashRoundPrompt {}
-});
+// TODO: Transfer prompt data across notebooks?
+quick_template!(QuiplashRoundPrompt, "/content/quiplash3/categories/round_prompt.ui", gtk::Window, (gtk::Widget), (gtk::Native, gtk::Root, gtk::ShortcutManager));
+impl ObjectImpl for imp::QuiplashRoundPrompt {}
+impl WidgetImpl for imp::QuiplashRoundPrompt {}
+impl WindowImpl for imp::QuiplashRoundPrompt {}
 
 impl QuiplashRoundPrompt {
     fn new() -> Self {
@@ -19,7 +18,7 @@ impl QuiplashRoundPrompt {
 // TODO: Modify so this is static (using round_prompt.ui)
 fn prompt_window() -> Window {
     // For unknown templates we have to ensure a type:
-    QuiplashGenericRoundPrompt::ensure_type();
+    QuiplashGenericRoundPrompt::ensure_all_types();
     QuiplashRoundPrompt::new().into()
 }
 

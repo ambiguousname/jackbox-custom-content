@@ -1,9 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-    <template class="JCCQuiplashGenericRoundPrompt" parent="GtkBox">
+    <template class="JCCQuiplashGenericRoundPrompt" parent="GtkFrame">
+        <property name="css-classes">no-border</property>
         <child>
-            <object class="GtkLabel">
-                <property name="label">TEST</property>
+            <object class="GtkFlowBox">
+                <property name="max-children-per-line">2</property>
+                <property name="selection-mode">none</property>
+                <child>
+                    <object class="GtkEntry">
+                        <property name="placeholder-text">Prompt Text</property>
+                    </object>
+                </child>
+                <child>
+                    <object class="JCCEditableList">
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkLabel">
+                        <property name="label">Test</property>
+                    </object>
+                </child>
             </object>
         </child>
     </template>

@@ -1,6 +1,7 @@
 use gtk::gio;
 
 pub mod filebrowse;
+pub mod editable_list;
 pub mod mainmenu;
 
 

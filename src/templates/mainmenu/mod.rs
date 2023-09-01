@@ -58,6 +58,7 @@ use super::*;
         }
 	}
 
+
 	impl ObjectImpl for MainMenuWindow {
 		fn constructed(&self) {
 			self.parent_constructed();

@@ -1,8 +1,4 @@
-use gtk::glib::ExitCode;
-// use content::ContentCategory;
-use gtk::prelude::*;
-use gtk::Application;
-
+use gtk::{prelude::*, Application, glib::ExitCode, CssProvider, gdk::Display};
 // mod util;
 // mod content;
 #[allow(unused_parens)]
@@ -14,6 +10,22 @@ mod mod_manager;
 mod util;
 
 const APP_ID : &str = "com.ambiguousname.JackboxCustomContent";
+
+const GLOBAL_CSS : &str = "
+
+frame.no-border {
+    border: none;
+}
+
+";
+
+fn load_css() {
+    let provider = CssProvider::new();
+    provider.load_from_data(GLOBAL_CSS);
+
+    gtk::style_context_add_provider_for_display(&Display::default().expect("Could not get display."), &provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+    println!("Loaded Global CSS.");
+}
 
 #[allow(unused_parens)]
 fn main() -> ExitCode {
@@ -27,6 +39,7 @@ fn main() -> ExitCode {
     println!("App built.");
     app.connect_activate(move |app| {
         println!("App activated.");
+        load_css();
         // We create the main window.
         let win = MainMenuWindow::new(app);
         println!("Window created.");
