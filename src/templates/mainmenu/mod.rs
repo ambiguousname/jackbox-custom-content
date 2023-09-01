@@ -4,89 +4,56 @@ mod content_creation;
 use std::{cell::{RefCell, OnceCell}, vec::Vec};
 
 // Template construction:
-use gtk::{prelude::*, subclass::prelude::*, glib, Application, CompositeTemplate, gio, Box, Button, Stack};
-use glib::Object;
+use gtk::{Application, Box, Button, Stack, gio};
 use gio::Settings;
 
 use content_creation::ContentCreationDialog;
 use content_view::ContentList;
 use crate::content::GameContent;
+use crate::quick_template;
 
 mod folder_selection;
 
-// region: Boilerplate definitions
-mod imp {
+quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::ApplicationWindow, (gtk::Window, gtk::Widget), (gio::ActionGroup, gio::ActionMap, gtk::Native, gtk::Root, gtk::ShortcutManager), handlers struct {
+	// Important lesson: unless you specify templates in the struct definition here, you'll get an error.
+	#[template_child(id="mod_selection")]
+	pub mod_selection : TemplateChild<gtk::Paned>,
+	
+	#[template_child(id="mod_stack")]
+	pub mod_stack : TemplateChild<Stack>,
+	
+	#[template_child(id="start_file_selection")]
+	pub folder_choose : TemplateChild<Button>,
+	#[template_child(id="folder_box")]
+	pub folder_box : TemplateChild<Box>,
 
-use super::*;
+	#[template_child(id="new_content")]
+	pub new_content : TemplateChild<Button>,
+	pub content_creation_dialog: RefCell<Option<ContentCreationDialog>>,
 
-	#[derive(Default, CompositeTemplate)]
-	#[template(resource="/templates/mainmenu/mainmenu.ui")]
-	pub struct MainMenuWindow {
-		// Important lesson: unless you specify templates in the struct definition here, you'll get an error.
-		#[template_child(id="mod_selection")]
-		pub mod_selection : TemplateChild<gtk::Paned>,
-		
-		#[template_child(id="mod_stack")]
-		pub mod_stack : TemplateChild<Stack>,
-		
-		#[template_child(id="start_file_selection")]
-		pub folder_choose : TemplateChild<Button>,
-		#[template_child(id="folder_box")]
-		pub folder_box : TemplateChild<Box>,
+	pub config : OnceCell<Settings>,
+});
 
-		#[template_child(id="new_content")]
-		pub new_content : TemplateChild<Button>,
-		pub content_creation_dialog: RefCell<Option<ContentCreationDialog>>,
+impl ObjectImpl for imp::MainMenuWindow {
+	fn constructed(&self) {
+		self.parent_constructed();
 
-		pub config : OnceCell<Settings>,
+		let obj = self.obj();
+		// Not working for whatever reason with the mainmenu.ui property xml.
+		obj.imp().mod_selection.set_shrink_start_child(false);
+		obj.imp().mod_selection.set_shrink_end_child(false);
+		obj.setup_stack();
+
+		obj.setup_config();
+
+		obj.setup_add_content();
+
+		obj.setup_folder_selection();
 	}
-
-	// region: Boring Subclass Defs
-	#[glib::object_subclass]
-	impl ObjectSubclass for MainMenuWindow {
-		const NAME: &'static str = "JCCMainMenuWindow";
-		type Type = super::MainMenuWindow;
-		type ParentType = gtk::ApplicationWindow;
-
-		fn class_init(klass: &mut Self::Class) {
-            klass.bind_template();
-			klass.bind_template_instance_callbacks();
-        }
-    
-        fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
-            obj.init_template();
-        }
-	}
-
-
-	impl ObjectImpl for MainMenuWindow {
-		fn constructed(&self) {
-			self.parent_constructed();
-
-			let obj = self.obj();
-			// Not working for whatever reason with the mainmenu.ui property xml.
-			obj.imp().mod_selection.set_shrink_start_child(false);
-			obj.imp().mod_selection.set_shrink_end_child(false);
-			obj.setup_stack();
-
-			obj.setup_config();
-
-			obj.setup_add_content();
-
-			obj.setup_folder_selection();
-		}
-	}
-    impl WidgetImpl for MainMenuWindow {}
-	impl WindowImpl for MainMenuWindow {}
-	impl ApplicationWindowImpl for MainMenuWindow {}
-	// endregion
 }
-
-glib::wrapper! {
-	pub struct MainMenuWindow(ObjectSubclass<imp::MainMenuWindow>) @extends gtk::ApplicationWindow, gtk::Window, gtk::Widget,
-	@implements gio::ActionGroup, gio::ActionMap, gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Native, gtk::Root, gtk::ShortcutManager;
-}
-// endregion
+impl WidgetImpl for imp::MainMenuWindow {}
+impl WindowImpl for imp::MainMenuWindow {}
+impl ApplicationWindowImpl for imp::MainMenuWindow {}
 
 #[gtk::template_callbacks]
 impl MainMenuWindow {

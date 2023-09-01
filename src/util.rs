@@ -48,9 +48,16 @@ glib::wrapper! {
 
 */
 
+#[macro_export(local_inner_macros)]
+macro_rules! call_func {
+    ($obj:ident, $func:ident) => {
+        $obj.$func()
+    };
+}
+
 #[macro_export]
 macro_rules! full_template {
-    ($name:ident, $resource_path:literal, $struct_def:tt, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), ($($derives:ident),+), ($($properties:meta)?), ($($instance_callbacks:expr)?)) => {
+    ($name:ident, $resource_path:literal, $struct_def:tt, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), ($($derives:ident),+), ($($properties:meta)?), ($($instance_callbacks:ident)?)) => {
         use gtk::{subclass::prelude::*, glib, CompositeTemplate, prelude::*};
         use glib::{Object, Properties};
 
@@ -70,7 +77,7 @@ macro_rules! full_template {
 
                 fn class_init(klass: &mut Self::Class) {
                     klass.bind_template();
-                    $($instance_callbacks)?
+                    $($crate::call_func!(klass, $instance_callbacks);)?
                 }
             
                 fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
@@ -96,10 +103,10 @@ macro_rules! quick_template {
     ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), props struct $struct_def : tt) => {
         $crate::full_template!($name, $resource_path, $struct_def, $widget_type, ($($extends),*), ($($implements),*), (Default, CompositeTemplate, Properties), (properties(wrapper_type=super::$name)), ());
     };
-    ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), props inst struct $struct_def : tt) => {
+    ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), props handlers struct $struct_def : tt) => {
         $crate::full_template!($name, $resource_path, $struct_def, $widget_type, ($($extends),*), ($($implements),*), (Default, CompositeTemplate, Properties), (properties(wrapper_type=super::$name)), (klass.bind_template_instance_callbacks();));
     };
-    ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), inst struct $struct_def : tt) => {
-        $crate::full_template!($name, $resource_path, $struct_def, $widget_type, ($($extends),*), ($($implements),*), (Default, CompositeTemplate), (), (klass.bind_template_instance_callbacks();));
+    ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), handlers struct $struct_def : tt) => {
+        $crate::full_template!($name, $resource_path, $struct_def, $widget_type, ($($extends),*), ($($implements),*), (Default, CompositeTemplate), (), (bind_template_instance_callbacks));
     };
 }
