@@ -5,18 +5,37 @@
         <child>
             <object class="GtkOverlay">
                 <child type="overlay">
-                    <object class="GtkButton">
+                    <object class="GtkBox">
                         <property name="halign">end</property>
                         <property name="valign">start</property>
-                        <property name="label">New Item</property>
-                        <property name="icon-name">list-add-symbolic</property>
-                        <property name="tooltip-text">Add new item</property>
+                        <child>
+                            <object class="GtkButton">
+                                <property name="label">New Item</property>
+                                <property name="icon-name">list-add-symbolic</property>
+                                <property name="tooltip-text">Add new item</property>
+                                <signal name="clicked" handler="handle_new_list_item" swapped="true"/>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkButton">
+                                <property name="label">Remove Item</property>
+                                <property name="icon-name">list-remove-symbolic</property>
+                                <property name="tooltip-text">Remove item</property>
+                            </object>
+                        </child>
                     </object>
                 </child>
                 <child>
                     <object class="GtkScrolledWindow">
+                        <property name="layout-manager">
+                            <object class="GtkConstraintLayout">
+                                <constraints>
+                                    <!--https://gitlab.gnome.org/GNOME/gtk/-/blob/main/demos/gtk-demo/constraints_builder.ui -->
+                                </constraints>
+                            </object>
+                        </property>
                         <child>
-                            <object class="GtkListBox"></object>
+                            <object class="GtkListBox" id="item-list"></object>
                         </child>
                     </object>
                 </child>

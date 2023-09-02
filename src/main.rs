@@ -15,6 +15,7 @@ const GLOBAL_CSS : &str = "
 
 frame.no-border {
     border: none;
+    border-radius: 0;
 }
 
 ";

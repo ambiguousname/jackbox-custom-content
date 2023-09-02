@@ -2,6 +2,7 @@
 <interface>
     <template class="JCCQuiplashRoundPrompt" parent="GtkWindow">
 		<property name="title" translatable="yes">Quiplash 3 Round Prompt</property>
+        <property name="default-width">500</property>
         <child>
             <object class="GtkNotebook">
                 <child>
