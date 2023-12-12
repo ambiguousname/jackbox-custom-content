@@ -12,7 +12,7 @@
                     </object>
                 </child>
                 <child>
-                    <object class="JCCEditableList">
+                    <object class="JCCEditableList" id="safety-quips">
                     </object>
                 </child>
                 <child>

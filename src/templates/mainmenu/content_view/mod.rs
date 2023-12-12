@@ -4,10 +4,9 @@ pub mod contentobj;
 use contentobj::ContentObject;
 use contentcol::ContentCol;
 
-use gtk::{ColumnView, ColumnViewColumn, gio, SignalListItemFactory, ListItem, SingleSelection};
+use gtk::{ColumnView, glib::derived_properties, ColumnViewColumn, gio, SignalListItemFactory, ListItem, SingleSelection};
 
 use std::cell::RefCell;
-use glib_macros::derived_properties;
 
 use crate::quick_template;
 
@@ -27,7 +26,7 @@ impl BoxImpl for imp::ContentList {}
 impl ContentList {
     pub fn new() -> Self {
         // We can clone the model however we want, the data stays the same.
-        let model = gio::ListStore::new(ContentObject::static_type()); 
+        let model = gio::ListStore::new::<ContentObject>(); 
         let list : SingleSelection = SingleSelection::new(Some(model.clone()));
         // model.append(&ContentObject::new(false));
         /*// Uncomment to show:
