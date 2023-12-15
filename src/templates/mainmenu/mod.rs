@@ -4,7 +4,7 @@ mod content_creation;
 use std::{cell::{RefCell, OnceCell}, vec::Vec};
 
 // Template construction:
-use gtk::{Application, Box, Button, Stack, gio};
+use gtk::{Application, Box, Button, Stack, gio, Window, Entry};
 use gio::Settings;
 
 use content_creation::ContentCreationDialog;
@@ -31,6 +31,8 @@ quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::Applicat
 	pub new_content : TemplateChild<Button>,
 	pub content_creation_dialog: RefCell<Option<ContentCreationDialog>>,
 
+	pub mod_creation_dialog: RefCell<Window>,
+
 	pub config : OnceCell<Settings>,
 });
 
@@ -47,6 +49,8 @@ impl ObjectImpl for imp::MainMenuWindow {
 		obj.setup_config();
 
 		obj.setup_add_content();
+
+		obj.setup_add_mod_creation();
 
 		obj.setup_folder_selection();
 	}
@@ -89,8 +93,25 @@ impl MainMenuWindow {
 
 	fn setup_add_content(&self) {
 		let dialog = ContentCreationDialog::new(self);
-
 		self.imp().content_creation_dialog.replace(Some(dialog)); 
+	}
+
+	fn setup_add_mod_creation(&self) {
+		let entry = Entry::builder()
+		.placeholder_text("Mod Name")
+		.build();
+
+		let submit = Button::builder()
+		.label("Ok")
+		.build();
+
+		let dlg = Window::builder()
+		.child(&entry)
+		.child(&submit)
+		.transient_for(self)
+		.hide_on_close(true)
+		.build();
+		self.imp().mod_creation_dialog.replace(dlg);
 	}
 
 	#[template_callback]
@@ -101,7 +122,7 @@ impl MainMenuWindow {
 
 	#[template_callback]
 	fn handle_new_mod(&self, _button : &Button) {
-		
+		self.imp().mod_creation_dialog.borrow().present();
 	}
 
 	fn reset_config(&self) {
