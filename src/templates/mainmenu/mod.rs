@@ -4,7 +4,7 @@ mod content_creation;
 use std::{cell::{RefCell, OnceCell}, vec::Vec};
 
 // Template construction:
-use gtk::{Application, Box, Button, Stack, gio, Window, Entry};
+use gtk::{Application, Box, Button, Grid, Stack, gio, Window, Entry};
 use gio::Settings;
 
 use content_creation::ContentCreationDialog;
@@ -97,20 +97,38 @@ impl MainMenuWindow {
 	}
 
 	fn setup_add_mod_creation(&self) {
+		let grid = Grid::builder()
+		.build();
+
 		let entry = Entry::builder()
+		.hexpand(true)
+		.vexpand(true)
 		.placeholder_text("Mod Name")
 		.build();
+		grid.attach(&entry, 0, 0, 2, 1);
 
 		let submit = Button::builder()
+		.hexpand(true)
+		.vexpand(true)
 		.label("Ok")
 		.build();
+		grid.attach(&submit, 0, 1, 1, 1);
+
+		let cancel = Button::builder()
+		.label("Cancel")
+		.build();
+		grid.attach(&cancel, 1, 1, 1, 1);
+		
+		cancel.connect_clicked(|this| {
+			this.ancestor(Window::static_type()).and_downcast::<Window>().expect("Could not get window.").close();
+		});
 
 		let dlg = Window::builder()
-		.child(&entry)
-		.child(&submit)
+		.child(&grid)
 		.transient_for(self)
 		.hide_on_close(true)
 		.build();
+
 		self.imp().mod_creation_dialog.replace(dlg);
 	}
 

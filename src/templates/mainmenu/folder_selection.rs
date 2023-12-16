@@ -2,9 +2,9 @@ use std::ffi::OsStr;
 
 use gtk::gio::Cancellable;
 use gtk::subclass::prelude::*;
-use gtk::prelude::{GtkWindowExt, WidgetExt, FileExt, SettingsExt};
-use gtk::traits::{ButtonExt};
-use gtk::{ResponseType, FileDialog, FileChooserAction, AlertDialog};
+use gtk::prelude::{WidgetExt, FileExt, SettingsExt};
+use gtk::traits::ButtonExt;
+use gtk::{FileDialog, AlertDialog};
 
 use gtk::{glib, gio};
 use glib::clone;
