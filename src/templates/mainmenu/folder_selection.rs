@@ -51,13 +51,9 @@ impl MainMenuWindow {
             let verified_folder = self.verify_folder(folder);
             if (verified_folder.is_err()) {
                 let dialg = AlertDialog::builder()
-                // .buttons(gtk::ButtonsType::Ok)
                 .message("Selection was not a valid folder.")
+                .detail("Please select the \"games\" directory for Jackbox Party Pack 7.")
                 .build();
-                // Some(file_chooser), gtk::DialogFlags::MODAL | gtk::DialogFlags::DESTROY_WITH_PARENT, gtk::MessageType::Error, gtk::ButtonsType::Ok, verified_folder.expect_err("Could not get error.");
-                // dialg.connect_response(move |this, _| {
-                //     this.close();
-                // });
                 dialg.show(Some(self));
                 return;
             }
@@ -68,7 +64,6 @@ impl MainMenuWindow {
             let path_str = path.to_str().expect("Could not get PathBuf str.");
 
             self.config().set_string("game-folder", path_str).expect("Could not set folder setting.");
-            //println!("{}", self.jackbox_folder().path().expect("Could not get path name.").display());
             if (!self.imp().mod_selection.is_visible()) {
                 self.toggle_creation_visibility(true);
                 self.toggle_folder_visibility(false);
@@ -81,12 +76,6 @@ impl MainMenuWindow {
         let file_chooser = FileDialog::builder()
         .title("Select the folder for the Jackbox Party Pack 7")
         .build();
-        // Some(), Some(self), FileChooserAction::SelectFolder, &[("Ok", ResponseType::Ok), ("Cancel", ResponseType::Cancel)]);
-        // file_chooser.set_hide_on_close(true);
-
-        // file_chooser.connect_response(clone!(@weak self as window => move |file_chooser,response_type| {
-        //     window.set_folder(file_chooser, response_type);
-        // }));
 
         self.imp().folder_choose.connect_clicked(clone!(@weak self as window => move |_| {
             let cancel = Cancellable::new();
@@ -95,7 +84,6 @@ impl MainMenuWindow {
             }));
         }));
 
-        // TODO: Hide other menu buttons.
         let folder = self.config().user_value("game-folder");
         if (folder.is_none()) {
             self.toggle_creation_visibility(false);
