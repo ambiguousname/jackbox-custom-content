@@ -29,7 +29,7 @@ quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::Applicat
 
 	#[template_child(id="new_content")]
 	pub new_content : TemplateChild<Button>,
-	pub content_creation_dialog: RefCell<Option<ContentCreationDialog>>,
+	pub content_creation_dialog: RefCell<ContentCreationDialog>,
 
 	pub mod_creation_dialog: RefCell<Window>,
 
@@ -77,7 +77,7 @@ impl MainMenuWindow {
 	}
 
 	pub fn add_game_info(&self, games : Vec<GameContent>) {
-		let d = self.imp().content_creation_dialog.borrow().clone().expect("Could not get dialog.");
+		let d = self.imp().content_creation_dialog.borrow();
 		for game in games {
 			d.add_game_type(game);
 		}
@@ -93,7 +93,7 @@ impl MainMenuWindow {
 
 	fn setup_add_content(&self) {
 		let dialog = ContentCreationDialog::new(self);
-		self.imp().content_creation_dialog.replace(Some(dialog)); 
+		self.imp().content_creation_dialog.replace(dialog); 
 	}
 
 	fn setup_add_mod_creation(&self) {
@@ -116,7 +116,7 @@ impl MainMenuWindow {
 
 	#[template_callback]
 	fn handle_create_content_clicked(&self, _button: &Button) {
-		let d = self.imp().content_creation_dialog.borrow().clone().expect("Could not get content creation dialog.");
+		let d = self.imp().content_creation_dialog.borrow();
 		d.present();
 	}
 

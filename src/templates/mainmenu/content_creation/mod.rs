@@ -1,56 +1,29 @@
-use gtk::{prelude::*, subclass::prelude::*, glib, Window, CompositeTemplate, gio, ListBox, Stack, Button};
-use glib::{clone, Object};
+use gtk::{gio, ListBox, Stack, Button, Window};
+use glib::clone;
 use gio::{SimpleAction, SimpleActionGroup};
 
 use std::cell::RefCell;
 
-use crate::content::GameContent;
+use crate::{content::GameContent, quick_template};
 
-mod imp {
+quick_template!(ContentCreationDialog, "/templates/mainmenu/content_creation/content_creation.ui", gtk::Window, (gtk::Widget), (gtk::Native, gtk::Root, gtk::ShortcutManager), handlers struct {
+    #[template_child(id="game_select_stack")]
+    pub content_stack : TemplateChild<Stack>,
 
-    use super::*;
+    pub action_group : RefCell<Option<SimpleActionGroup>>,
+});
 
-    #[derive(Default, CompositeTemplate)]
-    #[template(resource="/templates/mainmenu/content_creation/content_creation.ui")]
-    pub struct ContentCreationDialog {
-        #[template_child(id="game_select_stack")]
-        pub content_stack : TemplateChild<Stack>,
-
-        pub action_group : RefCell<Option<SimpleActionGroup>>,
+impl ObjectImpl for imp::ContentCreationDialog {
+    fn constructed(&self) {
+        self.parent_constructed();
+        
+        let obj = self.obj();
+        obj.setup_action_group();
     }
-
-    #[glib::object_subclass]
-    impl ObjectSubclass for ContentCreationDialog {
-        const NAME: &'static str = "JCCContentCreationDialog";
-		type Type = super::ContentCreationDialog;
-		type ParentType = gtk::Window;
-
-		fn class_init(klass: &mut Self::Class) {
-            klass.bind_template();
-			klass.bind_template_instance_callbacks();
-        }
-    
-        fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
-            obj.init_template();
-        }
-    }
-
-    impl ObjectImpl for ContentCreationDialog {
-        fn constructed(&self) {
-            self.parent_constructed();
-            
-            let obj = self.obj();
-            obj.setup_action_group();
-        }
-    }
-    impl WidgetImpl for ContentCreationDialog {}
-	impl WindowImpl for ContentCreationDialog {}
 }
 
-glib::wrapper! {
-    pub struct ContentCreationDialog(ObjectSubclass<imp::ContentCreationDialog>) @extends gtk::Window, gtk::Widget,
-	@implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Native, gtk::Root, gtk::ShortcutManager;
-}
+impl WidgetImpl for imp::ContentCreationDialog {}
+impl WindowImpl for imp::ContentCreationDialog {}
 
 #[gtk::template_callbacks]
 impl ContentCreationDialog {
@@ -120,5 +93,12 @@ impl ContentCreationDialog {
         //let column_view = ColumnView::new();
         // TODO: Custom signal for the page? 
         self.imp().content_stack.add_titled(&selector, Some(game.game_id), game.name);
+    }
+}
+
+impl Default for ContentCreationDialog {
+    fn default() -> Self {
+        let this : Self = Object::builder().build();
+        this
     }
 }
