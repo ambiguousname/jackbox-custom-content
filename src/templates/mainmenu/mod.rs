@@ -4,7 +4,7 @@ mod content_creation;
 use std::{cell::{RefCell, OnceCell}, vec::Vec};
 
 // Template construction:
-use gtk::{Application, Box, Button, Grid, Stack, gio, Window, Entry};
+use gtk::{Application, Box, Button, Grid, Label, Stack, StackSidebar, gio, Window, Entry};
 use glib::{clone, GString};
 use gio::Settings;
 
@@ -22,6 +22,9 @@ quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::Applicat
 	
 	#[template_child(id="mod_stack")]
 	pub mod_stack : TemplateChild<Stack>,
+
+	#[template_child(id="mod_stack_sidebar")]
+	pub mod_stack_sidebar : TemplateChild<StackSidebar>,
 	
 	#[template_child(id="start_file_selection")]
 	pub folder_choose : TemplateChild<Button>,
@@ -62,8 +65,8 @@ impl ApplicationWindowImpl for imp::MainMenuWindow {}
 
 #[gtk::template_callbacks]
 impl MainMenuWindow {
-	pub fn new(app: &Application) -> Self {
-		Object::builder().property("application", app).build()
+	pub fn new(app : &Application) -> Self {
+		Object::builder::<MainMenuWindow>().property("application", app).build()
 	}
 	
 	fn config(&self) -> &Settings {
@@ -87,7 +90,30 @@ impl MainMenuWindow {
 
 	// region: Mod management
 	pub fn add_mod(&self, name : GString) {
-		self.imp().mod_stack.add_child(child);
+		let stack = self.imp().mod_stack.clone();
+		// let mod_name = 
+		let new_mod = ContentList::new();
+		
+		let mod_name = name.as_str();
+		if (stack.child_by_name(mod_name).is_none()) {
+			stack.add_titled(&new_mod, Some(mod_name), mod_name);
+		}
+
+		// let scr_window = self.imp().mod_stack_sidebar.first_child().and_downcast::<gtk::ScrolledWindow>().expect("Could not get scrolled window.");
+
+		// let adjust = scr_window.vadjustment();
+		// adjust.set_value(adjust.upper());
+		
+		// scr_window.set_vadjustment(Some(&adjust));
+		// let val = adjust.lower();
+
+		// println!("{val}");
+		// scr_window.connect("realize", true, |val| {
+		// 	println!("TEST");
+		// 	let this : gtk::ScrolledWindow = val[0].get().expect("Could not get value.");
+			
+		// 	None
+		// });
 	}
 
 	// endregion
@@ -125,6 +151,7 @@ impl MainMenuWindow {
 		submit.connect_clicked(clone!(@weak self as window => move |this| {
 			this.ancestor(Window::static_type()).and_downcast::<Window>().expect("Could not get window.").close();
 			window.add_mod(entry.text());
+			entry.set_text("");
 		}));
 
 		let cancel = Button::builder()

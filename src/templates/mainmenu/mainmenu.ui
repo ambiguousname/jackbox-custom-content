@@ -23,15 +23,16 @@
 						<child>
 							<object class="GtkBox">
 								<child>
-									<object class="GtkStackSidebar">
+									<object class="GtkStackSidebar" id="mod_stack_sidebar">
 										<property name="stack">mod_stack</property>
+										<property name="vexpand">true</property>
+										<property name="height-request">100</property>
 									</object>
 								</child>
 								<property name="orientation">vertical</property>
 								<child>
 									<object class="GtkButton">
 										<property name="valign">end</property>
-										<property name="vexpand">true</property>
 										<property name="label">New Mod</property>
 										<property name="icon-name">folder-new-symbolic</property>
 										<property name="tooltip-text">Add new mod</property>
