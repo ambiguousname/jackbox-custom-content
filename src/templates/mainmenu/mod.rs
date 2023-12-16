@@ -5,6 +5,7 @@ use std::{cell::{RefCell, OnceCell}, vec::Vec};
 
 // Template construction:
 use gtk::{Application, Box, Button, Grid, Stack, gio, Window, Entry};
+use glib::{clone, GString};
 use gio::Settings;
 
 use content_creation::ContentCreationDialog;
@@ -84,6 +85,13 @@ impl MainMenuWindow {
 	}
 	// endregion
 
+	// region: Mod management
+	pub fn add_mod(&self, name : GString) {
+		self.imp().mod_stack.add_child(child);
+	}
+
+	// endregion
+
 	// region: Basic setup
 	fn setup_stack(&self) {
 		let stack = self.imp().mod_stack.clone();
@@ -113,6 +121,11 @@ impl MainMenuWindow {
 		.label("Ok")
 		.build();
 		grid.attach(&submit, 0, 1, 1, 1);
+
+		submit.connect_clicked(clone!(@weak self as window => move |this| {
+			this.ancestor(Window::static_type()).and_downcast::<Window>().expect("Could not get window.").close();
+			window.add_mod(entry.text());
+		}));
 
 		let cancel = Button::builder()
 		.label("Cancel")
