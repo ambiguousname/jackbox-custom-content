@@ -1,8 +1,8 @@
 use crate::content::ContentCategory;
-use gtk::{Window, Dialog};
+use gtk::Window;
 
 fn safety_window() -> Window {
-    let window = Dialog::builder().title("TEST").build();
+    let window = Window::builder().title("TEST").build();
     window.into()
 }
 

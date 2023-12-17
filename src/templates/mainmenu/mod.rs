@@ -1,16 +1,15 @@
 mod content_view;
 mod content_creation;
 
-use std::{cell::{RefCell, OnceCell}, vec::Vec};
+use std::{cell::{RefCell, RefMut, Ref}, vec::Vec};
 
 // Template construction:
-use gtk::{Application, Box, Button, Grid, Label, Stack, StackSidebar, gio, Window, Entry};
+use gtk::{Application, Box, Button, Grid, Stack, StackSidebar, gio, Window, Entry};
 use glib::{clone, GString};
-use gio::Settings;
 
 use content_creation::ContentCreationDialog;
 use content_view::ContentList;
-use crate::content::GameContent;
+use crate::{content::GameContent, mod_manager::ModsConfig};
 use crate::quick_template;
 
 mod folder_selection;
@@ -37,7 +36,7 @@ quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::Applicat
 
 	pub mod_creation_dialog: RefCell<Window>,
 
-	pub config : OnceCell<Settings>,
+	pub mods_config : RefCell<ModsConfig>,
 });
 
 impl ObjectImpl for imp::MainMenuWindow {
@@ -50,7 +49,7 @@ impl ObjectImpl for imp::MainMenuWindow {
 		obj.imp().mod_selection.set_shrink_end_child(false);
 		obj.setup_stack();
 
-		obj.setup_config();
+		obj.setup_mods_config();
 
 		obj.setup_add_content();
 
@@ -69,8 +68,12 @@ impl MainMenuWindow {
 		Object::builder::<MainMenuWindow>().property("application", app).build()
 	}
 	
-	fn config(&self) -> &Settings {
-		self.imp().config.get().expect("Could not get config.")
+	fn mods_config(&self) -> Ref<'_, ModsConfig> {
+		self.imp().mods_config.borrow()
+	}
+
+	fn mods_config_mut(&self) -> RefMut<'_, ModsConfig> {
+		self.imp().mods_config.borrow_mut()
 	}
 	
 	// region: Public content management
@@ -91,29 +94,13 @@ impl MainMenuWindow {
 	// region: Mod management
 	pub fn add_mod(&self, name : GString) {
 		let stack = self.imp().mod_stack.clone();
-		// let mod_name = 
+		
 		let new_mod = ContentList::new();
 		
 		let mod_name = name.as_str();
 		if (stack.child_by_name(mod_name).is_none()) {
 			stack.add_titled(&new_mod, Some(mod_name), mod_name);
 		}
-
-		// let scr_window = self.imp().mod_stack_sidebar.first_child().and_downcast::<gtk::ScrolledWindow>().expect("Could not get scrolled window.");
-
-		// let adjust = scr_window.vadjustment();
-		// adjust.set_value(adjust.upper());
-		
-		// scr_window.set_vadjustment(Some(&adjust));
-		// let val = adjust.lower();
-
-		// println!("{val}");
-		// scr_window.connect("realize", true, |val| {
-		// 	println!("TEST");
-		// 	let this : gtk::ScrolledWindow = val[0].get().expect("Could not get value.");
-			
-		// 	None
-		// });
 	}
 
 	// endregion
@@ -183,13 +170,13 @@ impl MainMenuWindow {
 		self.imp().mod_creation_dialog.borrow().present();
 	}
 
-	fn reset_config(&self) {
-		self.config().reset("game-folder");
+	// Remove the _ if this ends up getting used.
+	fn _reset_mods_config_settings(&mut self) {
+		self.mods_config_mut().settings.reset();
 	}
 
-	fn setup_config(&self) {
-		let cfg = Settings::new(crate::APP_ID);
-		self.imp().config.set(cfg).expect("Could not set config.");
+	fn setup_mods_config(&self) {
+		self.mods_config_mut().initialize();
 	}
 	// endregion
 

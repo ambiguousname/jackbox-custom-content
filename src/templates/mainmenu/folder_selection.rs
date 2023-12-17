@@ -2,7 +2,7 @@ use std::ffi::OsStr;
 
 use gtk::gio::Cancellable;
 use gtk::subclass::prelude::*;
-use gtk::prelude::{WidgetExt, FileExt, SettingsExt};
+use gtk::prelude::{WidgetExt, FileExt};
 use gtk::traits::ButtonExt;
 use gtk::{FileDialog, AlertDialog};
 
@@ -40,7 +40,7 @@ impl MainMenuWindow {
             return Err("Could not find Jackbox Party Pack 7 directory.");
         }
 
-        println!("Found folder at {}", folder.path().unwrap().display());
+        println!("Found folder at {}", folder.parse_name());
 
         Ok(folder)
     }
@@ -58,12 +58,9 @@ impl MainMenuWindow {
                 return;
             }
 
-            let folder_clone = verified_folder.expect("Could not get verified folder.");
+            let folder = verified_folder.expect("Could not get verified folder.");
+            self.mods_config_mut().settings.set_game_folder(folder);
 
-            let path = folder_clone.path().expect("Could not get folder PathBuf.");
-            let path_str = path.to_str().expect("Could not get PathBuf str.");
-
-            self.config().set_string("game-folder", path_str).expect("Could not set folder setting.");
             if (!self.imp().mod_selection.is_visible()) {
                 self.toggle_creation_visibility(true);
                 self.toggle_folder_visibility(false);
@@ -84,7 +81,7 @@ impl MainMenuWindow {
             }));
         }));
 
-        let folder = self.config().user_value("game-folder");
+        let folder = self.mods_config().settings.get_game_folder();
         if (folder.is_none()) {
             self.toggle_creation_visibility(false);
             self.toggle_folder_visibility(true);
