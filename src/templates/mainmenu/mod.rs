@@ -263,6 +263,8 @@ impl MainMenuWindow {
 
 		let child = self.imp().mod_stack.child_by_name(mod_name.as_str()).expect("Could not get child.");
 
+		// TODO: Test.
+		// Probably a runtime thing since I don't get this error in debug mode.
 		self.imp().mod_stack.remove(&child.clone());
 		unsafe {
 			child.run_dispose();
