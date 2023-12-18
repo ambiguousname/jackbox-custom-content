@@ -179,22 +179,28 @@ impl MainMenuWindow {
 		self.new_mod();
 	}
 
-	fn setup_stack(&self) {
-		self.imp().mod_stack.connect_notify(Some("visible-child-name"),|this, _| {
-			let window : MainMenuWindow = this.ancestor(MainMenuWindow::static_type()).and_downcast().expect("Could not get main menu window.");
+	fn stack_changed(stack : &Stack) {
+		let window : MainMenuWindow = stack.ancestor(MainMenuWindow::static_type()).and_downcast().expect("Could not get main menu window.");
 
-			let new_name = this.visible_child_name().expect("Could not get visible child name.");
-			if new_name != "" {
-				window.imp().first_new_mod.set_visible(false);
-			} else {
-				window.imp().first_new_mod.set_visible(true);
-			}
-			if new_name != "All" && new_name != "" {
-				window.imp().new_content.set_visible(true);
-			} else {
-				window.imp().new_content.set_visible(false);
-			}
-		});
+		let new_name = stack.visible_child_name();
+		let mut name = "".to_string();
+
+		if new_name.is_some() {
+			name = new_name.unwrap().to_string();
+			window.imp().first_new_mod.set_visible(false);
+		} else {
+			window.imp().first_new_mod.set_visible(true);
+		}
+
+		if name != "All" && name != "" {
+			window.imp().new_content.set_visible(true);
+		} else {
+			window.imp().new_content.set_visible(false);
+		}
+	}
+
+	fn setup_stack(&self) {
+		self.imp().mod_stack.connect_notify(Some("visible-child"), |this, _| { MainMenuWindow::stack_changed(this); });
 
 		// TODO: Make an "All" content list that doesn't use traditional mod loading.
 		// self.add_mod("All".to_string());
@@ -263,12 +269,16 @@ impl MainMenuWindow {
 
 		let child = self.imp().mod_stack.child_by_name(mod_name.as_str()).expect("Could not get child.");
 
-		// TODO: Test.
-		// Probably a runtime thing since I don't get this error in debug mode.
-		self.imp().mod_stack.remove(&child.clone());
-		unsafe {
-			child.run_dispose();
+		// Select the next thing:
+		if (self.imp().mod_stack.pages().n_items() - 1 > 0) {
+			self.imp().mod_stack.set_visible_child(&child.next_sibling().or(child.prev_sibling()).unwrap());
 		}
+
+		// FIXME: Creates a segfault. This is a known issue: https://gitlab.gnome.org/GNOME/gtk/-/issues/5917
+		// Solution? Uhhhh, wait until it gets patched and update, I guess.
+		self.imp().mod_stack.remove(&child);
+		
+		MainMenuWindow::stack_changed(&self.imp().mod_stack);
 	}
 
 	fn start_mod_deletion(&self) {
