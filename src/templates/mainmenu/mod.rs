@@ -4,7 +4,7 @@ mod content_creation;
 use std::{cell::{RefCell, RefMut, Ref}, vec::Vec, fs::DirEntry};
 
 // Template construction:
-use gtk::{Application, Box, Button, Grid, Stack, StackSidebar, gio::{self, ActionEntry, Cancellable}, Window, Entry, AlertDialog};
+use gtk::{Application, Box, Button, Grid, Stack, StackSwitcher, gio::{self, ActionEntry, Cancellable}, Window, Entry, AlertDialog};
 use glib::clone;
 
 use content_creation::ContentCreationDialog;
@@ -24,7 +24,7 @@ quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::Applicat
 	pub mod_stack : TemplateChild<Stack>,
 
 	#[template_child(id="mod_stack_sidebar")]
-	pub mod_stack_sidebar : TemplateChild<StackSidebar>,
+	pub mod_stack_sidebar : TemplateChild<StackSwitcher>,
 	
 	#[template_child(id="start_file_selection")]
 	pub folder_choose : TemplateChild<Button>,
@@ -274,8 +274,9 @@ impl MainMenuWindow {
 			self.imp().mod_stack.set_visible_child(&child.next_sibling().or(child.prev_sibling()).unwrap());
 		}
 
-		// FIXME: Creates a segfault. This is a known issue: https://gitlab.gnome.org/GNOME/gtk/-/issues/5917
-		// Solution? Uhhhh, wait until it gets patched and update, I guess.
+		// FIXME: When using StackSidebar, creates a segfault. This is a known issue: https://gitlab.gnome.org/GNOME/gtk/-/issues/5917
+		// We're using a stackswitcher for now, but a StackSidebar would look better (whenever this gets fixed)
+		// For now the program still runs.
 		self.imp().mod_stack.remove(&child);
 		
 		MainMenuWindow::stack_changed(&self.imp().mod_stack);
