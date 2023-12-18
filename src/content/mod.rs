@@ -7,7 +7,7 @@ pub mod quiplash3;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct ContentData {
     // Unique identifier for the data:
     id : i32,

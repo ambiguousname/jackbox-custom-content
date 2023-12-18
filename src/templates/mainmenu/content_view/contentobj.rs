@@ -1,5 +1,4 @@
 use std::cell::RefCell;
-use std::rc::Rc;
 
 use gtk::glib;
 use gtk::prelude::*;
@@ -19,7 +18,7 @@ mod imp {
 	use super::*;
 	#[derive(Default)]
 	pub struct ContentObject {
-		pub data: Rc<RefCell<ContentData>>,
+		pub data: RefCell<ContentData>,
 	}
 
 	#[glib::object_subclass]

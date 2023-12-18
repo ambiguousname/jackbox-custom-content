@@ -4,11 +4,12 @@
 // 3. Save lists of mod data.
 
 use crate::content::ContentData;
-use std::{fs::{self, File, DirEntry}, path::Path};
+use std::{fs::{self, File, DirEntry}, path::Path, collections::HashMap};
 use serde_json;
 use serde::{Serialize, Deserialize};
 use gtk::gio::prelude::FileExt;
 
+#[derive(Default)]
 pub struct JackboxMod {
     name : String,
     id : String,
@@ -20,8 +21,26 @@ pub struct JackboxMod {
 }
 
 impl JackboxMod {
-    fn get_id(&self) -> String {
+    fn new(name: String) -> Self {
+        let id = JackboxMod::string_to_id(name.clone());
+
+        JackboxMod {
+            name,
+            id,
+            ..Default::default()
+        }
+    }
+
+    fn string_to_id(string : String) -> String {
+        string.to_ascii_lowercase().replace(" ", "_")
+    }
+
+    pub fn get_id(&self) -> String {
         self.id.clone()
+    }
+
+    pub fn get_name(&self) -> String {
+        self.name.clone()
     }
 }
 
@@ -70,7 +89,7 @@ impl Settings {
 #[derive(Default)]
 pub struct ModsConfig {
     pub settings : Settings,
-    pub mods : Vec<JackboxMod>,
+    pub mods : HashMap<String, JackboxMod>,
 }
 
 impl ModsConfig {
@@ -92,6 +111,22 @@ impl ModsConfig {
             let dir = directory.expect("Could not get child directory.");
             self.load_mod_from_dir(dir);
         }
+    }
+
+    pub fn mod_exists(&self, mod_name : String) -> bool {
+        self.mods.contains_key(&JackboxMod::string_to_id(mod_name))
+    }
+
+    pub fn new_mod(&mut self, mod_name : String) -> Result<(), &'static str> {
+        if self.mod_exists(mod_name.clone()) {
+            return Err("Mod already exists.");
+        }
+
+        let jackbox_mod = JackboxMod::new(mod_name);
+
+        self.mods.insert(jackbox_mod.get_id(), jackbox_mod);
+
+        Ok(())
     }
 
     fn load_mod_from_dir(&mut self, dir : DirEntry) {

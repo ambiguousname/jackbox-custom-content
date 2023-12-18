@@ -8,7 +8,6 @@ use gtk::{Application, Box, Button, Grid, Stack, StackSidebar, gio, Window, Entr
 use glib::{clone, GString};
 
 use content_creation::ContentCreationDialog;
-use content_view::ContentList;
 use crate::{content::GameContent, mod_manager::ModsConfig};
 use crate::quick_template;
 
@@ -68,14 +67,6 @@ impl MainMenuWindow {
 		Object::builder::<MainMenuWindow>().property("application", app).build()
 	}
 	
-	fn mods_config(&self) -> Ref<'_, ModsConfig> {
-		self.imp().mods_config.borrow()
-	}
-
-	fn mods_config_mut(&self) -> RefMut<'_, ModsConfig> {
-		self.imp().mods_config.borrow_mut()
-	}
-	
 	// region: Public content management
 	
 	pub fn toggle_creation_visibility(&self, visible: bool) {
@@ -92,24 +83,23 @@ impl MainMenuWindow {
 	// endregion
 
 	// region: Mod management
+	fn mods_config(&self) -> Ref<'_, ModsConfig> {
+		self.imp().mods_config.borrow()
+	}
+
+	fn mods_config_mut(&self) -> RefMut<'_, ModsConfig> {
+		self.imp().mods_config.borrow_mut()
+	}
+
 	pub fn add_mod(&self, name : GString) {
-		let stack = self.imp().mod_stack.clone();
-		
-		let new_mod = ContentList::new();
-		
-		let mod_name = name.as_str();
-		if (stack.child_by_name(mod_name).is_none()) {
-			stack.add_titled(&new_mod, Some(mod_name), mod_name);
-		}
+		self.mods_config_mut().new_mod(name.to_string());
 	}
 
 	// endregion
 
 	// region: Basic setup
 	fn setup_stack(&self) {
-		let stack = self.imp().mod_stack.clone();
-		let all = ContentList::new();
-		stack.add_titled(&all, Some("all"), "All");
+		self.mods_config_mut().new_mod("All".to_string());
 	}
 
 	fn setup_add_content(&self) {
