@@ -1,4 +1,4 @@
-use gtk::{prelude::*, Application, glib::ExitCode, CssProvider, gdk::Display};
+use gtk::{prelude::*, Application, glib::ExitCode, CssProvider, Window, gdk::Display};
 // mod util;
 // mod content;
 #[allow(unused_parens)]
@@ -30,28 +30,33 @@ fn load_css() {
 
 #[allow(unused_parens)]
 fn main() -> ExitCode {
-    println!("Start");
     templates::load_resources();
-    println!("Resources loaded.");
     let app = Application::builder()
         .application_id(APP_ID)
         .build();
 
-    println!("App built.");
-    app.connect_activate(move |app| {
-        println!("App activated.");
-        load_css();
-        // We create the main window.
-        let win = MainMenuWindow::new(app);
-        println!("Window created.");
-
-        // TODO: Should be a ref cell?
-        content::initialize_content(win.clone());
-        println!("Content initialized.");
-
-        // Don't forget to make all widgets visible.
-        win.present();
-    });
+    app.connect_activate(build_window);
 
     app.run()
+}
+
+fn build_window(app: &Application) {
+    load_css();
+
+    // This works in debug for whatever reason (runtime issues, I presume.)
+    #[cfg(debug_assertions)]
+    {
+        println!("DEBUG SLEEP");
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }
+    
+    // We create the main window.
+    let win = MainMenuWindow::new(app);
+    // println!("Window created.");
+
+    // TODO: Should be a ref cell???
+    content::initialize_content(win.clone());
+
+    // Don't forget to make all widgets visible.
+    win.present();
 }

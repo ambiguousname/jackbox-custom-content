@@ -4,8 +4,8 @@ mod content_creation;
 use std::{cell::{RefCell, RefMut, Ref}, vec::Vec, fs::DirEntry};
 
 // Template construction:
-use gtk::{Application, Box, Button, Grid, Stack, StackSidebar, gio, Window, Entry, AlertDialog};
-use glib::{clone, GString};
+use gtk::{Application, Box, Button, Grid, Stack, StackSidebar, gio::{self, ActionEntry, Cancellable}, Window, Entry, AlertDialog};
+use glib::clone;
 
 use content_creation::ContentCreationDialog;
 use crate::{content::GameContent, mod_config::ModsConfig, quick_template};
@@ -31,6 +31,9 @@ quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::Applicat
 	#[template_child(id="folder_box")]
 	pub folder_box : TemplateChild<Box>,
 
+	#[template_child(id="first_new_mod")]
+	pub first_new_mod : TemplateChild<Box>,
+
 	#[template_child(id="new_content")]
 	pub new_content : TemplateChild<Button>,
 	pub content_creation_dialog: RefCell<ContentCreationDialog>,
@@ -45,6 +48,9 @@ impl ObjectImpl for imp::MainMenuWindow {
 		self.parent_constructed();
 
 		let obj = self.obj();
+
+		obj.setup_actions();
+
 		// Not working for whatever reason with the mainmenu.ui property xml.
 		obj.imp().mod_selection.set_shrink_start_child(false);
 		obj.imp().mod_selection.set_shrink_end_child(false);
@@ -66,10 +72,28 @@ impl ApplicationWindowImpl for imp::MainMenuWindow {}
 #[gtk::template_callbacks]
 impl MainMenuWindow {
 	pub fn new(app : &Application) -> Self {
-		Object::builder::<MainMenuWindow>().property("application", app).build()
+		Object::builder().property("application", app).build()
 	}
+
+	// region: Action Setup
+	fn setup_actions(&self) {
+		let new_action = ActionEntry::builder("new")
+		.activate(|window : &MainMenuWindow, _, _| {
+			window.new_mod();
+		})
+		.build();
+
+		let delete_action = ActionEntry::builder("delete")
+		.activate(|window : &MainMenuWindow, _, _| {
+			window.start_mod_deletion();
+		})
+		.build();
+
+		self.add_action_entries([new_action, delete_action]);
+	}
+	// endregion
 	
-	// region: Public content management
+	// region: Initial folder/content setup.
 	
 	pub fn toggle_creation_visibility(&self, visible: bool) {
 		self.imp().mod_selection.set_visible(visible);
@@ -84,34 +108,7 @@ impl MainMenuWindow {
 	}
 	// endregion
 
-	// region: Mod management
-	fn setup_stack(&self) {
-		// TODO: Make an "All" content list that doesn't use traditional mod loading.
-		// self.add_mod("All".to_string());
-		let mods_folder = Path::new("./mods");
-
-        if !mods_folder.exists() {
-            let result = fs::create_dir(mods_folder.clone());
-            if result.is_err() {
-                eprintln!("Could not create ./mods directory.");
-            }
-        }
-
-        for directory in fs::read_dir(mods_folder).unwrap() {
-            let dir = directory.expect("Could not get child directory.");
-            self.load_mod_from_dir(dir);
-        }
-
-		self.imp().mod_stack.connect_notify(Some("visible-child-name"),|this, _| {
-			let window : MainMenuWindow = this.ancestor(MainMenuWindow::static_type()).and_downcast().expect("Could not get main menu window.");
-			if this.visible_child_name().expect("Could not get visible child name.") != "All" {
-				window.imp().new_content.set_visible(true);
-			} else {
-				window.imp().new_content.set_visible(false);
-			}
-		});
-	}
-
+	// region: Mods config
 	fn mods_config(&self) -> Ref<'_, ModsConfig> {
 		self.imp().mods_config.borrow()
 	}
@@ -120,38 +117,17 @@ impl MainMenuWindow {
 		self.imp().mods_config.borrow_mut()
 	}
 
-	pub fn add_mod(&self, name : String) {
-		// Create new ContentList:
-		let result = ContentList::new(name.clone());
-		if result.is_err() {
-			let error = result.err().unwrap();
-			AlertDialog::builder()
-			.message("Could not create mod folder.")
-			.detail(error.to_string()).build().show(Some(self));
-			return;
-		}
-
-		let mod_list = result.unwrap();
-
-		self.imp().mod_stack.add_titled(&mod_list, Some(name.as_str()), name.as_str());
+	// Remove the _ if this ends up getting used.
+	fn _reset_mods_config_settings(&mut self) {
+		self.mods_config_mut().reset();
 	}
 
-	pub fn load_mod_from_dir(&self, dir : DirEntry) {
-		let result = ContentList::from_folder(dir);
-
-		let mod_list = result.unwrap();
-		self.imp().mod_stack.add_titled(&mod_list, Some(mod_list.name().as_str()), mod_list.name().as_str());
+	fn setup_mods_config(&self) {
+		self.mods_config_mut().initialize();
 	}
-
 	// endregion
 
-	// region: Basic setup
-
-	fn setup_add_content(&self) {
-		let dialog = ContentCreationDialog::new(self);
-		self.imp().content_creation_dialog.replace(dialog); 
-	}
-
+	// region: Mod management
 	fn setup_add_mod_creation(&self) {
 		let grid = Grid::builder()
 		.build();
@@ -194,25 +170,139 @@ impl MainMenuWindow {
 		self.imp().mod_creation_dialog.replace(dlg);
 	}
 
+	fn new_mod(&self) {
+		self.imp().mod_creation_dialog.borrow().present();
+	}
+
+	#[template_callback]
+	fn handle_new_mod(&self, _button : &Button) {
+		self.new_mod();
+	}
+
+	fn setup_stack(&self) {
+		self.imp().mod_stack.connect_notify(Some("visible-child-name"),|this, _| {
+			let window : MainMenuWindow = this.ancestor(MainMenuWindow::static_type()).and_downcast().expect("Could not get main menu window.");
+
+			let new_name = this.visible_child_name().expect("Could not get visible child name.");
+			if new_name != "" {
+				window.imp().first_new_mod.set_visible(false);
+			} else {
+				window.imp().first_new_mod.set_visible(true);
+			}
+			if new_name != "All" && new_name != "" {
+				window.imp().new_content.set_visible(true);
+			} else {
+				window.imp().new_content.set_visible(false);
+			}
+		});
+
+		// TODO: Make an "All" content list that doesn't use traditional mod loading.
+		// self.add_mod("All".to_string());
+		let mods_folder = Path::new("./mods");
+
+        if !mods_folder.exists() {
+            let result = fs::create_dir(mods_folder.clone());
+            if result.is_err() {
+                eprintln!("Could not create ./mods directory.");
+            }
+        }
+
+        for directory in fs::read_dir(mods_folder).unwrap() {
+            let dir = directory.expect("Could not get child directory.");
+            self.load_mod_from_dir(dir);
+        }
+
+		// let gesture = &self.imp().sidebar_gesture;
+		// gesture.set_property("widget", self.imp().mod_stack_sidebar.to_value());
+		
+	}
+
+	fn add_mod_to_stack(&self, name : String, mod_list : &ContentList) {
+		self.imp().mod_stack.add_titled(mod_list, Some(name.as_str()), name.as_str());
+		self.imp().mod_stack.set_visible_child_name(name.as_str());
+	}
+
+	pub fn add_mod(&self, name : String) {
+		// Create new ContentList:
+		let result = ContentList::new(name.clone());
+		if result.is_err() {
+			let error = result.err().unwrap();
+			AlertDialog::builder()
+			.message("Could not create mod folder.")
+			.detail(error.to_string()).build().show(Some(self));
+			return;
+		}
+
+		let mod_list = result.unwrap();
+		self.add_mod_to_stack(name, &mod_list);
+	}
+
+	pub fn load_mod_from_dir(&self, dir : DirEntry) {
+		let result = ContentList::from_folder(dir);
+
+		let mod_list = result.unwrap();
+		self.add_mod_to_stack(mod_list.name(), &mod_list);
+	}
+
+	fn delete_mod(&self, mod_name : String) {
+		let mods_folder = Path::new("./mods");
+		let mod_folder = mods_folder.join(mod_name.clone());
+		
+		let result = fs::remove_dir(mod_folder);
+
+		if result.is_err() {
+			let msg = format!("Could not delete mod {mod_name}");
+			let err = AlertDialog::builder()
+			.message(msg)
+			.detail(result.err().unwrap().to_string())
+			.build();
+
+			err.show(Some(self));
+			return;
+		}
+
+		let child = self.imp().mod_stack.child_by_name(mod_name.as_str()).expect("Could not get child.");
+
+		self.imp().mod_stack.remove(&child.clone());
+		unsafe {
+			child.run_dispose();
+		}
+	}
+
+	fn start_mod_deletion(&self) {
+		let visible_child = self.imp().mod_stack.visible_child_name();
+		if visible_child.is_none() {
+			return;
+		}
+		let mod_name : String = visible_child.unwrap().to_string();
+		let msg = format!("Are you sure you want to delete {mod_name}?");
+
+		let warn = AlertDialog::builder()
+		.buttons(["Yes", "No"])
+		.message(msg)
+		.detail("This action cannot be undone.")
+		.build();
+
+		warn.choose(Some(self), Some(&Cancellable::new()), clone!(@weak self as window => move |result| {
+			let option = result.expect("Could not get warn option.");
+			if option == 0 {
+				window.delete_mod(mod_name);
+			}
+		}));
+	}
+	// endregion
+
+	// region: Content creation
+
+	fn setup_add_content(&self) {
+		let dialog = ContentCreationDialog::new(self);
+		self.imp().content_creation_dialog.replace(dialog); 
+	}
+
 	#[template_callback]
 	fn handle_create_content_clicked(&self, _button: &Button) {
 		let d = self.imp().content_creation_dialog.borrow();
 		d.present();
 	}
-
-	#[template_callback]
-	fn handle_new_mod(&self, _button : &Button) {
-		self.imp().mod_creation_dialog.borrow().present();
-	}
-
-	// Remove the _ if this ends up getting used.
-	fn _reset_mods_config_settings(&mut self) {
-		self.mods_config_mut().reset();
-	}
-
-	fn setup_mods_config(&self) {
-		self.mods_config_mut().initialize();
-	}
 	// endregion
-
 }

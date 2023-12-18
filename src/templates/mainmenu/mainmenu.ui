@@ -1,9 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
+	<menu id="menubar">
+		<submenu>
+			<attribute name="label" translatable="yes">_File</attribute>
+			<section>
+			<item>
+				<attribute name="label" translatable="yes">_New Mod</attribute>
+				<attribute name="action">win.new</attribute>
+			</item>
+			<item>
+				<attribute name="label" translatable="yes">_Import Mod</attribute>
+				<attribute name="action">win.import</attribute>
+			</item>
+			<item>
+				<attribute name="label" translatable="yes">_Delete Mod</attribute>
+				<attribute name="action">win.delete</attribute>
+			</item>
+			</section>
+		</submenu>
+		<submenu>
+			<attribute name="label" translatable="yes">_Help</attribute>
+			<section>
+			<item>
+				<attribute name="label" translatable="yes">_Help</attribute>
+				<attribute name="action">win.help</attribute>
+			</item>
+			<item>
+				<attribute name="label" translatable="yes">_About</attribute>
+				<attribute name="action">win.about</attribute>
+			</item>
+			</section>
+		</submenu>
+	</menu>
 	<template class="JCCMainMenuWindow" parent="GtkApplicationWindow">
 		<property name="title" translatable="yes">Jackbox Party Pack 7 Custom Content</property>
 		<child type="titlebar">
 			<object class="GtkHeaderBar">
+				<child>
+					<object class="GtkPopoverMenuBar">
+						<property name="menu-model">menubar</property>
+						<accessibility>
+						<property name="label">Main Menu</property>
+						</accessibility>
+					</object>
+				</child>
 				<child type="end">
 					<object class="GtkButton" id="new_content">
 						<property name="visible">false</property>
@@ -31,7 +71,7 @@
 									</object>
 								</child>
 								<property name="orientation">vertical</property>
-								<child>
+								<!-- <child>
 									<object class="GtkButton">
 										<property name="valign">end</property>
 										<property name="label">New Mod</property>
@@ -39,13 +79,31 @@
 										<property name="tooltip-text">Add new mod</property>
 										<signal name="clicked" handler="handle_new_mod" swapped="true"/>
 									</object>
-								</child>
+								</child> -->
 							</object>
 						</child>
 						<child>
 							<object class="GtkStack" id="mod_stack">
 								<property name="halign">center</property>
 								<property name="hexpand">true</property>
+								
+								<child>
+									<object class="GtkBox" id="first_new_mod">
+										<property name="vexpand">true</property>
+										<property name="orientation">vertical</property>
+										<child>
+											<object class="GtkLabel">
+												<property name="label">No mods detected:</property>
+											</object>
+										</child>
+										<child>
+											<object class="GtkButton">
+												<property name="label">New Mod</property>
+												<signal name="clicked" handler="handle_new_mod" swapped="true"/>
+											</object>
+										</child>
+									</object>
+								</child>
 							</object>
 						</child>
 					</object>
