@@ -6,6 +6,7 @@
 			<object class="GtkHeaderBar">
 				<child type="end">
 					<object class="GtkButton" id="new_content">
+						<property name="visible">false</property>
 						<property name="label">New Content</property>
 						<property name="icon-name">list-add-symbolic</property>
 						<property name="tooltip-text">Add new content</property>

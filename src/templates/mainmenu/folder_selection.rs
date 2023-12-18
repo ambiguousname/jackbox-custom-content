@@ -59,7 +59,7 @@ impl MainMenuWindow {
             }
 
             let folder = verified_folder.expect("Could not get verified folder.");
-            self.mods_config_mut().settings.set_game_folder(folder);
+            self.mods_config_mut().set_game_folder(folder);
 
             if (!self.imp().mod_selection.is_visible()) {
                 self.toggle_creation_visibility(true);
@@ -81,7 +81,7 @@ impl MainMenuWindow {
             }));
         }));
 
-        let folder = self.mods_config().settings.get_game_folder();
+        let folder = self.mods_config().get_game_folder();
         if (folder.is_none()) {
             self.toggle_creation_visibility(false);
             self.toggle_folder_visibility(true);

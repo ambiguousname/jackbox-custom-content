@@ -1,15 +1,17 @@
 mod content_view;
 mod content_creation;
 
-use std::{cell::{RefCell, RefMut, Ref}, vec::Vec};
+use std::{cell::{RefCell, RefMut, Ref}, vec::Vec, fs::DirEntry};
 
 // Template construction:
-use gtk::{Application, Box, Button, Grid, Stack, StackSidebar, gio, Window, Entry};
+use gtk::{Application, Box, Button, Grid, Stack, StackSidebar, gio, Window, Entry, AlertDialog};
 use glib::{clone, GString};
 
 use content_creation::ContentCreationDialog;
-use crate::{content::GameContent, mod_manager::ModsConfig};
-use crate::quick_template;
+use crate::{content::GameContent, mod_config::ModsConfig, quick_template};
+use content_view::ContentList;
+
+use std::{fs, path::Path};
 
 mod folder_selection;
 
@@ -83,6 +85,33 @@ impl MainMenuWindow {
 	// endregion
 
 	// region: Mod management
+	fn setup_stack(&self) {
+		// TODO: Make an "All" content list that doesn't use traditional mod loading.
+		// self.add_mod("All".to_string());
+		let mods_folder = Path::new("./mods");
+
+        if !mods_folder.exists() {
+            let result = fs::create_dir(mods_folder.clone());
+            if result.is_err() {
+                eprintln!("Could not create ./mods directory.");
+            }
+        }
+
+        for directory in fs::read_dir(mods_folder).unwrap() {
+            let dir = directory.expect("Could not get child directory.");
+            self.load_mod_from_dir(dir);
+        }
+
+		self.imp().mod_stack.connect_notify(Some("visible-child-name"),|this, _| {
+			let window : MainMenuWindow = this.ancestor(MainMenuWindow::static_type()).and_downcast().expect("Could not get main menu window.");
+			if this.visible_child_name().expect("Could not get visible child name.") != "All" {
+				window.imp().new_content.set_visible(true);
+			} else {
+				window.imp().new_content.set_visible(false);
+			}
+		});
+	}
+
 	fn mods_config(&self) -> Ref<'_, ModsConfig> {
 		self.imp().mods_config.borrow()
 	}
@@ -91,16 +120,32 @@ impl MainMenuWindow {
 		self.imp().mods_config.borrow_mut()
 	}
 
-	pub fn add_mod(&self, name : GString) {
-		self.mods_config_mut().new_mod(name.to_string());
+	pub fn add_mod(&self, name : String) {
+		// Create new ContentList:
+		let result = ContentList::new(name.clone());
+		if result.is_err() {
+			let error = result.err().unwrap();
+			AlertDialog::builder()
+			.message("Could not create mod folder.")
+			.detail(error.to_string()).build().show(Some(self));
+			return;
+		}
+
+		let mod_list = result.unwrap();
+
+		self.imp().mod_stack.add_titled(&mod_list, Some(name.as_str()), name.as_str());
+	}
+
+	pub fn load_mod_from_dir(&self, dir : DirEntry) {
+		let result = ContentList::from_folder(dir);
+
+		let mod_list = result.unwrap();
+		self.imp().mod_stack.add_titled(&mod_list, Some(mod_list.name().as_str()), mod_list.name().as_str());
 	}
 
 	// endregion
 
 	// region: Basic setup
-	fn setup_stack(&self) {
-		self.mods_config_mut().new_mod("All".to_string());
-	}
 
 	fn setup_add_content(&self) {
 		let dialog = ContentCreationDialog::new(self);
@@ -127,7 +172,7 @@ impl MainMenuWindow {
 
 		submit.connect_clicked(clone!(@weak self as window => move |this| {
 			this.ancestor(Window::static_type()).and_downcast::<Window>().expect("Could not get window.").close();
-			window.add_mod(entry.text());
+			window.add_mod(entry.text().to_string());
 			entry.set_text("");
 		}));
 
@@ -162,7 +207,7 @@ impl MainMenuWindow {
 
 	// Remove the _ if this ends up getting used.
 	fn _reset_mods_config_settings(&mut self) {
-		self.mods_config_mut().settings.reset();
+		self.mods_config_mut().reset();
 	}
 
 	fn setup_mods_config(&self) {

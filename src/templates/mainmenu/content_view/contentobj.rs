@@ -7,17 +7,14 @@ use gtk::subclass::prelude::*;
 use glib::{Object, Value, ParamSpec, ParamSpecBoolean, once_cell};
 use once_cell::sync::Lazy;
 
-#[derive(Default)]
-pub struct ContentData {
-	pub enabled: bool,
-	pub game_name: String,
-	pub content_type: String,
-}
+use crate::content::ContentData;
 
 mod imp {
 	use super::*;
 	#[derive(Default)]
 	pub struct ContentObject {
+		// Allow this to be written to JSON?
+		pub enabled : RefCell<bool>,
 		pub data: RefCell<ContentData>,
 	}
 
@@ -42,7 +39,7 @@ mod imp {
 			match _pspec.name() {
 				"enabled" => {
 					let input_value = _value.get().expect("Value should be of type `bool`.");
-					self.data.borrow_mut().enabled = input_value;
+					self.enabled.replace(input_value);
 				},
 				_ => unimplemented!(),
 			}
@@ -50,7 +47,7 @@ mod imp {
 
 		fn property(&self, _id: usize, _pspec: &ParamSpec) -> Value {
 			match _pspec.name() {
-				"enabled" => self.data.borrow().enabled.to_value(),
+				"enabled" => self.enabled.borrow().to_value(),
 				_ => unimplemented!(),
 			}
 		}
