@@ -12,6 +12,7 @@ gtk = { version = "0.7.3", package = "gtk4", features = ["v4_10"]}
 # glib-macros = "0.18.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+open = "5"
 
 [build-dependencies]
 glib-build-tools = "0.17.0"

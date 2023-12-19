@@ -61,7 +61,7 @@ impl MainMenuWindow {
             let folder = verified_folder.expect("Could not get verified folder.");
             self.mods_config_mut().set_game_folder(folder);
 
-            if (!self.imp().mod_selection.is_visible()) {
+            if (!self.imp().mod_editor.is_visible()) {
                 self.toggle_creation_visibility(true);
                 self.toggle_folder_visibility(false);
             }

@@ -1,0 +1,7 @@
+How stuff works:
+
+- IDs (at least when I test in Talking Points) can be alphanumeric.
+- Talking points can accept image IDs as relative paths (but not necessarily absolute ones, since it's already using the local JackboxTalksPicture folder as a base)
+	- Easiest way to avoid copying over images would just be creating a relative path to the mod images from the Jackbox folder.
+- There's a jbg.config.jet file in each game folder, and it includes a reference to the serverURL.
+	- Probably usable with something like https://github.com/InvoxiPlayGames/johnbox
