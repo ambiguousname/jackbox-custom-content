@@ -225,9 +225,11 @@ class CustomData(CustomContent):
         super()
         self.values = {"fields": []}
     
-    def add_data(self, t, v, n): #What are t, v, n? Depends on the game. t is some random letter thing that I can't for the life of me decipher.
-        #v is like text? Like, what someone is saying or what they're going to say, or what's being shown on screen (I think it's for captioning/showing text)
-        #And n is usually a descriptor saying what the data point is for.
+    def add_data(self, t, v, n):
+        # Thanks to: https://github.com/ambiguousname/jackbox-custom-content/issues/10#issue-1893415234
+        # t is type (B) for Boolean, (S) for string, (A) for audio, etc.
+        # v is for value
+        # n is for the name (a descriptor saying what the data is for)
         self.values["fields"].append({
             "t": t,
             "v": v,
