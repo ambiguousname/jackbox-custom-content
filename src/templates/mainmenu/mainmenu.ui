@@ -63,12 +63,12 @@
 			<object class="GtkBox" id="mod_editor">
 				<property name="orientation">vertical</property>
 				<child>
-					<object class="GtkBox">
+					<object class="GtkBox" id="mod_toolbar">
 						<property name="accessible-role">toolbar</property>
 						<property name="css-classes">toolbar</property>
 						
 						<child>
-							<object class="GtkLabel">
+							<object class="GtkLabel" id="mod_toolbar_name">
 								<property name="label">Mod Name</property>
 							</object>
 						</child>

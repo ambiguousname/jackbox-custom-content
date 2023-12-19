@@ -92,6 +92,18 @@ macro_rules! full_template {
     };
 }
 
+/*
+Usage: quick_template!(ClassName, "path/to/template.ui", WidgetType (e.g., gtk::ScrolledWindow), (gtk::ExtendedWidgetsLike, gtk::Window, gtk::Widget), (gtk::ImplementedObjectsLike, gtk::Native, gtk::Root, gio::ShortcutMap), [props] [handlers] struct {
+    structure definition here
+    
+    props or handlers may be inserted before the struct definition for:
+
+    props - Allow custom properties (like #[property(get, set)])
+    handlers - Allow custom template instance callbacks (like #[template_callback])
+});
+
+It's meant to quickly fill in all the boilerplate so you can just write the code.
+*/
 #[macro_export]
 macro_rules! quick_template {
     ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*)) => {
@@ -104,7 +116,7 @@ macro_rules! quick_template {
         $crate::full_template!($name, $resource_path, $struct_def, $widget_type, ($($extends),*), ($($implements),*), (Default, CompositeTemplate, Properties), (properties(wrapper_type=super::$name)), ());
     };
     ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), props handlers struct $struct_def : tt) => {
-        $crate::full_template!($name, $resource_path, $struct_def, $widget_type, ($($extends),*), ($($implements),*), (Default, CompositeTemplate, Properties), (properties(wrapper_type=super::$name)), (klass.bind_template_instance_callbacks();));
+        $crate::full_template!($name, $resource_path, $struct_def, $widget_type, ($($extends),*), ($($implements),*), (Default, CompositeTemplate, Properties), (properties(wrapper_type=super::$name)), (bind_template_instance_callbacks));
     };
     ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), handlers struct $struct_def : tt) => {
         $crate::full_template!($name, $resource_path, $struct_def, $widget_type, ($($extends),*), ($($implements),*), (Default, CompositeTemplate), (), (bind_template_instance_callbacks));

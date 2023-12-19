@@ -18,6 +18,11 @@ quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::Applicat
 	pub mod_editor : TemplateChild<Box>,
 	#[template_child(id="mod_selection")]
 	pub mod_selection : TemplateChild<gtk::Paned>,
+	#[template_child(id="mod_toolbar")]
+	pub mod_toolbar : TemplateChild<gtk::Box>,
+
+	#[template_child(id="mod_toolbar_name")]
+	pub mod_toolbar_name : TemplateChild<gtk::Label>,
 	
 	#[template_child(id="mod_stack")]
 	pub mod_stack : TemplateChild<Stack>,

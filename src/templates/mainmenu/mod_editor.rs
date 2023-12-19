@@ -71,6 +71,7 @@ impl MainMenuWindow {
 		if new_name.is_some() {
 			name = new_name.unwrap().to_string();
 			window.imp().first_new_mod.set_visible(false);
+			window.imp().mod_toolbar_name.set_label(name.as_str());
 		} else {
 			window.imp().first_new_mod.set_visible(true);
 		}
