@@ -48,6 +48,7 @@ fn compile(out_path : PathBuf) {
 // 	assert!(copy.is_ok(), "Copy to share/themes/ failed: {}", copy.err().unwrap());
 // }
 
+// Settings.ini is never recognized for whatever reason.
 // fn install_settings(out_path : PathBuf) {
 // 	let new_path = out_path.join("etc/gtk-4.0");
 // 	if !new_path.exists() {

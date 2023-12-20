@@ -52,7 +52,6 @@ fn build_window(app: &Application) {
     let win = MainMenuWindow::new(app);
     // println!("Window created.");
 
-    // TODO: Should be a ref cell???
     content::initialize_content(win.clone());
 
     let default = gtk::Settings::default().expect("Could not get default");
