@@ -4,10 +4,10 @@ mod content_creation;
 use std::{cell::{RefCell, RefMut, Ref}, vec::Vec};
 
 // Template construction:
-use gtk::{Application, Box, Button, Stack, StackSwitcher, gio::{self, ActionEntry}, Window, AlertDialog};
+use gtk::{Application, Box, Button, Stack, StackSwitcher, gio::{self, ActionEntry, Settings}, Window, AlertDialog};
 
 use content_creation::ContentCreationDialog;
-use crate::{content::GameContent, mod_config::ModsConfig, quick_template};
+use crate::{content::GameContent, quick_template};
 
 mod folder_selection;
 mod mod_editor;
@@ -44,7 +44,7 @@ quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::Applicat
 
 	pub mod_creation_dialog: RefCell<Window>,
 
-	pub mods_config : RefCell<ModsConfig>,
+	pub config : RefCell<Option<Settings>>,
 });
 
 impl ObjectImpl for imp::MainMenuWindow {
@@ -59,7 +59,7 @@ impl ObjectImpl for imp::MainMenuWindow {
 		obj.imp().mod_selection.set_shrink_start_child(false);
 		obj.imp().mod_selection.set_shrink_end_child(false);
 
-		obj.setup_mods_config();
+		obj.setup_config();
 
 		obj.setup_add_content();
 
@@ -125,21 +125,18 @@ impl MainMenuWindow {
 	// endregion
 
 	// region: Mods config
-	fn mods_config(&self) -> Ref<'_, ModsConfig> {
-		self.imp().mods_config.borrow()
-	}
-
-	fn mods_config_mut(&self) -> RefMut<'_, ModsConfig> {
-		self.imp().mods_config.borrow_mut()
+	fn config(&self) -> Settings {
+		self.imp().config.borrow().clone().expect("Could not get settings")
 	}
 
 	// Remove the _ if this ends up getting used.
-	fn _reset_mods_config_settings(&mut self) {
-		self.mods_config_mut().reset();
+	fn _reset_config(&self) {
+		self.config().reset("game-folder");
 	}
 
-	fn setup_mods_config(&self) {
-		self.mods_config_mut().initialize();
+	fn setup_config(&self) {
+		let cfg = Settings::new(crate::APP_ID);
+		self.imp().config.replace(Some(cfg));
 	}
 	// endregion
 
