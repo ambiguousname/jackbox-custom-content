@@ -54,9 +54,6 @@ fn build_window(app: &Application) {
 
     content::initialize_content(win.clone());
 
-    let default = gtk::Settings::default().expect("Could not get default");
-    // TODO: Handle setting preferences.
-    default.set_gtk_application_prefer_dark_theme(true);
     // For this to work, make a Windows10 folder in share/themes folder in the build directory. Then copy a theme there.
     // TODO: Test what needs to get added for builds.
     // default.set_gtk_theme_name(Some("Windows10"));

@@ -1,7 +1,7 @@
 mod content_view;
 mod content_creation;
 
-use std::{cell::{RefCell, RefMut, Ref}, vec::Vec};
+use std::{cell::{RefCell, OnceCell}, vec::Vec};
 
 // Template construction:
 use gtk::{Application, Box, Button, Stack, StackSwitcher, gio::{self, ActionEntry, Settings}, Window, AlertDialog};
@@ -47,7 +47,7 @@ quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::Applicat
 	pub mod_creation_dialog: RefCell<Window>,
 
 	pub preferences_window : RefCell<PreferencesWindow>,
-	pub config : RefCell<Option<Settings>>,
+	pub config : OnceCell<Settings>,
 });
 
 impl ObjectImpl for imp::MainMenuWindow {
@@ -133,8 +133,8 @@ impl MainMenuWindow {
 	// endregion
 
 	// region: Mods config
-	fn config(&self) -> Settings {
-		self.imp().config.borrow().clone().expect("Could not get settings")
+	fn config(&self) -> &Settings {
+		self.imp().config.get().expect("Could not get config.")
 	}
 
 	// Remove the _ if this ends up getting used.
@@ -144,9 +144,9 @@ impl MainMenuWindow {
 
 	fn setup_config(&self) {
 		let cfg = Settings::new(crate::APP_ID);
-		self.imp().config.replace(Some(cfg));
+		self.imp().config.set(cfg.clone());
 
-		let prefs_window = PreferencesWindow::new(self);
+		let prefs_window = PreferencesWindow::new(self, &cfg);
 		self.imp().preferences_window.replace(prefs_window);
 	}
 	// endregion

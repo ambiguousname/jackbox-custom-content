@@ -5,5 +5,9 @@
             <default>""</default>
             <summary>Jackbox Party Pack 7 Folder</summary>
         </key>
+        <key name="dark-mode" type="b">
+            <default>true</default>
+            <summary>Use Dark Mode</summary>
+        </key>
     </schema>
 </schemalist>

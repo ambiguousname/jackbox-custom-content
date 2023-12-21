@@ -10,11 +10,12 @@ fn compile(out_path : PathBuf) {
 		assert!(creation.is_ok(), "Could not create directories: {}", creation.err().unwrap());
 	}
 
-	let target_dir = format!("--targetdir={}", out_path.as_path().to_str().expect("Could not get path str"));
+	let target_dir = format!("--targetdir={}", new_path.as_path().to_str().expect("Could not get path str"));
 
 	let o = Command::new("glib-compile-schemas").arg("./src").arg(target_dir).output().unwrap();
 	assert!(o.status.success(), "glib-compile-schemas failed with {} and stderr: {}\n", o.status, String::from_utf8_lossy(&o.stderr));
 
+	println!("cargo:rerun-if-changed=src/com.ambiguousname.JackboxCustomContent.gschema.xml");
 
 	glib_build_tools::compile_resources(&["src/templates/", "src/content/"], "src/resources.gresource.xml", "resources.gresource");
 }
