@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+	<template class="JCCPreferencesWindow" parent="GtkWindow">
+		<property name="title" translatable="yes">Preferences</property>
+		<property name="width-request">400</property>
+		<child>
+			<object class="GtkBox">
+				<property name="margin-top">30</property>
+				<property name="margin-bottom">30</property>
+				<property name="orientation">vertical</property>
+				<child>
+					<object class="GtkBox">
+						<property name="margin-start">60</property>
+						<property name="margin-end">60</property>
+						<property name="margin-bottom">30</property>
+						<child>
+							<object class="GtkLabel">
+								<property name="label" translatable="yes">Dark Mode</property>
+								<property name="xalign">0</property>
+                                <property name="halign">start</property>
+                                <property name="valign">center</property>
+                                <property name="hexpand">true</property>
+                                <property name="mnemonic-widget">dark_mode</property>
+							</object>
+						</child>
+						<child>
+							<object class="GtkSwitch" id="dark_mode">
+								<property name="halign">end</property>
+							</object>
+						</child>
+					</object>
+				</child>
+				<child>
+					<object class="GtkBox">
+						<property name="margin-start">60</property>
+						<property name="margin-end">60</property>
+						<child>
+							<object class="GtkLabel">
+								<property name="label" translatable="yes">Game Folder</property>
+                                <property name="hexpand">true</property>
+								<property name="xalign">0</property>
+                                <property name="halign">start</property>
+							</object>
+						</child>
+						<child>
+							<object class="GtkBox">
+                                <property name="halign">end</property>
+								<child>
+									<object class="GtkLabel">
+										<property name="label"></property>
+									</object>
+								</child>
+								<child>
+									<object class="GtkButton">
+										<property name="label" translatable="yes">Browse</property>
+									</object>
+								</child>
+							</object>
+						</child>
+					</object>
+				</child>
+			</object>
+		</child>
+	</template>
+</interface>

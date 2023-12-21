@@ -1,8 +1,8 @@
 use gtk::gio;
 
-pub mod filebrowse;
 pub mod editable_list;
 pub mod mainmenu;
+pub mod preferences;
 
 
 pub fn load_resources() {

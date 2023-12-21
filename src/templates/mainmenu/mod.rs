@@ -9,6 +9,8 @@ use gtk::{Application, Box, Button, Stack, StackSwitcher, gio::{self, ActionEntr
 use content_creation::ContentCreationDialog;
 use crate::{content::GameContent, quick_template};
 
+use super::preferences::PreferencesWindow;
+
 mod folder_selection;
 mod mod_editor;
 
@@ -44,6 +46,7 @@ quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::Applicat
 
 	pub mod_creation_dialog: RefCell<Window>,
 
+	pub preferences_window : RefCell<PreferencesWindow>,
 	pub config : RefCell<Option<Settings>>,
 });
 
@@ -105,7 +108,12 @@ impl MainMenuWindow {
 			}
 		}).build();
 
-		self.add_action_entries([new_action, delete_action, open_action]);
+		let prefs_action = ActionEntry::builder("prefs")
+		.activate(|window : &MainMenuWindow, _, _| {
+			window.imp().preferences_window.borrow().present();
+		}).build();
+
+		self.add_action_entries([new_action, delete_action, open_action, prefs_action]);
 	}
 	// endregion
 	
@@ -137,6 +145,9 @@ impl MainMenuWindow {
 	fn setup_config(&self) {
 		let cfg = Settings::new(crate::APP_ID);
 		self.imp().config.replace(Some(cfg));
+
+		let prefs_window = PreferencesWindow::new(self);
+		self.imp().preferences_window.replace(prefs_window);
 	}
 	// endregion
 

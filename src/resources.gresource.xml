@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="/templates/">
-    <file compressed="true" preprocess="xml-stripblanks">filebrowse.ui</file>
 	  <file compressed="true" preprocess="xml-stripblanks">mainmenu/mainmenu.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">mainmenu/content_creation/content_creation.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">mainmenu/content_view/contentlist.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">editable_list.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">preferences/preferences.ui</file>
   </gresource>
   <gresource prefix="/content/">
     <file compressed="true" preprocess="xml-stripblanks">quiplash3/categories/generic_round_prompt.ui</file>
