@@ -113,7 +113,13 @@ impl MainMenuWindow {
 			window.imp().preferences_window.borrow().present();
 		}).build();
 
-		self.add_action_entries([new_action, delete_action, open_action, prefs_action]);
+		let content_action = ActionEntry::builder("new_content")
+		.activate(|window : &MainMenuWindow, _, _| {
+			window.handle_create_content_clicked();
+		})
+		.build();
+
+		self.add_action_entries([new_action, delete_action, open_action, prefs_action, content_action]);
 	}
 	// endregion
 	
@@ -159,7 +165,7 @@ impl MainMenuWindow {
 	}
 
 	#[template_callback]
-	fn handle_create_content_clicked(&self, _button: &Button) {
+	fn handle_create_content_clicked(&self) {
 		let d = self.imp().content_creation_dialog.borrow();
 		d.present();
 	}
@@ -167,7 +173,7 @@ impl MainMenuWindow {
 
 	// region: Misc Template Callbacks
 	#[template_callback]
-	fn handle_new_mod(&self, _button : &Button) {
+	fn handle_new_mod(&self) {
 		self.new_mod();
 	}
 	// endregion
