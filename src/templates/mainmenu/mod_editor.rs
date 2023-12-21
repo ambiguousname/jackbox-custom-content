@@ -71,9 +71,11 @@ impl MainMenuWindow {
 		if new_name.is_some() {
 			name = new_name.unwrap().to_string();
 			window.imp().first_new_mod.set_visible(false);
+			window.imp().mod_editor.set_visible(true);
 			window.imp().mod_toolbar_name.set_label(name.as_str());
 		} else {
 			window.imp().first_new_mod.set_visible(true);
+			window.imp().mod_editor.set_visible(false);
 		}
 
 		if name != "All" && name != "" {
@@ -101,6 +103,7 @@ impl MainMenuWindow {
             let dir = directory.expect("Could not get child directory.");
             self.load_mod_from_dir(dir);
         }
+		Self::stack_changed(&self.imp().mod_stack);
 
 		// let gesture = &self.imp().sidebar_gesture;
 		// gesture.set_property("widget", self.imp().mod_stack_sidebar.to_value());
@@ -172,7 +175,7 @@ impl MainMenuWindow {
 		let mods_folder = Path::new("./mods");
 		let mod_folder = mods_folder.join(mod_name.clone());
 		
-		let result = fs::remove_dir(mod_folder);
+		let result = fs::remove_dir_all(mod_folder);
 
 		if result.is_err() {
 			let msg = format!("Could not delete mod {mod_name}");

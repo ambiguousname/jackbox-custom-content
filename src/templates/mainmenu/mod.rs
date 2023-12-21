@@ -150,7 +150,7 @@ impl MainMenuWindow {
 
 	fn setup_config(&self) {
 		let cfg = Settings::new(crate::APP_ID);
-		self.imp().config.set(cfg.clone());
+		self.imp().config.set(cfg.clone()).expect("Could not set initial config.");
 
 		let prefs_window = PreferencesWindow::new(self, &cfg);
 		self.imp().preferences_window.replace(prefs_window);

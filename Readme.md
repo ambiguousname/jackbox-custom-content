@@ -88,6 +88,9 @@ This option isn't recommended for any game unless that game has at least the num
 
 Yes, but there are a few differences. For one: making your own "episodes" in Quiplash 3 means you have to manually select them. If you add custom questions using this program, they'll get inserted into the normal rotation of questions. For two: using this program will allow you to add more stuff not available in Quiplash 3's "episodes" feature, like audio files to read the questions and custom responses to certain answers. And this program can be used for more games than Quiplash 3.
 
+## Help, I accidentally deleted a mod!
+On Windows at least, you can recover from the Recycle Bin. Not sure about other operating systems.
+
 ## I accidentally added content multiple times, can I remove it?
 
 There's a delete option in "View/Edit Content". You can select multiple pieces of content to delete.

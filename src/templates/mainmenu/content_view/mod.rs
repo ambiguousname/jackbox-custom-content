@@ -37,7 +37,8 @@ impl ContentList {
 			let msg = format!("Folder {name} already exists.");
 			return Err(Error::new(std::io::ErrorKind::Other, msg));
 		}
-		fs::create_dir(mod_dir)?;
+		fs::create_dir(mod_dir.clone())?;
+		fs::create_dir(mod_dir.join("The Jackbox Party Pack 7"))?;
 
         ContentList::create(name)
     }

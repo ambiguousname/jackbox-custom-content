@@ -95,6 +95,24 @@
 					</object>
 				</child>
 				<child>
+					<object class="GtkBox" id="first_new_mod">
+						<property name="vexpand">true</property>
+						<property name="orientation">vertical</property>
+						<property name="visible">false</property>
+						<child>
+							<object class="GtkLabel">
+								<property name="label">No mods detected:</property>
+							</object>
+						</child>
+						<child>
+							<object class="GtkButton">
+								<property name="label">New Mod</property>
+								<signal name="clicked" handler="handle_new_mod" swapped="true"/>
+							</object>
+						</child>
+					</object>
+				</child>
+				<child>
 					<object class="GtkBox" id="mod_editor">
 						<property name="orientation">vertical</property>
 						<child>
@@ -141,24 +159,6 @@
 										<property name="halign">center</property>
 										<property name="hexpand">true</property>
 										<property name="vexpand">true</property>
-										
-										<child>
-											<object class="GtkBox" id="first_new_mod">
-												<property name="vexpand">true</property>
-												<property name="orientation">vertical</property>
-												<child>
-													<object class="GtkLabel">
-														<property name="label">No mods detected:</property>
-													</object>
-												</child>
-												<child>
-													<object class="GtkButton">
-														<property name="label">New Mod</property>
-														<signal name="clicked" handler="handle_new_mod" swapped="true"/>
-													</object>
-												</child>
-											</object>
-										</child>
 									</object>
 								</child>
 							</object>
