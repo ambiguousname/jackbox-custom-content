@@ -7,7 +7,7 @@ build="src/build.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-gtk = { version = "0.7.3", package = "gtk4", features = ["v4_10"]}
+gtk = { version = "0.7.3", package = "gtk4", features = ["v4_12"]}
 # TODO: Remove if gtk gets update with these new macros? Mostly looking for derived_properties for easier use.
 # glib-macros = "0.18.0"
 serde = { version = "1.0", features = ["derive"] }

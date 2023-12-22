@@ -4,7 +4,7 @@ pub mod contentobj;
 use contentobj::ContentObject;
 use contentcol::ContentCol;
 
-use gtk::{ColumnView, glib::derived_properties, ColumnViewColumn, gio, SignalListItemFactory, ListItem, SingleSelection};
+use gtk::{ColumnView, glib::derived_properties, ColumnViewColumn, gio, SignalListItemFactory, ListItem, SingleSelection, BuilderListItemFactory};
 
 use std::{cell::{RefCell, OnceCell}, fs::{self, DirEntry}, path::PathBuf, io::Error};
 
@@ -81,43 +81,8 @@ impl ContentList {
     }
 
     fn setup_factory(&self) {
-        let columns = self.imp().column_view.columns();
-        let len = columns.n_items();
-
-        for i in 0..len {
-			let column = columns.item(i).and_downcast::<ColumnViewColumn>().expect("Column should be `ColumnViewColumn`.");
-			
-			let factory = SignalListItemFactory::new();
-			factory.connect_setup(move |_, list_item| {
-				let widget = gtk::Label::new(Some("Test"));
-				let content_row = ContentCol::new(gtk::Widget::from(widget));
-				list_item.downcast_ref::<ListItem>().expect("Should be `ListItem`.")
-				.set_child(Some(&content_row));
-			});
-
-			factory.connect_bind(move |_, list_item| {
-				let content_object = list_item.downcast_ref::<ListItem>()
-					.expect("Should be ListItem")
-					.item()
-					.and_downcast::<ContentObject>()
-					.expect("Item should be `ContentObject`.");
-	
-				let content_row = list_item.downcast_ref::<ListItem>().expect("Should be `ListItem`.")
-				.child()
-				.and_downcast::<ContentCol>().expect("Child should be `ContentCol`.");
-	
-				content_row.bind(&content_object);
-			});
-	
-			factory.connect_unbind(move |_, list_item| {
-				let content_row = list_item.downcast_ref::<ListItem>().expect("Should be `ListItem`.")
-				.child()
-				.and_downcast::<ContentCol>().expect("Child should be `ContentCol`.");
-	
-				content_row.unbind();
-			});
-			
-			column.set_factory(Some(&factory));
-		}
+		let factory = BuilderListItemFactory::from_resource(None::<&gtk::BuilderScope>, "/templates/mainmenu/content_view/contentlistitem.ui");
+		
+        self.imp().column_view.set_row_factory(Some(&factory));
     }
 }
