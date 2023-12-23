@@ -4,7 +4,8 @@ use std::cell::OnceCell;
 // Way to specify no extension? For subclass GObject directly.
 
 mod game_imp {
-	use std::cell::RefCell;
+
+	use gtk::gio::ListModel;
 
 use super::*;
 
@@ -12,7 +13,9 @@ use super::*;
 	#[properties(wrapper_type=super::Game)]
 	pub struct Game {
 		#[property(get, set)]
-		pub title : RefCell<String>,
+		pub title : OnceCell<String>,
+		#[property(get, set)]
+		pub children : OnceCell<Option<ListModel>>,
 	}
 
 	#[glib::object_subclass]
