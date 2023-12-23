@@ -1,8 +1,11 @@
 use std::collections::HashMap;
 
+use crate::quick_template;
+
 use super::templates::mainmenu::MainMenuWindow;
 
 pub mod quiplash3;
+pub mod game_list;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -38,7 +41,7 @@ pub struct GameContent {
 
 
 pub fn initialize_content(window : MainMenuWindow) {
-    let categories = vec![quiplash3::GAME_INFO];
+    // let categories = vec![quiplash3::GAME_INFO];
 
-    window.add_game_info(categories);
+    // window.add_game_info(categories);
 }

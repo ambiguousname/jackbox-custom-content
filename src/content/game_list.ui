@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+	<template class="JCCGameList" parent="GtkBox">
+		<child>
+			<!-- ListView is not subclassable (nor can I just "import" a list store from this folder), so this is the workaround. -->
+			<object class="GtkListView">
+				<property name="factory">
+					<object class="GtkBuilderListItemFactory">
+						<property name="resource">/content/game.ui</property>
+					</object>
+				</property>
+				<property name="model">
+					<object class="GtkSingleSelection">
+						<property name="model">
+							<object class="GListStore">
+								<property name="item-type">JCCGame</property>
+								<child>
+									<object class="JCCGame">
+										<property name="title">Jackbox Party Pack 7</property>
+									</object>
+								</child>
+							</object>
+						</property>
+					</object>
+				</property>
+				<property name="tab-behavior">item</property>
+				<style>
+					<class name="navigation-sidebar"/>
+				</style>
+			</object>
+		</child>
+	</template>
+</interface>

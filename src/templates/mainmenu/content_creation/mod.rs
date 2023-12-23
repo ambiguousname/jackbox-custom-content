@@ -4,11 +4,11 @@ use gio::{SimpleAction, SimpleActionGroup};
 
 use std::cell::RefCell;
 
-use crate::{content::GameContent, quick_template};
+use crate::{content::{GameContent, game_list::GameList}, quick_template};
 
 quick_template!(ContentCreationDialog, "/templates/mainmenu/content_creation/content_creation.ui", gtk::Window, (gtk::Widget), (gtk::Native, gtk::Root, gtk::ShortcutManager), handlers struct {
-    #[template_child(id="game_select_stack")]
-    pub content_stack : TemplateChild<Stack>,
+    // #[template_child(id="game_select_stack")]
+    // pub content_stack : TemplateChild<Stack>,
 
     pub action_group : RefCell<Option<SimpleActionGroup>>,
 });
@@ -35,22 +35,27 @@ impl ContentCreationDialog {
         this
     }
 
+    pub fn ensure_all_types() {
+        ContentCreationDialog::ensure_type();
+        GameList::ensure_all_types();
+    }
+
 	#[template_callback]
     fn handle_create_clicked(&self, _button : &Button) {
-        let current_page = self.imp().content_stack.visible_child().expect("No selected page.");
+        // let current_page = self.imp().content_stack.visible_child().expect("No selected page.");
 
-        let selector : ListBox = current_page.downcast::<ListBox>().expect("Could not get ListBox.");
+        // let selector : ListBox = current_page.downcast::<ListBox>().expect("Could not get ListBox.");
 
-        let row = selector.selected_row();
-        if row.is_none() {
-            return;
-        }
+        // let row = selector.selected_row();
+        // if row.is_none() {
+        //     return;
+        // }
 
-        let selected = row.unwrap().child().expect("Could not get child.");
-        let window_name : String = selected.property("label");
-        let action_name = format!("{}-open-window", window_name);
+        // let selected = row.unwrap().child().expect("Could not get child.");
+        // let window_name : String = selected.property("label");
+        // let action_name = format!("{}-open-window", window_name);
         
-        self.action_group().activate_action(&action_name, None);
+        // self.action_group().activate_action(&action_name, None);
     }
 
     fn setup_action_group(&self) {
@@ -92,12 +97,13 @@ impl ContentCreationDialog {
         //let model = gio::ListStore::new();
         //let column_view = ColumnView::new();
         // TODO: Custom signal for the page? 
-        self.imp().content_stack.add_titled(&selector, Some(game.game_id), game.name);
+        // self.imp().content_stack.add_titled(&selector, Some(game.game_id), game.name);
     }
 }
 
 impl Default for ContentCreationDialog {
     fn default() -> Self {
+		ContentCreationDialog::ensure_all_types();
         let this : Self = Object::builder().build();
         this
     }

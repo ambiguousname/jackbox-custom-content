@@ -57,7 +57,7 @@ macro_rules! call_func {
 
 #[macro_export]
 macro_rules! full_template {
-    ($name:ident, $resource_path:literal, $struct_def:tt, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), ($($derives:ident),+), ($($properties:meta)?), ($($instance_callbacks:ident)?)) => {
+    ($name:ident, ($($resource_path:literal)?), $struct_def:tt, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), ($($derives:ident),+), ($($properties:meta)?), ($($instance_callbacks:ident)?)) => {
         use gtk::{subclass::prelude::*, glib, CompositeTemplate, prelude::*};
         use glib::{Object, Properties};
 
@@ -65,7 +65,7 @@ macro_rules! full_template {
             use super::*;
 
             #[derive($($derives,)+)]
-            #[template(resource=$resource_path)]
+            $(#[template(resource=$resource_path)])?
             $(#[$properties])?
             pub struct $name $struct_def
 
@@ -106,19 +106,22 @@ It's meant to quickly fill in all the boilerplate so you can just write the code
 */
 #[macro_export]
 macro_rules! quick_template {
+    ($name:ident, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), struct $struct_def : tt) => {
+        $crate::full_template!($name, (), $struct_def, $widget_type, ($($extends),*), ($($implements),*), (Default), (), ());
+    };
     ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*)) => {
-        $crate::full_template!($name, $resource_path, {}, $widget_type, ($($extends),*), ($($implements),*), (Default, CompositeTemplate), (), ());
+        $crate::full_template!($name, ($resource_path), {}, $widget_type, ($($extends),*), ($($implements),*), (Default, CompositeTemplate), (), ());
     };
     ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), struct $struct_def : tt) => {
-        $crate::full_template!($name, $resource_path, $struct_def, $widget_type, ($($extends),*), ($($implements),*), (Default, CompositeTemplate), (), ());
+        $crate::full_template!($name, ($resource_path), $struct_def, $widget_type, ($($extends),*), ($($implements),*), (Default, CompositeTemplate), (), ());
     };
     ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), props struct $struct_def : tt) => {
-        $crate::full_template!($name, $resource_path, $struct_def, $widget_type, ($($extends),*), ($($implements),*), (Default, CompositeTemplate, Properties), (properties(wrapper_type=super::$name)), ());
+        $crate::full_template!($name, ($resource_path), $struct_def, $widget_type, ($($extends),*), ($($implements),*), (Default, CompositeTemplate, Properties), (properties(wrapper_type=super::$name)), ());
     };
     ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), props handlers struct $struct_def : tt) => {
-        $crate::full_template!($name, $resource_path, $struct_def, $widget_type, ($($extends),*), ($($implements),*), (Default, CompositeTemplate, Properties), (properties(wrapper_type=super::$name)), (bind_template_instance_callbacks));
+        $crate::full_template!($name, ($resource_path), $struct_def, $widget_type, ($($extends),*), ($($implements),*), (Default, CompositeTemplate, Properties), (properties(wrapper_type=super::$name)), (bind_template_instance_callbacks));
     };
     ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), handlers struct $struct_def : tt) => {
-        $crate::full_template!($name, $resource_path, $struct_def, $widget_type, ($($extends),*), ($($implements),*), (Default, CompositeTemplate), (), (bind_template_instance_callbacks));
+        $crate::full_template!($name, ($resource_path), $struct_def, $widget_type, ($($extends),*), ($($implements),*), (Default, CompositeTemplate), (), (bind_template_instance_callbacks));
     };
 }
