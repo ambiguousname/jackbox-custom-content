@@ -54,12 +54,13 @@ impl MainMenuWindow {
 		});
 
 		let dlg = Window::builder()
+		.name("Mod Creation Dialog")
 		.child(&grid)
 		.transient_for(self)
 		.hide_on_close(true)
 		.build();
 
-		self.imp().mod_creation_dialog.replace(dlg);
+		self.imp().mod_creation_dialog.replace(Some(dlg));
 	}
 
 	fn stack_changed(stack : &Stack) {
@@ -115,7 +116,7 @@ impl MainMenuWindow {
 	// region: Add Mods
 
 	pub(super) fn new_mod(&self) {
-		self.imp().mod_creation_dialog.borrow().present();
+		self.imp().mod_creation_dialog.borrow().clone().expect("Could not get mod creation dialog.").present();
 	}
 
 	fn add_mod_to_stack(&self, name : String, mod_list : &ContentList) {

@@ -93,10 +93,3 @@ impl PreferencesWindow {
 		})));
 	}
 }
-
-impl Default for PreferencesWindow {
-    fn default() -> Self {
-        let this : Self = Object::builder().build();
-        this
-    }
-}

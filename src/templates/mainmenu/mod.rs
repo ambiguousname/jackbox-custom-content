@@ -42,11 +42,11 @@ quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::Applicat
 
 	#[template_child(id="new_content")]
 	pub new_content : TemplateChild<Button>,
-	pub content_creation_dialog: RefCell<ContentCreationDialog>,
+	pub content_creation_dialog: RefCell<Option<ContentCreationDialog>>,
 
-	pub mod_creation_dialog: RefCell<Window>,
+	pub mod_creation_dialog: RefCell<Option<Window>>,
 
-	pub preferences_window : RefCell<PreferencesWindow>,
+	pub preferences_window : RefCell<Option<PreferencesWindow>>,
 	pub config : OnceCell<Settings>,
 });
 
@@ -110,7 +110,7 @@ impl MainMenuWindow {
 
 		let prefs_action = ActionEntry::builder("prefs")
 		.activate(|window : &MainMenuWindow, _, _| {
-			window.imp().preferences_window.borrow().present();
+			window.imp().preferences_window.borrow().clone().expect("Could not get prefs window").present();
 		}).build();
 
 		let content_action = ActionEntry::builder("new_content")
@@ -131,7 +131,7 @@ impl MainMenuWindow {
 	}
 
 	pub fn add_game_info(&self, games : Vec<GameContent>) {
-		let d = self.imp().content_creation_dialog.borrow();
+		let d = self.imp().content_creation_dialog.borrow().clone().expect("Could not get dialog.");
 		for game in games {
 			d.add_game_type(game);
 		}
@@ -153,7 +153,7 @@ impl MainMenuWindow {
 		self.imp().config.set(cfg.clone()).expect("Could not set initial config.");
 
 		let prefs_window = PreferencesWindow::new(self, &cfg);
-		self.imp().preferences_window.replace(prefs_window);
+		self.imp().preferences_window.replace(Some(prefs_window));
 	}
 	// endregion
 
@@ -161,12 +161,12 @@ impl MainMenuWindow {
 
 	fn setup_add_content(&self) {
 		let dialog = ContentCreationDialog::new(self);
-		self.imp().content_creation_dialog.replace(dialog); 
+		self.imp().content_creation_dialog.replace(Some(dialog));
 	}
 
 	#[template_callback]
 	fn handle_create_content_clicked(&self) {
-		let d = self.imp().content_creation_dialog.borrow();
+		let d = self.imp().content_creation_dialog.borrow().clone().expect("Could not get content creation dialog.");
 		d.present();
 	}
 	// endregion

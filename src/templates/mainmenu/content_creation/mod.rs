@@ -28,6 +28,7 @@ impl WindowImpl for imp::ContentCreationDialog {}
 #[gtk::template_callbacks]
 impl ContentCreationDialog {
     pub fn new(parent: &impl IsA<Window>) -> Self {
+		ContentCreationDialog::ensure_all_types();
         let this : Self = Object::builder()
         .property("transient-for", parent)
         .property("hide-on-close", true)
@@ -98,13 +99,5 @@ impl ContentCreationDialog {
         //let column_view = ColumnView::new();
         // TODO: Custom signal for the page? 
         // self.imp().content_stack.add_titled(&selector, Some(game.game_id), game.name);
-    }
-}
-
-impl Default for ContentCreationDialog {
-    fn default() -> Self {
-		ContentCreationDialog::ensure_all_types();
-        let this : Self = Object::builder().build();
-        this
     }
 }
