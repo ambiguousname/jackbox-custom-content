@@ -7,7 +7,7 @@ use std::{cell::{RefCell, OnceCell}, vec::Vec};
 use gtk::{Application, Box, Button, Stack, StackSwitcher, gio::{self, ActionEntry, Settings}, Window, AlertDialog};
 
 use content_creation::ContentCreationDialog;
-use crate::{content::GameContent, quick_template};
+use crate::quick_template;
 
 use super::preferences::PreferencesWindow;
 
@@ -128,13 +128,6 @@ impl MainMenuWindow {
 	pub fn toggle_creation_visibility(&self, visible: bool) {
 		self.imp().mod_editor.set_visible(visible);
 		self.imp().new_content.set_visible(visible);
-	}
-
-	pub fn add_game_info(&self, games : Vec<GameContent>) {
-		let d = self.imp().content_creation_dialog.borrow().clone().expect("Could not get dialog.");
-		for game in games {
-			d.add_game_type(game);
-		}
 	}
 	// endregion
 

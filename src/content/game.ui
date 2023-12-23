@@ -4,11 +4,11 @@
 		<property name="focusable">false</property>
 		<property name="child">
 			<object class="GtkTreeExpander" id="expander">
-				<!-- <binding name="list-row">
-					<lookup name="children" type="JCCGame">
+				<binding name="list-row">
+					<lookup name="children" type="JCCPartyPack">
 						<lookup name="item">GtkListItem</lookup>
 					</lookup>
-				</binding> -->
+				</binding>
 				<property name="child">
 					<object class="GtkInscription">
 						<property name="hexpand">true</property>
@@ -16,7 +16,7 @@
 						<property name="text-overflow">ellipsize-end</property>
 						<binding name="text">
 							<!-- Get the game name from the Game class -->
-							<lookup name="title" type="JCCGame">
+							<lookup name="title" type="JCCPartyPack">
 								<lookup name="item">GtkListItem</lookup>
 							</lookup>
 						</binding>

@@ -4,7 +4,7 @@ use gio::{SimpleAction, SimpleActionGroup};
 
 use std::cell::RefCell;
 
-use crate::{content::{GameContent, game_list::GameList}, quick_template};
+use crate::{content::game_list::GameList, quick_template};
 
 quick_template!(ContentCreationDialog, "/templates/mainmenu/content_creation/content_creation.ui", gtk::Window, (gtk::Widget), (gtk::Native, gtk::Root, gtk::ShortcutManager), handlers struct {
     // #[template_child(id="game_select_stack")]
@@ -68,36 +68,36 @@ impl ContentCreationDialog {
         self.imp().action_group.borrow().clone().expect("Could not get action group.")
     }
 
-    pub fn add_game_type(&self, game : GameContent) {
-        let selector = ListBox::new();
-        selector.set_selection_mode(gtk::SelectionMode::Single);
+    // pub fn add_game_type(&self, game : GameContent) {
+    //     let selector = ListBox::new();
+    //     selector.set_selection_mode(gtk::SelectionMode::Single);
 
-        selector.set_hexpand(true);
+    //     selector.set_hexpand(true);
 
-        for content_type in game.content_categories {
-            // TODO: Fix so you can only add one bit of custom content at a time.
-            let option = gtk::Label::new(Some(content_type.name));
-            let open = content_type.open_window;
+    //     for content_type in game.content_categories {
+    //         // TODO: Fix so you can only add one bit of custom content at a time.
+    //         let option = gtk::Label::new(Some(content_type.name));
+    //         let open = content_type.open_window;
 
-            let action_name = format!("{}-open-window", content_type.name);
-            let window_action = SimpleAction::new(&action_name, None);
-            window_action.connect_activate(clone!(@weak self as window => move |_, _| {
-                let content_window = open();
-                content_window.set_property("transient-for", window);
-                content_window.present();
-            }));
-            self.action_group().add_action(&window_action);
+    //         let action_name = format!("{}-open-window", content_type.name);
+    //         let window_action = SimpleAction::new(&action_name, None);
+    //         window_action.connect_activate(clone!(@weak self as window => move |_, _| {
+    //             let content_window = open();
+    //             content_window.set_property("transient-for", window);
+    //             content_window.present();
+    //         }));
+    //         self.action_group().add_action(&window_action);
             
-            selector.append(&option);
-        }
+    //         selector.append(&option);
+    //     }
 
-        let row = selector.row_at_index(0).expect("Could not get first row.");
+    //     let row = selector.row_at_index(0).expect("Could not get first row.");
 
-        selector.select_row(Some(&row));
+    //     selector.select_row(Some(&row));
 
-        //let model = gio::ListStore::new();
-        //let column_view = ColumnView::new();
-        // TODO: Custom signal for the page? 
-        // self.imp().content_stack.add_titled(&selector, Some(game.game_id), game.name);
-    }
+    //     //let model = gio::ListStore::new();
+    //     //let column_view = ColumnView::new();
+    //     // TODO: Custom signal for the page? 
+    //     // self.imp().content_stack.add_titled(&selector, Some(game.game_id), game.name);
+    // }
 }

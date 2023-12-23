@@ -1,47 +1,41 @@
-use std::collections::HashMap;
+use gtk::{subclass::prelude::*, glib, prelude::*};
+use glib::{Object, Properties, derived_properties};
 
-use crate::quick_template;
-
-use super::templates::mainmenu::MainMenuWindow;
+use std::cell::OnceCell;
 
 pub mod quiplash3;
 pub mod game_list;
 
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
+mod imp {
+    use super::*;
 
-#[derive(Default, Serialize, Deserialize)]
-pub struct ContentData {
-    // Unique identifier for the data:
-    id : i32,
-    // The relative path to the .jet file from the /games/ directory.
-    master_jet : &'static str,
-    properties : HashMap<&'static str, Value>,
-}
-
-impl ContentData {
-    fn write_to_game(&self, games_path : &str) {
-        
+    #[derive(Default, Properties)]
+    #[properties(wrapper_type=super::Game)]
+    pub struct Game {
+        #[property(get, set)]
+        pub title : OnceCell<String>,
+		// Internal ID (the relative folder from the /games/ directory)
+		#[property(get, set)]
+		pub id : OnceCell<String>,
     }
+
+    #[glib::object_subclass]
+	impl ObjectSubclass for Game {
+		const NAME: &'static str = "JCCGame";
+		type Type = super::Game;
+		type ParentType = Object;
+	}
+
+    #[derived_properties]
+	impl ObjectImpl for Game {}
 }
 
-pub struct ContentCategory
-{
-    pub name: &'static str,
-    pub open_window : fn() -> gtk::Window,
+glib::wrapper! {
+    pub struct Game(ObjectSubclass<imp::Game>);
 }
 
-pub struct GameContent {
-    // Internal game ID (the relative folder from the /games/ directory)
-    pub game_id: &'static str,
-    // The game's display name.
-    pub name: &'static str,
-    pub content_categories: &'static [ContentCategory],
-}
-
-
-pub fn initialize_content(window : MainMenuWindow) {
-    // let categories = vec![quiplash3::GAME_INFO];
-
-    // window.add_game_info(categories);
+impl Game {
+    pub fn ensure_all_types() {
+        Game::ensure_type();
+    }
 }

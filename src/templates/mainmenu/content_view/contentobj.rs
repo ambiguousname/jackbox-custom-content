@@ -7,15 +7,14 @@ use gtk::subclass::prelude::*;
 use glib::{Object, Value, ParamSpec, ParamSpecBoolean, once_cell};
 use once_cell::sync::Lazy;
 
-use crate::content::ContentData;
-
+// TODO: Use properties.
 mod imp {
 	use super::*;
 	#[derive(Default)]
 	pub struct ContentObject {
 		// Allow this to be written to JSON?
 		pub enabled : RefCell<bool>,
-		pub data: RefCell<ContentData>,
+		// pub data: RefCell<Option<ContentData>>,
 	}
 
 	#[glib::object_subclass]

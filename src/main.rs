@@ -20,7 +20,7 @@ frame.no-border {
 
 fn load_css() {
     let provider = CssProvider::new();
-    provider.load_from_data(GLOBAL_CSS);
+    provider.load_from_string(GLOBAL_CSS);
 
     gtk::style_context_add_provider_for_display(&Display::default().expect("Could not get display."), &provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
     println!("Loaded Global CSS.");
@@ -51,8 +51,6 @@ fn build_window(app: &Application) {
     // We create the main window.
     let win = MainMenuWindow::new(app);
     // println!("Window created.");
-
-    content::initialize_content(win.clone());
 
     // For this to work, make a Windows10 folder in share/themes folder in the build directory. Then copy a theme there.
     // TODO: Test what needs to get added for builds.
