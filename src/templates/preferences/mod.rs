@@ -1,4 +1,3 @@
-use crate::quick_template;
 
 use gtk::{Window, gio::Settings, glib::derived_properties, Switch, AlertDialog};
 
@@ -6,16 +5,51 @@ use std::cell::OnceCell;
 
 use super::mainmenu::MainMenuWindow;
 
-quick_template!(PreferencesWindow, "/templates/preferences/preferences.ui", Window, (gtk::Widget), (gtk::Native, gtk::Root, gtk::ShortcutManager), props handlers struct {
-	#[property(set)]
-	pub app_settings : OnceCell<Settings>,
+// use crate::quick_template;
+// quick_template!(PreferencesWindow, "/templates/preferences/preferences.ui", Window, (gtk::Widget), (gtk::Native, gtk::Root, gtk::ShortcutManager), props handlers struct {
+// 	#[property(set)]
+// 	pub app_settings : OnceCell<Settings>,
 
-	#[template_child(id="dark_mode")]
-	pub dark_mode : TemplateChild<Switch>,
+// 	#[template_child(id="dark_mode")]
+// 	pub dark_mode : TemplateChild<Switch>,
 
-	#[template_child(id="folder_label")]
-	pub folder_label : TemplateChild<gtk::Label>,
-});
+// 	#[template_child(id="folder_label")]
+// 	pub folder_label : TemplateChild<gtk::Label>,
+// });
+
+use gtk::{CompositeTemplate, glib::{self, Object, Properties}, prelude::*, subclass::prelude::*};
+mod imp {
+    use super::*;
+    #[derive(Default, CompositeTemplate, Properties)]
+    #[template(resource = "/templates/preferences/preferences.ui")]
+    #[properties(wrapper_type = super::PreferencesWindow)]
+    pub struct PreferencesWindow {
+        #[property(set)]
+        pub app_settings: OnceCell<Settings>,
+        #[template_child(id = "dark_mode")]
+        pub dark_mode: TemplateChild<Switch>,
+        #[template_child(id = "folder_label")]
+        pub folder_label: TemplateChild<gtk::Label>,
+    }
+    #[glib::object_subclass]
+    impl ObjectSubclass for PreferencesWindow {
+        const NAME: &'static str = "JCCPreferencesWindow";
+        type Type = super::PreferencesWindow;
+        type ParentType = Window;
+        fn class_init(klass: &mut Self::Class) {
+            klass.bind_template();
+            klass.bind_template_instance_callbacks();
+        }
+        fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
+            obj.init_template();
+        }
+    }
+}
+
+glib::wrapper! {
+	pub struct PreferencesWindow(ObjectSubclass<imp::PreferencesWindow>) @extends Window, gtk::Widget, @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Native, gtk::Root, gtk::ShortcutManager;
+}
+
 
 #[derived_properties]
 impl ObjectImpl for imp::PreferencesWindow {}
