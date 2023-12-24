@@ -75,11 +75,13 @@
 											<object class="GtkBox">
 												<property name="halign">end</property>
 												<child>
-													<object class="GtkLabel" id="folder_label">
+													<object class="GtkInscription" id="folder_label">
+														<property name="nat-chars">40</property>
+														<property name="nat-lines">1</property>
+														<property name="text-overflow">ellipsize-end</property>
 														<property name="margin-start">10</property>
 														<property name="margin-end">10</property>
-														<property name="mnemonic-widget">browse_folder</property>
-														<property name="label"></property>
+														<property name="valign">center</property>
 													</object>
 												</child>
 												<child>

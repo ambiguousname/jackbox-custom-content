@@ -29,7 +29,7 @@ mod imp {
         #[template_child(id = "dark_mode")]
         pub dark_mode: TemplateChild<Switch>,
         #[template_child(id = "folder_label")]
-        pub folder_label: TemplateChild<gtk::Label>,
+        pub folder_label: TemplateChild<gtk::Inscription>,
     }
     #[glib::object_subclass]
     impl ObjectSubclass for PreferencesWindow {
@@ -78,12 +78,7 @@ impl PreferencesWindow {
 	}
 
 	fn update_folder_label(&self, string: String) {
-		let mut string_label = string.clone();
-		const MAX_LENGTH : usize = 40;
-		if string_label.len() > MAX_LENGTH {
-			string_label = format!("{}...", string_label.get(..MAX_LENGTH).expect("Could not get shortened string."));
-		}
-		self.imp().folder_label.set_label(string_label.as_str());
+		self.imp().folder_label.set_text(Some(string.as_str()));
 		self.imp().folder_label.set_tooltip_text(Some(&string));
 	}
 
