@@ -14,7 +14,7 @@
 						<property name="text-overflow">ellipsize-end</property>
 						<binding name="text">
 							<!-- Get the game name from the Game class -->
-							<lookup name="title" type="JCCPartyPack">
+							<lookup name="title" type="JCCGameListItem">
 								<lookup name="item">expander</lookup>
 							</lookup>
 						</binding>

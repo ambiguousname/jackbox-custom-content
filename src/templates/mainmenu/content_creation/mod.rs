@@ -4,7 +4,10 @@ use gio::{SimpleAction, SimpleActionGroup};
 
 use std::cell::RefCell;
 
-use crate::{content::game_list::GameList, quick_template};
+use crate::quick_template;
+
+mod game_list;
+use game_list::GameList;
 
 quick_template!(ContentCreationDialog, "/templates/mainmenu/content_creation/content_creation.ui", gtk::Window, (gtk::Widget), (gtk::Native, gtk::Root, gtk::ShortcutManager), handlers struct {
     // #[template_child(id="game_select_stack")]

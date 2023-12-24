@@ -6,17 +6,12 @@
 			<object class="GtkListView">
 				<property name="factory">
 					<object class="GtkBuilderListItemFactory">
-						<property name="resource">/content/game.ui</property>
+						<property name="resource">/templates/mainmenu/content_creation/game.ui</property>
 					</object>
 				</property>
 				<property name="model">
 					<object class="GtkSingleSelection" id="game_select_model">
-						<!-- Because of GTK limitations, we need to create the TreeListModel on creation. -->
-						<!-- <property name="model">
-							<object class="GtkTreeListModel">
-
-							</object>
-						</property> -->
+						<!-- Because of GTK limitations, we need to create a TreeListModel on creation, not in a .ui definition. -->
 					</object>
 				</property>
 				<property name="tab-behavior">item</property>
