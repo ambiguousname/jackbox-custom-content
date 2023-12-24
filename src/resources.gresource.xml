@@ -12,6 +12,7 @@
     <file compressed="true" preprocess="xml-stripblanks">quiplash3/prompts/generic_round_prompt.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">quiplash3/prompts/round_prompt.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">game_list.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">content_list.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">game.ui</file>
   </gresource>
 </gresources>

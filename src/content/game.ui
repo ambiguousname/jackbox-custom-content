@@ -5,9 +5,7 @@
 		<property name="child">
 			<object class="GtkTreeExpander" id="expander">
 				<binding name="list-row">
-					<lookup name="children" type="JCCPartyPack">
-						<lookup name="item">GtkListItem</lookup>
-					</lookup>
+					<lookup name="item">GtkListItem</lookup>
 				</binding>
 				<property name="child">
 					<object class="GtkInscription">
@@ -17,7 +15,7 @@
 						<binding name="text">
 							<!-- Get the game name from the Game class -->
 							<lookup name="title" type="JCCPartyPack">
-								<lookup name="item">GtkListItem</lookup>
+								<lookup name="item">expander</lookup>
 							</lookup>
 						</binding>
 					</object>

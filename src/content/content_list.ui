@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+	<object class="GListStore" id="content_list">
+		<property name="item-type">JCCPartyPack</property>
+		<child>
+			<object class="JCCPartyPack">
+				<property name="title">Jackbox Party Pack 7</property>
+				<property name="children">
+					<object class="GListStore">
+						<property name="item-type">JCCPartyPack</property>
+						<child>
+							<object class="JCCPartyPack">
+								<property name="title">Quiplash 3</property>
+							</object>
+						</child>
+					</object>
+				</property>
+			</object>
+		</child>
+	</object>
+</interface>

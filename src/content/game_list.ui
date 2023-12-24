@@ -1,24 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-	<object class="GListStore" id="game-list">
-		<property name="item-type">JCCPartyPack</property>
-		<child>
-			<object class="JCCPartyPack">
-				<property name="title">Jackbox Party Pack 7</property>
-				<property name="children">
-					<object class="GListStore">
-						<property name="item-type">JCCGame</property>
-						<child>
-							<object class="JCCGame">
-								<property name="title">Quiplash 3</property>
-								<property name="id">Quiplash3</property>
-							</object>
-						</child>
-					</object>
-				</property>
-			</object>
-		</child>
-	</object>
 	<template class="JCCGameList" parent="GtkBox">
 		<child>
 			<!-- ListView is not subclassable (nor can I just "import" a list store from this folder), so this is the workaround. -->
@@ -29,10 +10,13 @@
 					</object>
 				</property>
 				<property name="model">
-					<object class="GtkSingleSelection">
-						<property name="model">
-							game-list
-						</property>
+					<object class="GtkSingleSelection" id="game_select_model">
+						<!-- Because of GTK limitations, we need to create the TreeListModel on creation. -->
+						<!-- <property name="model">
+							<object class="GtkTreeListModel">
+
+							</object>
+						</property> -->
 					</object>
 				</property>
 				<property name="tab-behavior">item</property>

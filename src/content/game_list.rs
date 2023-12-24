@@ -1,7 +1,7 @@
 use crate::quick_template;
 use glib::derived_properties;
-use gtk::gio::ListModel;
-use std::cell::OnceCell;
+use gtk::gio::{ListModel, ListStore};
+use std::cell::RefCell;
 
 use super::Game;
 // Way to specify no extension? For subclass GObject directly.
@@ -15,11 +15,11 @@ mod party_imp {
 	pub struct PartyPack {
 		// The game's display name.
 		#[property(get, set)]
-		pub title : OnceCell<String>,
+		pub title : RefCell<String>,
 
 
 		#[property(get, set)]
-		pub children : OnceCell<Option<ListModel>>,
+		pub children : RefCell<Option<ListModel>>,
 	}
 
 	#[glib::object_subclass]
@@ -45,9 +45,19 @@ impl PartyPack {
 	}
 }
 
-quick_template!(GameList, "/content/game_list.ui", gtk::Box, (gtk::Widget), (), struct {});
+quick_template!(GameList, "/content/game_list.ui", gtk::Box, (gtk::Widget), (), struct {
+	#[template_child(id="game_select_model")]
+	pub model: TemplateChild<gtk::SingleSelection>,
+});
 
-impl ObjectImpl for imp::GameList {}
+impl ObjectImpl for imp::GameList {
+	fn constructed(&self) {
+		self.parent_constructed();
+		
+		let obj = self.obj();
+		obj.setup_model();
+	}
+}
 impl WidgetImpl for imp::GameList {}
 impl BoxImpl for imp::GameList {}
 
@@ -56,5 +66,19 @@ impl GameList {
 		GameList::ensure_type();
 		PartyPack::ensure_all_types();
 		Game::ensure_type();
+	}
+
+	fn setup_model(&self) {
+		let data : ListStore = gtk::Builder::from_resource("/content/content_list.ui").object("content_list").expect("Could not get store.");
+		let tree = gtk::TreeListModel::new(data, false, true, |item| {
+			let party_pack : PartyPack = item.clone().downcast().expect("Could not get party pack item.");
+
+			if party_pack.children().is_some() {
+				party_pack.children()
+			} else {
+				None
+			}
+		});
+		self.imp().model.set_model(Some(&tree));
 	}
 }
