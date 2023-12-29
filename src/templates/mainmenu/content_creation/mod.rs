@@ -1,6 +1,6 @@
-use gtk::{gio::{self, ListStore}, ListBox, Stack, Button, Window, SingleSelection, TreeListRow};
+use gtk::{gio::{self, ListStore}, Button, Window, SingleSelection, TreeListRow, AlertDialog};
 use glib::clone;
-use gio::{SimpleAction, SimpleActionGroup};
+use gio::SimpleActionGroup;
 
 use std::cell::{RefCell, OnceCell};
 
@@ -90,19 +90,17 @@ impl ContentCreationDialog {
 
 	#[template_callback]
     fn handle_create_clicked(&self, _button : &Button) {
-        // let current_page = self.imp().content_stack.visible_child().expect("No selected page.");
+        let current_option = self.imp().content_select_model.selected_item();
+        if current_option.is_none() {
+            let dlg = AlertDialog::builder()
+            .message("Could not create content.")
+            .detail("Try selecting a game from the left.")
+            .build();
+            dlg.show(Some(self));
+            return;
+        }
 
-        // let selector : ListBox = current_page.downcast::<ListBox>().expect("Could not get ListBox.");
-
-        // let row = selector.selected_row();
-        // if row.is_none() {
-        //     return;
-        // }
-
-        // let selected = row.unwrap().child().expect("Could not get child.");
-        // let window_name : String = selected.property("label");
-        // let action_name = format!("{}-open-window", window_name);
-        
-        // self.action_group().activate_action(&action_name, None);
+        let current_selection : Content = current_option.and_downcast().expect("Could not get selected.");
+        current_selection.create_content(Some(self));
     }
 }
