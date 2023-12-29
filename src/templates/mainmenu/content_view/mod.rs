@@ -4,58 +4,28 @@ pub mod contentobj;
 use contentobj::ContentObject;
 use contentcol::ContentCol;
 
-use gtk::{ColumnView, glib::derived_properties, ColumnViewColumn, gio, SignalListItemFactory, ListItem, SingleSelection, BuilderListItemFactory};
+use gtk::{ColumnView, glib::{Properties, derived_properties}, ColumnViewColumn, gio, SignalListItemFactory, ListItem, SingleSelection, BuilderListItemFactory};
 
 use std::{cell::{RefCell, OnceCell}, fs::{self, DirEntry}, path::PathBuf, io::Error};
 
-// use crate::quick_template;
-// quick_template!(ContentList, "/templates/mainmenu/content_view/contentlist.ui", gtk::Box, (gtk::Widget), (gtk::Orientable), props struct {
-//     #[template_child(id="column_view")]
-//     pub column_view : TemplateChild<ColumnView>,
+use crate::quick_template;
 
-// 	// TODO: Need some way to write the list store to JSON.
-//     #[property(get, set)]
-//     pub model : RefCell<Option<gio::ListStore>>,
+quick_template!(ContentList, "/templates/mainmenu/content_view/contentlist.ui", gtk::Box, (gtk::Widget), (gtk::Orientable),
+	#[derive(Default, CompositeTemplate, Properties)]
+	props struct {
+		#[template_child(id="column_view")]
+		pub column_view : TemplateChild<ColumnView>,
 
-// 	#[property(get, set)]
-// 	pub name : OnceCell<String>,
-// 	#[property(get, set)]
-// 	pub id: OnceCell<String>,
-// });
+		// TODO: Need some way to write the list store to JSON.
+		#[property(get, set)]
+		pub model : RefCell<Option<gio::ListStore>>,
 
-use gtk::{CompositeTemplate, glib::{self, Object, Properties}, prelude::*, subclass::prelude::*};
-mod imp {
-    use super::*;
-    #[derive(Default, CompositeTemplate, Properties)]
-    #[template(resource = "/templates/mainmenu/content_view/contentlist.ui")]
-    #[properties(wrapper_type = super::ContentList)]
-    pub struct ContentList {
-        #[template_child(id = "column_view")]
-        pub column_view: TemplateChild<ColumnView>,
-        #[property(get, set)]
-        pub model: RefCell<Option<gio::ListStore>>,
-        #[property(get, set)]
-        pub name: OnceCell<String>,
-        #[property(get, set)]
-        pub id: OnceCell<String>,
-    }
-    #[glib::object_subclass]
-    impl ObjectSubclass for ContentList {
-        const NAME: &'static str = "JCCContentList";
-        type Type = super::ContentList;
-        type ParentType = gtk::Box;
-        fn class_init(klass: &mut Self::Class) {
-            klass.bind_template();
-        }
-        fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
-            obj.init_template();
-        }
-    }
-}
-
-glib::wrapper! {
-	pub struct ContentList(ObjectSubclass<imp::ContentList>) @extends gtk::Box, gtk::Widget, @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Orientable;
-}
+		#[property(get, set)]
+		pub name : OnceCell<String>,
+		#[property(get, set)]
+		pub id: OnceCell<String>,
+	}
+);
 
 #[derived_properties]
 impl ObjectImpl for imp::ContentList {}

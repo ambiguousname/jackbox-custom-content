@@ -1,5 +1,5 @@
 use crate::quick_template;
-use glib::derived_properties;
+use glib::{Properties, derived_properties};
 use gtk::gio::{ListModel, ListStore};
 use std::cell::{RefCell, OnceCell};
 
@@ -43,10 +43,13 @@ impl GameListItem {
 	}
 }
 
-quick_template!(GameList, "/templates/mainmenu/content_creation/game_list.ui", gtk::Box, (gtk::Widget), (), struct {
-	#[template_child(id="game_select_model")]
-	pub model: TemplateChild<gtk::SingleSelection>,
-});
+quick_template!(GameList, "/templates/mainmenu/content_creation/game_list.ui", gtk::Box, (gtk::Widget), (),
+	#[derive(CompositeTemplate, Default)]
+	struct {
+		#[template_child(id="game_select_model")]
+		pub model: TemplateChild<gtk::SingleSelection>,
+	}
+);
 
 impl ObjectImpl for imp::GameList {
 	fn constructed(&self) {

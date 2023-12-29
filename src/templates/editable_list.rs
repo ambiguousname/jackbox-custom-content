@@ -2,10 +2,13 @@ use gtk::{ListBox, EditableLabel};
 
 use crate::quick_template;
 
-quick_template!(EditableList, "/templates/editable_list.ui", gtk::Frame, (gtk::Widget), (), handlers struct {
-    #[template_child(id="item-list")]
-    pub item_list : TemplateChild<ListBox>,
-});
+quick_template!(EditableList, "/templates/editable_list.ui", gtk::Frame, (gtk::Widget), (),
+    #[derive(Default, CompositeTemplate)]
+    handlers struct {
+        #[template_child(id="item-list")]
+        pub item_list : TemplateChild<ListBox>,
+    }
+);
 
 impl ObjectImpl for imp::EditableList {
     fn constructed(&self) {

@@ -9,12 +9,15 @@ use crate::quick_template;
 mod game_list;
 use game_list::GameList;
 
-quick_template!(ContentCreationDialog, "/templates/mainmenu/content_creation/content_creation.ui", gtk::Window, (gtk::Widget), (gtk::Native, gtk::Root, gtk::ShortcutManager), handlers struct {
-    // #[template_child(id="game_select_stack")]
-    // pub content_stack : TemplateChild<Stack>,
+quick_template!(ContentCreationDialog, "/templates/mainmenu/content_creation/content_creation.ui", gtk::Window, (gtk::Widget), (gtk::Native, gtk::Root, gtk::ShortcutManager),
+    #[derive(Default, CompositeTemplate)]
+    handlers struct {
+        // #[template_child(id="game_select_stack")]
+        // pub content_stack : TemplateChild<Stack>,
 
-    pub action_group : RefCell<Option<SimpleActionGroup>>,
-});
+        pub action_group : RefCell<Option<SimpleActionGroup>>,
+    }
+);
 
 impl ObjectImpl for imp::ContentCreationDialog {
     fn constructed(&self) {
