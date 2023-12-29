@@ -3,12 +3,11 @@
 	<template class="GtkListItem">
 		<property name="child">
 			<object class="GtkLabel">
-				<property name="label">Testing</property>
-				<!-- <binding name="label">
-					<lookup name="title">
+				<binding name="label">
+					<lookup name="title" type="JCCContent">
 						<lookup name="item">GtkListItem</lookup>
 					</lookup>
-				</binding> -->
+				</binding>
 			</object>
 		</property>
 	</template>
