@@ -1,13 +1,14 @@
-use gtk::{gio, ListBox, Stack, Button, Window};
+use gtk::{gio::{self, ListStore}, ListBox, Stack, Button, Window, SingleSelection, TreeListRow};
 use glib::clone;
 use gio::{SimpleAction, SimpleActionGroup};
 
-use std::cell::RefCell;
+use std::cell::{RefCell, OnceCell};
 
-use crate::quick_template;
+use crate::{quick_template, content::Content};
 
 mod game_list;
-use game_list::GameList;
+
+use self::game_list::GameListItem;
 
 quick_template!(ContentCreationDialog, "/templates/mainmenu/content_creation/content_creation.ui", gtk::Window, (gtk::Widget), (gtk::Native, gtk::Root, gtk::ShortcutManager),
     #[derive(Default, CompositeTemplate)]
@@ -16,18 +17,26 @@ quick_template!(ContentCreationDialog, "/templates/mainmenu/content_creation/con
         // pub content_stack : TemplateChild<Stack>,
 
         pub action_group : RefCell<Option<SimpleActionGroup>>,
+
+        #[template_child(id="content_select_model")]
+        pub content_select_model : TemplateChild<gtk::SingleSelection>,
+
+        #[template_child(id="game_select_model")]
+        pub game_select_model : TemplateChild<gtk::SingleSelection>,
+
+        pub tree_select_model : OnceCell<gtk::TreeListModel>,
     }
 );
 
 impl ObjectImpl for imp::ContentCreationDialog {
     fn constructed(&self) {
         self.parent_constructed();
-        
+
         let obj = self.obj();
-        obj.setup_action_group();
+        obj.setup_switch();
+        obj.setup_model();
     }
 }
-
 impl WidgetImpl for imp::ContentCreationDialog {}
 impl WindowImpl for imp::ContentCreationDialog {}
 
@@ -43,8 +52,40 @@ impl ContentCreationDialog {
     }
 
     pub fn ensure_all_types() {
+        GameListItem::ensure_all_types();
+        Content::ensure_all_types();
         ContentCreationDialog::ensure_type();
-        GameList::ensure_all_types();
+    }
+
+    fn setup_model(&self) {
+		let data : ListStore = gtk::Builder::from_resource("/content/content_list.ui").object("content_list").expect("Could not get store.");
+		let tree = gtk::TreeListModel::new(data, false, true, |item| {
+			let party_pack : GameListItem = item.clone().downcast().expect("Could not get party pack item.");
+
+			if party_pack.children().is_some() {
+				party_pack.children()
+			} else {
+				None
+			}
+		});
+		self.imp().game_select_model.set_model(Some(&tree));
+	}
+
+    fn setup_switch(&self) {
+        let game_select = self.imp().game_select_model.clone();
+        game_select.connect_selection_changed(clone!(@weak self as window => move |selection, _, _| {
+            window.switch(selection);
+        }));
+    }
+
+    fn switch(&self, selection : &SingleSelection) {
+        let row : TreeListRow = selection.selected_item().and_downcast().expect("Could not get TreeListRow.");
+        let item : GameListItem = row.item().and_downcast().expect("Could not get GameListItem");
+        if item.content().is_some() {
+            self.imp().content_select_model.set_model(Some(&item.content().unwrap()));
+        } else {
+            self.imp().content_select_model.set_model(None::<& gio::ListModel>);
+        }
     }
 
 	#[template_callback]
@@ -64,46 +105,4 @@ impl ContentCreationDialog {
         
         // self.action_group().activate_action(&action_name, None);
     }
-
-    fn setup_action_group(&self) {
-        let action_group = SimpleActionGroup::new();
-        self.imp().action_group.replace(Some(action_group));
-    }
-
-    fn action_group(&self) -> SimpleActionGroup {
-        self.imp().action_group.borrow().clone().expect("Could not get action group.")
-    }
-
-    // pub fn add_game_type(&self, game : GameContent) {
-    //     let selector = ListBox::new();
-    //     selector.set_selection_mode(gtk::SelectionMode::Single);
-
-    //     selector.set_hexpand(true);
-
-    //     for content_type in game.content_categories {
-    //         // TODO: Fix so you can only add one bit of custom content at a time.
-    //         let option = gtk::Label::new(Some(content_type.name));
-    //         let open = content_type.open_window;
-
-    //         let action_name = format!("{}-open-window", content_type.name);
-    //         let window_action = SimpleAction::new(&action_name, None);
-    //         window_action.connect_activate(clone!(@weak self as window => move |_, _| {
-    //             let content_window = open();
-    //             content_window.set_property("transient-for", window);
-    //             content_window.present();
-    //         }));
-    //         self.action_group().add_action(&window_action);
-            
-    //         selector.append(&option);
-    //     }
-
-    //     let row = selector.row_at_index(0).expect("Could not get first row.");
-
-    //     selector.select_row(Some(&row));
-
-    //     //let model = gio::ListStore::new();
-    //     //let column_view = ColumnView::new();
-    //     // TODO: Custom signal for the page? 
-    //     // self.imp().content_stack.add_titled(&selector, Some(game.game_id), game.name);
-    // }
 }

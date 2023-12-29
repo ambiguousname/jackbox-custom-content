@@ -17,20 +17,36 @@
             <object class="GtkPaned">
                 <property name="orientation">horizontal</property>
                 <child>
-                    <object class="JCCGameList"></object>
-                </child>
-                <child>
-                    <object class="GtkLabel">
-                        <property name="label">Test</property>
-                    </object>
-                    <!-- <object class="GtkListView"> -->
-                        <!-- Get games list working first. -->
-                        <!-- <property name="factory">
+                    <!-- Party Packs/Games View: -->
+                    <object class="GtkListView">
+                        <property name="factory">
                             <object class="GtkBuilderListItemFactory">
-                                <property name="resource">templates/mainmenu/content_creation/content.ui</property>
+                                <property name="resource">/templates/mainmenu/content_creation/game.ui</property>
                             </object>
-                        </property> -->
-                    <!-- </object> -->
+                        </property>
+                        <property name="model">
+                            <object class="GtkSingleSelection" id="game_select_model">
+                                <!-- Because of GTK limitations, we need to create a TreeListModel on creation, not in a .ui definition. -->
+                            </object>
+                        </property>
+                        <property name="tab-behavior">item</property>
+                        <style>
+                            <class name="navigation-sidebar"/>
+                        </style>
+                    </object>
+                </child>
+                <!-- Content types list: -->
+                <child>
+                    <object class="GtkListView">
+                        <property name="factory">
+                            <object class="GtkBuilderListItemFactory">
+                                <property name="resource">/templates/mainmenu/content_creation/content.ui</property>
+                            </object>
+                        </property>
+                        <property name="model">
+                            <object class="GtkSingleSelection" id="content_select_model"></object>
+                        </property>
+                    </object>
                 </child>
             </object>
         </child>
