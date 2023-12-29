@@ -9,10 +9,6 @@ impl WidgetImpl for imp::QuiplashGenericRoundPrompt {}
 impl FrameImpl for imp::QuiplashGenericRoundPrompt {}
 
 impl QuiplashGenericRoundPrompt {
-    pub fn new() -> Self {
-        glib::Object::new()
-    }
-
     pub fn ensure_all_types() {
         EditableList::ensure_type();
         QuiplashGenericRoundPrompt::ensure_type();

@@ -51,3 +51,7 @@ impl Content {
         window.present();
     }
 }
+
+pub trait ContentWindow {
+    fn ensure_all_types();
+}

@@ -1,4 +1,4 @@
-use crate::{quick_template, content::Content};
+use crate::{quick_template, content::{Content, ContentWindow}};
 
 mod prompt_util;
 use prompt_util::QuiplashGenericRoundPrompt;
@@ -9,8 +9,8 @@ impl ObjectImpl for imp::QuiplashRoundPrompt {}
 impl WidgetImpl for imp::QuiplashRoundPrompt {}
 impl WindowImpl for imp::QuiplashRoundPrompt {}
 
-impl QuiplashRoundPrompt {
-    pub fn ensure_all_types() {
+impl ContentWindow for QuiplashRoundPrompt {
+    fn ensure_all_types() {
         QuiplashGenericRoundPrompt::ensure_all_types();
         QuiplashRoundPrompt::ensure_type();
     }
