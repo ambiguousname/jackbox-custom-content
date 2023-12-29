@@ -20,8 +20,6 @@ quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::Applicat
 		// Important lesson: unless you specify templates in the struct definition here, you'll get an error.
 		#[template_child(id="mod_editor")]
 		pub mod_editor : TemplateChild<Box>,
-		#[template_child(id="mod_selection")]
-		pub mod_selection : TemplateChild<gtk::Paned>,
 		#[template_child(id="mod_toolbar")]
 		pub mod_toolbar : TemplateChild<gtk::Box>,
 
@@ -60,10 +58,6 @@ impl ObjectImpl for imp::MainMenuWindow {
 		let obj = self.obj();
 
 		obj.setup_actions();
-
-		// Not working for whatever reason with the mainmenu.ui property xml.
-		obj.imp().mod_selection.set_shrink_start_child(false);
-		obj.imp().mod_selection.set_shrink_end_child(false);
 
 		obj.setup_config();
 
