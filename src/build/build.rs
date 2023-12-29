@@ -1,4 +1,3 @@
-use std::path::Path;
 use std::process::Command;
 use std::{fs, io, env, path::PathBuf};
 
@@ -63,13 +62,18 @@ fn compile(out_path : PathBuf) {
 // 	}
 // }
 
+mod content_list;
+
+use content_list::compile_content_list;
+
 #[allow(unused_parens)]
 fn main() {
 	let out_path = PathBuf::from(env::var_os("OUT_DIR").expect("Could not get OUT_DIR environment variable.")).join("../../../");
 	
 	compile(out_path.clone());
+	compile_content_list();	
 	// install_theme(out_path.clone());
 	// install_settings(out_path.clone());
 
-	println!("cargo:rerun-if-changed=src/build.rs");
+	println!("cargo:rerun-if-changed=src/build/build.rs");
 }

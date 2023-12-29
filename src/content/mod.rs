@@ -5,6 +5,9 @@ use std::cell::OnceCell;
 
 pub mod quiplash3;
 
+// TODO: Can re-do this if there's a ensure type problem.
+include!(concat!(env!("OUT_DIR"), "/content_list.rs"));
+
 mod imp {
     use super::*;
 
@@ -13,6 +16,12 @@ mod imp {
     pub struct Content {
         #[property(get, set)]
         pub title : OnceCell<String>,
+
+        #[property(get, set)]
+        pub window_path : OnceCell<String>,
+
+        #[property(get, set)]
+        pub window : OnceCell<gtk::Window>,
     }
 
     #[glib::object_subclass]
@@ -33,5 +42,12 @@ glib::wrapper! {
 impl Content {
     pub fn ensure_all_types() {
         Content::ensure_type();
+        ensure_types();
+    }
+
+    pub fn create_content(&self, parent : Option<&impl IsA<gtk::Window>>) {
+        let window = self.window();
+        window.set_transient_for(parent);
+        window.present();
     }
 }

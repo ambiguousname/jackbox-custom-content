@@ -112,10 +112,11 @@ Usage: quick_template!(ClassName, "path/to/template.ui", WidgetType (e.g., gtk::
 
 It's meant to quickly fill in all the boilerplate so you can just write the code.
 */
+// TODO: Get rid of properties argument. The caller can set that up themselves with meta stuff (Just make the derive arg a list)
 #[macro_export]
 macro_rules! quick_template {
-    ($name:ident, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), struct $struct_def : tt) => {
-        $crate::full_template!($name, (), $struct_def, $widget_type, ($($extends),*), ($($implements),*), (), (), ());
+    ($name:ident, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), #[$derive:meta] struct $struct_def : tt) => {
+        $crate::full_template!($name, (), $struct_def, $widget_type, ($($extends),*), ($($implements),*), #[$derive], (), ());
     };
     ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*)) => {
         $crate::full_template!($name, ($resource_path), {}, $widget_type, ($($extends),*), ($($implements),*), #[derive(CompositeTemplate, Default)], (), ());

@@ -12,6 +12,20 @@
 						<child>
 							<object class="JCCGameListItem">
 								<property name="title">Quiplash 3</property>
+								<property name="content">
+									<object class="GListStore">
+										<property name="item-type">JCCContent</property>
+										<child>
+											<object class="JCCContent">
+												<property name="title">Round Prompt</property>
+												<property name="window-path">quiplash3::prompts</property>
+												<property name="window">
+													<object class="JCCQuiplashRoundPrompt"></object>
+												</property>
+											</object>
+										</child>
+									</object>
+								</property>
 							</object>
 						</child>
 					</object>

@@ -1,4 +1,4 @@
-use crate::quick_template;
+use crate::{quick_template, content::Content};
 use glib::{Properties, derived_properties};
 use gtk::gio::{ListModel, ListStore};
 use std::cell::{RefCell, OnceCell};
@@ -18,6 +18,9 @@ mod game_imp {
 
 		#[property(get, set)]
 		pub children : RefCell<Option<ListModel>>,
+
+		#[property(get, set)]
+		pub content : RefCell<Option<ListModel>>,
 	}
 
 	#[glib::object_subclass]
@@ -66,6 +69,7 @@ impl GameList {
 	pub fn ensure_all_types() {
 		GameList::ensure_type();
 		GameListItem::ensure_all_types();
+		Content::ensure_all_types();
 	}
 
 	fn setup_model(&self) {
