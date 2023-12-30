@@ -116,7 +116,20 @@ impl MainMenuWindow {
 		})
 		.build();
 
-		self.add_action_entries([new_action, delete_action, open_action, prefs_action, content_action]);
+		let help_action = ActionEntry::builder("help")
+		.activate(|window : &MainMenuWindow, _, _| {
+			let result = open::that("https://github.com/ambiguousname/jackbox-custom-content/wiki");
+			if result.is_err() {
+				let dlg = AlertDialog::builder()
+				.message("Could not open https://github.com/ambiguousname/jackbox-custom-content/wiki")
+				.detail(result.err().unwrap().to_string())
+				.build();
+
+				dlg.show(Some(window));
+			}
+		}).build();
+
+		self.add_action_entries([new_action, delete_action, open_action, prefs_action, content_action, help_action]);
 	}
 	// endregion
 	
