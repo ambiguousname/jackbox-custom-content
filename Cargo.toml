@@ -1,8 +1,13 @@
 [package]
 name = "jackbox-custom-content"
 version = "2.0.0"
+description = "Mod creation for Jackbox Party Pack 7"
 edition = "2021"
-build="src/build/build.rs"
+build = "src/build/build.rs"
+readme = "README"
+license = "MIT"
+license-file="LICENSE"
+publish=false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -12,7 +17,7 @@ gtk = { version = "0.7.3", package = "gtk4", features = ["v4_12"]}
 # glib-macros = "0.18.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-open = "5"
+open = "5.0.1"
 
 [build-dependencies]
 glib-build-tools = "0.17.0"

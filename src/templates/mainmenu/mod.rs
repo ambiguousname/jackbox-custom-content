@@ -4,7 +4,7 @@ mod content_creation;
 use std::{cell::{RefCell, OnceCell}, vec::Vec};
 
 // Template construction:
-use gtk::{Application, Box, Button, Stack, StackSwitcher, gio::{self, ActionEntry, Settings}, Window, AlertDialog};
+use gtk::{Application, Box, Button, Stack, StackSwitcher, glib::{derived_properties, Properties}, gio::{self, ActionEntry, Settings}, Window, AlertDialog, AboutDialog};
 
 use content_creation::ContentCreationDialog;
 use crate::quick_template;
@@ -15,8 +15,8 @@ mod folder_selection;
 mod mod_editor;
 
 quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::ApplicationWindow, (gtk::Window, gtk::Widget), (gio::ActionGroup, gio::ActionMap, gtk::Native, gtk::Root, gtk::ShortcutManager),
-	#[derive(Default, CompositeTemplate)]
-	handlers struct {
+	#[derive(Default, CompositeTemplate, Properties)]
+	props handlers struct {
 		// Important lesson: unless you specify templates in the struct definition here, you'll get an error.
 		#[template_child(id="mod_editor")]
 		pub mod_editor : TemplateChild<Box>,
@@ -48,9 +48,13 @@ quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::Applicat
 
 		pub preferences_window : RefCell<Option<PreferencesWindow>>,
 		pub config : OnceCell<Settings>,
+
+		#[property(get, set)]
+		pub about : OnceCell<AboutDialog>,
 	}
 );
 
+#[derived_properties]
 impl ObjectImpl for imp::MainMenuWindow {
 	fn constructed(&self) {
 		self.parent_constructed();
@@ -74,8 +78,9 @@ impl ApplicationWindowImpl for imp::MainMenuWindow {}
 
 #[gtk::template_callbacks]
 impl MainMenuWindow {
-	pub fn new(app : &Application) -> Self {
-		Object::builder().property("application", app).build()
+	pub fn new(app : &Application, about : &AboutDialog) -> Self {
+		Object::builder().property("application", app)
+		.property("about", about).build()
 	}
 
 	// region: Action Setup
@@ -129,7 +134,13 @@ impl MainMenuWindow {
 			}
 		}).build();
 
-		self.add_action_entries([new_action, delete_action, open_action, prefs_action, content_action, help_action]);
+		let about_action = ActionEntry::builder("about")
+		.activate(|window : &MainMenuWindow, _, _| {
+			window.about().present();
+		})
+		.build();
+
+		self.add_action_entries([new_action, delete_action, open_action, prefs_action, content_action, help_action, about_action]);
 	}
 	// endregion
 	
