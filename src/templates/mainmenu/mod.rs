@@ -4,7 +4,7 @@ mod content_creation;
 use std::{cell::{RefCell, OnceCell}, vec::Vec};
 
 // Template construction:
-use gtk::{Application, Box, Button, Stack, StackSwitcher, glib::{derived_properties, Properties}, gio::{self, ActionEntry, Settings}, Window, AlertDialog, AboutDialog};
+use gtk::{Application, Box, Button, Stack, StackSwitcher, gio::{self, ActionEntry, Settings}, Window, AlertDialog, AboutDialog};
 
 use content_creation::ContentCreationDialog;
 use crate::quick_template;
@@ -15,8 +15,8 @@ mod folder_selection;
 mod mod_editor;
 
 quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::ApplicationWindow, (gtk::Window, gtk::Widget), (gio::ActionGroup, gio::ActionMap, gtk::Native, gtk::Root, gtk::ShortcutManager),
-	#[derive(Default, CompositeTemplate, Properties)]
-	props handlers struct {
+	#[derive(Default, CompositeTemplate)]
+	handlers struct {
 		// Important lesson: unless you specify templates in the struct definition here, you'll get an error.
 		#[template_child(id="mod_editor")]
 		pub mod_editor : TemplateChild<Box>,
@@ -48,13 +48,9 @@ quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::Applicat
 
 		pub preferences_window : RefCell<Option<PreferencesWindow>>,
 		pub config : OnceCell<Settings>,
-
-		#[property(get, set)]
-		pub about : OnceCell<AboutDialog>,
 	}
 );
 
-#[derived_properties]
 impl ObjectImpl for imp::MainMenuWindow {
 	fn constructed(&self) {
 		self.parent_constructed();
@@ -78,9 +74,8 @@ impl ApplicationWindowImpl for imp::MainMenuWindow {}
 
 #[gtk::template_callbacks]
 impl MainMenuWindow {
-	pub fn new(app : &Application, about : &AboutDialog) -> Self {
-		Object::builder().property("application", app)
-		.property("about", about).build()
+	pub fn new(app : &Application) -> Self {
+		Object::builder().property("application", app).build()
 	}
 
 	// region: Action Setup
@@ -136,7 +131,19 @@ impl MainMenuWindow {
 
 		let about_action = ActionEntry::builder("about")
 		.activate(|window : &MainMenuWindow, _, _| {
-			window.about().present();
+			let about = AboutDialog::builder()
+			.application(&window.application().unwrap())
+			.authors(["ambiguousname"])
+			.comments("Creates mods for the Jackbox Party Pack 7.\nWith much gratitude to Jackbox Games and the developers of the Jackbox Party Pack 7.\nMade with Rust 2021, GTK 4.12 (gtk-rs 0.7.3), Serde 1.0, and open 5.0.1")
+			.copyright("MIT License (c) 2023 ambiguousname")
+			.program_name("Jackbox Custom Content")
+			.version("2.0.0")
+			.website("https://github.com/ambiguousname/jackbox-custom-content")
+			.website_label("Source Code")
+			.title("About Jackbox Custom Content")
+			.license_type(gtk::License::MitX11)
+			.build();
+			about.present();
 		})
 		.build();
 

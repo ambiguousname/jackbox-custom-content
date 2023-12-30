@@ -5,7 +5,6 @@ description = "Mod creation for Jackbox Party Pack 7"
 edition = "2021"
 build = "src/build/build.rs"
 readme = "README"
-license = "MIT"
 license-file="LICENSE"
 publish=false
 

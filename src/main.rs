@@ -41,22 +41,9 @@ fn build_window(app: &Application) {
         println!("DEBUG SLEEP");
         std::thread::sleep(std::time::Duration::from_millis(10));
     }
-
-    let about = AboutDialog::builder()
-    .application(app)
-    .authors(["ambiguousname"])
-    .comments("Creates mods for the Jackbox Party Pack 7.\nWith much gratitude to Jackbox Games and the developers of the Jackbox Party Pack 7.\nMade with Rust 2021, GTK 4.12 (gtk-rs 0.7.3), Serde 1.0, and open 5.0.1")
-    .copyright("MIT License (c) 2023 ambiguousname")
-    .program_name("Jackbox Custom Content")
-    .version("2.0.0")
-    .website("https://github.com/ambiguousname/jackbox-custom-content")
-    .website_label("Source Code")
-    .title("About Jackbox Custom Content")
-    .license_type(gtk::License::MitX11)
-    .build();
     
     // We create the main window.
-    let win = MainMenuWindow::new(app, &about);
+    let win = MainMenuWindow::new(app);
     // println!("Window created.");
 
     // For this to work, make a Windows10 folder in share/themes folder in the build directory. Then copy a theme there.
