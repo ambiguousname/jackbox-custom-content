@@ -18,28 +18,29 @@ Check out the video [demo](https://youtu.be/4YO2SM21eIo).
 
 ## If you're running on Windows:
 - Go to the [releases](https://github.com/ambiguousname/jackbox-custom-content/releases) page and download the .ZIP file.
-- Extract the contents of the .ZIP file into the "games" directory of your Jackbox Party Pack 7 install folder. (For Steam on Windows that's typically C:\Program Files (x86)\Steam\steamapps\common\The Jackbox Party Pack 7\games)
-- Run "Jackbox Party Pack Custom.exe".
+- Extract the contents of the .ZIP file into its own folder.
+- Run the executable. You will be walked through setup.
 - Please read the rest of this Readme for clearer instructions if you ever get confused.
 
 ## Otherwise:
-- [Install Python 3.9+](https://www.python.org/)
 - Clone this repository
-- Move "jppc.py" to the "games" directory of your Jackbox Party Pack 7 install folder (You can look up where the game is stored yourself, you're very smart).
-- Run jppc.py in the terminal of your choice.
+- You can build it using Cargo: https://doc.rust-lang.org/cargo/getting-started/index.html
+- Then run: `cargo run` once cargo is installed.
 - Please read the rest of this Readme for clearer instructions if you ever get confused.
 
+I will try to work on adding additional OSes when I can!
+
 ## To add the sample custom content:
-Before installing, the sample custom content does contain some adult... jokes (I wrote them very late in the evening, the level of comedy will vary significantly)? So be warned if you want to import it.
+Before installing, the sample content does have some content that could be considered adult. So be warned if you want to import it.
 
-- Add Jackbox Party Pack Custom.exe or jppc.py to the "games" directory of the Jackbox Party Pack 7 folder.
-- Run jppc.py or Jackbox Party Pack Custom.exe
-- Select the "Import/Reimport Content" option.
-- Select the "sample_custom_content.json" file.
-- Click "Import".
-- To view your new content, click on "View/Edit Content", then click "All Games".
+- Install and run the Jackbox Custom Content executable at least once.
+- Download this repository and extract the "Sample Content" folder somewhere.
+- You can either select: File->Import Mod and select the Sample Content folder, or:
+  - Find the mods folder in the same folder as the Jackbox Custom Content executable
+  - Extract the "Sample Content" folder to the mods folder.
+- The content should show up in the mods side pane now.
 
-Just so you know, the sample custom content is meant to be played with other content in the mix (there isn't enough sample custom content to last a full game with 8 players). While you can use the "Only Custom" menu option to get rid of the game's own content files and play with only the sample content, it's not recommended.
+Just so you know, the sample custom content is meant to be played with other content in the mix (there isn't enough sample custom content to last a full game with 8 players).
 
 ## Common things to watch out for:
 ### Tags
@@ -93,7 +94,7 @@ On Windows at least, you can recover from the Recycle Bin. Not sure about other 
 
 ## I accidentally added content multiple times, can I remove it?
 
-There's a delete option in "View/Edit Content". You can select multiple pieces of content to delete.
+You can delete any content you make with Edit->Delete Content.
 
 ## HELP, EVERYTHING IS BROKEN AND/OR I REMOVED ALL NON-CUSTOM CONTENT AND CAN'T GET IT BACK
 

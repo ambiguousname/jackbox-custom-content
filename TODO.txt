@@ -1,7 +1,6 @@
-- Build main menu UI: https://gtk-rs.org/gtk4-rs/stable/latest/book/composite_templates.html
+- Add sample content.
 - Automate ContentCol.rs to handle creation, find one place to be able to define the columns.
 - Is there a way to replace clone! macros with something better?
-- Create Option<> for some windows to avoid multiple constructions (like JCCPreferences. Check the constructor.)
 
 Planned Features:
 - Mod List for easy export/import

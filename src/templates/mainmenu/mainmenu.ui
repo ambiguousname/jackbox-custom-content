@@ -9,6 +9,10 @@
 				<attribute name="action">win.new</attribute>
 			</item>
 			<item>
+				<attribute name="label" translatable="yes">_Import Mod</attribute>
+				<attribute name="action">win.import</attribute>
+			</item>
+			<item>
 				<attribute name="label" translatable="yes">_Delete Mod</attribute>
 				<attribute name="action">win.delete</attribute>
 			</item>
@@ -24,6 +28,10 @@
 				<item>
 					<attribute name="label" translatable="yes">_New Content</attribute>
 					<attribute name="action">win.new_content</attribute>
+				</item>
+				<item>
+					<attribute name="label" translatable="yes">_Delete Selected Content</attribute>
+					<attribute name="action">win.delete_content</attribute>
 				</item>
 				<item>
 					<attribute name="label" translatable="yes">_Open Preferences</attribute>
