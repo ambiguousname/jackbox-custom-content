@@ -1,8 +1,7 @@
 use gtk::{gio::{self, ListStore}, Button, Window, SingleSelection, TreeListRow, AlertDialog};
 use glib::clone;
-use gio::SimpleActionGroup;
 
-use std::cell::{RefCell, OnceCell};
+use std::cell::OnceCell;
 
 use crate::{quick_template, content::Content};
 
@@ -15,8 +14,6 @@ quick_template!(ContentCreationDialog, "/templates/mainmenu/content_creation/con
     handlers struct {
         // #[template_child(id="game_select_stack")]
         // pub content_stack : TemplateChild<Stack>,
-
-        pub action_group : RefCell<Option<SimpleActionGroup>>,
 
         #[template_child(id="content_select_model")]
         pub content_select_model : TemplateChild<gtk::SingleSelection>,

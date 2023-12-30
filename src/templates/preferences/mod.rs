@@ -9,9 +9,9 @@ use glib::Properties;
 
 use crate::quick_template;
 quick_template!(PreferencesWindow, "/templates/preferences/preferences.ui", Window, (gtk::Widget), (gtk::Native, gtk::Root, gtk::ShortcutManager),
-
 	#[derive(CompositeTemplate, Default, Properties)]
-	props handlers struct {
+	#[properties(wrapper_type=super::PreferencesWindow)]
+	handlers struct {
 		#[property(set)]
 		pub app_settings : OnceCell<Settings>,
 

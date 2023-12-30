@@ -64,7 +64,7 @@ macro_rules! derive {
 
 #[macro_export]
 macro_rules! full_template {
-    ($name:ident, ($($resource_path:literal)?), $struct_def:tt, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), #[$derive:meta], ($($properties:meta)?), ($($instance_callbacks:ident)?)) => {
+    ($name:ident, ($($resource_path:literal)?), $struct_def:tt, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), ($(#[$metas:meta])+), ($($instance_callbacks:ident)?)) => {
         use gtk::{subclass::prelude::*, glib, CompositeTemplate, prelude::*};
         use glib::Object;
 
@@ -72,9 +72,7 @@ macro_rules! full_template {
             use super::*;
 
             // $crate::derive!{$($derives),+}
-            #[$derive]
-            $(#[template(resource=$resource_path)])?
-            $(#[$properties])?
+            $(#[$metas])+
             pub struct $name $struct_def
 
             #[glib::object_subclass]
@@ -115,22 +113,16 @@ It's meant to quickly fill in all the boilerplate so you can just write the code
 // TODO: Get rid of properties argument. The caller can set that up themselves with meta stuff (Just make the derive arg a list)
 #[macro_export]
 macro_rules! quick_template {
-    ($name:ident, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), #[$derive:meta] struct $struct_def : tt) => {
-        $crate::full_template!($name, (), $struct_def, $widget_type, ($($extends),*), ($($implements),*), #[$derive], (), ());
+    ($name:ident, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), $(#[$metas:meta])+ struct $struct_def : tt) => {
+        $crate::full_template!($name, (), $struct_def, $widget_type, ($($extends),*), ($($implements),*), ($(#[$metas])+), ());
     };
     ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*)) => {
-        $crate::full_template!($name, ($resource_path), {}, $widget_type, ($($extends),*), ($($implements),*), #[derive(CompositeTemplate, Default)], (), ());
+        $crate::full_template!($name, ($resource_path), {}, $widget_type, ($($extends),*), ($($implements),*), (#[derive(CompositeTemplate, Default)] #[template(resource=$resource_path)]), ());
     };
-    ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), #[$derive:meta] struct $struct_def : tt) => {
-        $crate::full_template!($name, ($resource_path), $struct_def, $widget_type, ($($extends),*), ($($implements),*), #[$derive], (), ());
+    ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), $(#[$metas:meta])+ struct $struct_def : tt) => {
+        $crate::full_template!($name, ($resource_path), $struct_def, $widget_type, ($($extends),*), ($($implements),*), ($(#[$metas])+ #[template(resource=$resource_path)]), ());
     };
-    ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), #[$derive:meta] props struct $struct_def : tt) => {
-        $crate::full_template!($name, ($resource_path), $struct_def, $widget_type, ($($extends),*), ($($implements),*), #[$derive], (properties(wrapper_type=super::$name)), ());
-    };
-    ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), #[$derive:meta] props handlers struct $struct_def : tt) => {
-        $crate::full_template!($name, ($resource_path), $struct_def, $widget_type, ($($extends),*), ($($implements),*), #[$derive], (properties(wrapper_type=super::$name)), (bind_template_instance_callbacks));
-    };
-    ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), #[$derive:meta] handlers struct $struct_def : tt) => {
-        $crate::full_template!($name, ($resource_path), $struct_def, $widget_type, ($($extends),*), ($($implements),*), #[$derive], (), (bind_template_instance_callbacks));
+    ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), $(#[$metas:meta])+ handlers struct $struct_def : tt) => {
+        $crate::full_template!($name, ($resource_path), $struct_def, $widget_type, ($($extends),*), ($($implements),*), ($(#[$metas])+ #[template(resource=$resource_path)]), (bind_template_instance_callbacks));
     };
 }

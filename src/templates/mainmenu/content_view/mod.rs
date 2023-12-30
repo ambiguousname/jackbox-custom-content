@@ -12,7 +12,8 @@ use crate::quick_template;
 
 quick_template!(ContentList, "/templates/mainmenu/content_view/contentlist.ui", gtk::Box, (gtk::Widget), (gtk::Orientable),
 	#[derive(Default, CompositeTemplate, Properties)]
-	props struct {
+	#[properties(wrapper_type=super::ContentList)]
+	struct {
 		#[template_child(id="column_view")]
 		pub column_view : TemplateChild<ColumnView>,
 

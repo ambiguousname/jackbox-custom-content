@@ -6,7 +6,8 @@ use gtk::glib::once_cell::sync::OnceCell;
 
 quick_template!(QuiplashGenericRoundPrompt, "/content/quiplash3/prompts/generic_round_prompt.ui", gtk::Box, (gtk::Widget), (),
     #[derive(CompositeTemplate, Default, Properties)]
-    props struct {
+    #[properties(wrapper_type=super::QuiplashGenericRoundPrompt)]
+    struct {
         #[property(get, set)]
         pub final_round : Cell<bool>,
 
