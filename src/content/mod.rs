@@ -21,7 +21,7 @@ mod imp {
         pub window_path : OnceCell<String>,
 
         #[property(get, set)]
-        pub window : OnceCell<ContentWindow>,
+        pub window : OnceCell<gtk::Window>,
     }
 
     #[glib::object_subclass]
@@ -48,13 +48,9 @@ impl Content {
     pub fn create_content(&self, parent : Option<&impl IsA<gtk::Window>>) {
         let window = self.window();
         window.set_transient_for(parent);
-        ContentWindowImpl::create_content(&window.imp());
+        // ContentWindowImpl::create_content(&window.imp());
         window.present();
     }
-}
-
-mod window_imp {
-    pub struct ContentWindow {}
 }
 
 // Easier than doing the subclassing route for now:
@@ -64,39 +60,39 @@ mod window_imp {
 //     fn create_content(&self);
 // }
 
-mod content_window_imp {
-    use super::*;
+// mod content_window_imp {
+//     use super::*;
 
-    #[derive(Default)]
-    pub struct ContentWindow {
+//     #[derive(Default)]
+//     pub struct ContentWindow {
 
-    }
-
-    #[glib::object_subclass]
-    impl ObjectSubclass for ContentWindow {
-        const NAME: &'static str = "JCCContentWindow";
-        type Type = super::ContentWindow;
-        type ParentType = gtk::Window;
-    }
-
-    impl ObjectImpl for ContentWindow {}
-    impl WidgetImpl for ContentWindow {}
-    impl WindowImpl for ContentWindow {}
-}
-
-glib::wrapper! {
-    pub struct ContentWindow(ObjectSubclass<content_window_imp::ContentWindow>) @extends gtk::Window, gtk::Widget, @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Native, gtk::Root, gtk::ShortcutManager;
-}
-
-// impl ContentWindowExt for ContentWindow {
-//     fn ensure_all_types() {
-        
 //     }
+
+//     #[glib::object_subclass]
+//     impl ObjectSubclass for ContentWindow {
+//         const NAME: &'static str = "JCCContentWindow";
+//         type Type = super::ContentWindow;
+//         type ParentType = gtk::Window;
+//     }
+
+//     impl ObjectImpl for ContentWindow {}
+//     impl WidgetImpl for ContentWindow {}
+//     impl WindowImpl for ContentWindow {}
 // }
 
-pub trait ContentWindowImpl : WindowImpl {
-    fn ensure_all_types();
-    fn create_content(&self);
-}
+// glib::wrapper! {
+//     pub struct ContentWindow(ObjectSubclass<content_window_imp::ContentWindow>) @extends gtk::Window, gtk::Widget, @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Native, gtk::Root, gtk::ShortcutManager;
+// }
 
-unsafe impl<T: ContentWindowImpl> IsSubclassable<T> for ContentWindow {}
+// // impl ContentWindowExt for ContentWindow {
+// //     fn ensure_all_types() {
+        
+// //     }
+// // }
+
+// pub trait ContentWindowImpl : WindowImpl {
+//     fn ensure_all_types();
+//     fn create_content(&self);
+// }
+
+// unsafe impl<T: ContentWindowImpl> IsSubclassable<T> for ContentWindow {}
