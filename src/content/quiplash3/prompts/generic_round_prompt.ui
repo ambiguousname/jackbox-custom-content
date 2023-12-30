@@ -39,6 +39,9 @@
                         </child>
                         <child>
                             <object class="JCCEditableList" id="safety-quips">
+                                <property name="hexpand">true</property>
+                                <property name="orientation">vertical</property>
+                                <property name="width-request">154</property>
                             </object>
                         </child>
                         <layout>

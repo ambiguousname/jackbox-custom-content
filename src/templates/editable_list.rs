@@ -25,4 +25,15 @@ impl EditableList {
         let editable = EditableLabel::new("Double click to edit");
         self.imp().item_list.append(&editable);
     }
+
+    #[template_callback]
+    fn handle_remove_list_item(&self) {
+        let item_list = self.imp().item_list.clone();
+        let selected = item_list.selected_row();
+        let row = selected.or(item_list.last_child().and_downcast());
+        if row.is_some() {
+            let list_box_row = row.unwrap();
+            item_list.remove(&list_box_row);
+        }
+    }
 }

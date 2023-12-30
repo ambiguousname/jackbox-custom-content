@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
     <template class="JCCEditableList" parent="GtkBox">
-        <property name="orientation">vertical</property>
-        <property name="width-request">150</property>
         <child>
             <object class="GtkScrolledWindow">
                 <property name="hscrollbar-policy">GTK_POLICY_NEVER</property>
@@ -32,6 +30,7 @@
                         <property name="label">Remove Item</property>
                         <property name="icon-name">list-remove-symbolic</property>
                         <property name="tooltip-text">Remove item</property>
+                        <signal name="clicked" handler="handle_remove_list_item" swapped="true"/>
                     </object>
                 </child>
             </object>
