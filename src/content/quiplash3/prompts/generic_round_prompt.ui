@@ -113,7 +113,7 @@
                     </object>
                 </child>
                 <child>
-                    <object class="GtkBox">
+                    <object class="GtkBox" id="filter_text">
                         <property name="spacing">10</property>
                         <layout>
                             <property name="row">3</property>
@@ -134,7 +134,7 @@
                     </object>
                 </child>
                 <child>
-                    <object class="GtkBox">
+                    <object class="GtkBox" id="filter_ogg">
                         <layout>
                             <property name="row">3</property>
                             <property name="column">1</property>
@@ -170,7 +170,7 @@
                     </object>
                 </child>
                 <child>
-                    <object class="GtkBox">
+                    <object class="GtkBox" id="filter_transcript">
                         <property name="spacing">10</property>
                         <layout>
                             <property name="row">4</property>

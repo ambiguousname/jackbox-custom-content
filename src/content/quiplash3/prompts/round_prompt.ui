@@ -9,7 +9,6 @@
 					<object class="GtkButton" id="new">
 						<property name="label">Create</property>
 						<property name="tooltip-text">Create round prompt</property>
-						<signal name="clicked" handler="handle_create_clicked" swapped="true"/>
 					</object>
 				</child>
 			</object>
@@ -36,6 +35,7 @@
                 </child>
                 <child>
                     <object class="JCCQuiplashGenericRoundPrompt">
+                        <property name="final-round">true</property>
                     </object>
                 </child>
                 <child type="tab">
