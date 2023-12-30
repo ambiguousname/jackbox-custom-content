@@ -10,21 +10,15 @@ mod util;
 
 const APP_ID : &str = "com.ambiguousname.JackboxCustomContent";
 
-const GLOBAL_CSS : &str = "
+// const GLOBAL_CSS : &str = "";
 
-frame.no-border {
-    border: none;
-    border-radius: 0;
-}
-";
+// fn load_css() {
+//     let provider = CssProvider::new();
+//     provider.load_from_string(GLOBAL_CSS);
 
-fn load_css() {
-    let provider = CssProvider::new();
-    provider.load_from_string(GLOBAL_CSS);
-
-    gtk::style_context_add_provider_for_display(&Display::default().expect("Could not get display."), &provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
-    println!("Loaded Global CSS.");
-}
+//     gtk::style_context_add_provider_for_display(&Display::default().expect("Could not get display."), &provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+//     println!("Loaded Global CSS.");
+// }
 
 #[allow(unused_parens)]
 fn main() -> ExitCode {
@@ -39,7 +33,7 @@ fn main() -> ExitCode {
 }
 
 fn build_window(app: &Application) {
-    load_css();
+    // load_css();
 
     // This works in debug for whatever reason (runtime issues, I presume.)
     #[cfg(debug_assertions)]

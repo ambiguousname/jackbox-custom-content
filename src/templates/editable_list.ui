@@ -1,43 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-    <template class="JCCEditableList" parent="GtkFrame">
-        <property name="css-classes">no-border</property>
+    <template class="JCCEditableList" parent="GtkBox">
         <child>
-            <object class="GtkOverlay">
-                <child type="overlay">
-                    <object class="GtkBox">
-                        <property name="halign">end</property>
-                        <property name="valign">start</property>
-                        <child>
-                            <object class="GtkButton">
-                                <property name="label">New Item</property>
-                                <property name="icon-name">list-add-symbolic</property>
-                                <property name="tooltip-text">Add new item</property>
-                                <signal name="clicked" handler="handle_new_list_item" swapped="true"/>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkButton">
-                                <property name="label">Remove Item</property>
-                                <property name="icon-name">list-remove-symbolic</property>
-                                <property name="tooltip-text">Remove item</property>
-                            </object>
-                        </child>
+            <object class="GtkBox">
+                <property name="halign">end</property>
+                <property name="valign">start</property>
+                <child>
+                    <object class="GtkButton">
+                        <property name="label">New Item</property>
+                        <property name="icon-name">list-add-symbolic</property>
+                        <property name="tooltip-text">Add new item</property>
+                        <signal name="clicked" handler="handle_new_list_item" swapped="true"/>
                     </object>
                 </child>
                 <child>
-                    <object class="GtkScrolledWindow">
-                        <property name="layout-manager">
-                            <object class="GtkConstraintLayout">
-                                <constraints>
-                                    <!--https://gitlab.gnome.org/GNOME/gtk/-/blob/main/demos/gtk-demo/constraints_builder.ui -->
-                                </constraints>
-                            </object>
-                        </property>
-                        <child>
-                            <object class="GtkListBox" id="item-list"></object>
-                        </child>
+                    <object class="GtkButton">
+                        <property name="label">Remove Item</property>
+                        <property name="icon-name">list-remove-symbolic</property>
+                        <property name="tooltip-text">Remove item</property>
                     </object>
+                </child>
+            </object>
+        </child>
+        <child>
+            <object class="GtkScrolledWindow">
+                <property name="hscrollbar-policy">GTK_POLICY_NEVER</property>
+                <property name="propagate-natural-height">true</property>
+                <property name="overlay-scrolling">false</property>
+                <property name="propagate-natural-width">true</property>
+                <child>
+                    <object class="GtkListBox" id="item-list"></object>
                 </child>
             </object>
         </child>
