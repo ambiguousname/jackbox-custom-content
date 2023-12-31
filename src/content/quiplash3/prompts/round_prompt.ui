@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-    <template class="JCCQuiplashRoundPrompt" parent="GtkWindow">
+    <template class="JCCQuiplashRoundPrompt" parent="JCCContentWindow">
 		<property name="title" translatable="yes">Quiplash 3 Round Prompt</property>
         <property name="default-width">500</property>
         <child type="titlebar">
