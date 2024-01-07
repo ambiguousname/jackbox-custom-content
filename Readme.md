@@ -24,6 +24,7 @@ Check out the video [demo](https://youtu.be/4YO2SM21eIo).
 
 ## Otherwise:
 - Clone this repository
+- Install GTK 4, following these instructions: https://gtk-rs.org/gtk4-rs/stable/latest/book/installation.html
 - You can build it using Cargo: https://doc.rust-lang.org/cargo/getting-started/index.html
 - Then run: `cargo run` once cargo is installed.
 - Please read the rest of this Readme for clearer instructions if you ever get confused.
