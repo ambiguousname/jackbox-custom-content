@@ -1,4 +1,4 @@
-use crate::{quick_template, content::{ContentWindow, Content, ContentWindowImpl, ContentWindowExt}};
+use crate::{quick_template, content::{ContentWindow, Content, ContentWindowImpl}};
 
 mod prompt_util;
 use prompt_util::QuiplashGenericRoundPrompt;
@@ -13,7 +13,6 @@ impl ObjectImpl for imp::QuiplashRoundPrompt {
 }
 impl WidgetImpl for imp::QuiplashRoundPrompt {}
 impl WindowImpl for imp::QuiplashRoundPrompt {}
-
 impl ContentWindowImpl for imp::QuiplashRoundPrompt {}
 
 impl QuiplashRoundPrompt {
