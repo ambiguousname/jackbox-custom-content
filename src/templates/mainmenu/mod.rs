@@ -6,6 +6,8 @@ use std::{cell::{RefCell, OnceCell}, vec::Vec};
 // Template construction:
 use gtk::{Application, Box, Button, Stack, StackSwitcher, gio::{self, ActionEntry, Settings}, Window, AlertDialog, AboutDialog};
 
+use glib::Object;
+
 use content_creation::ContentCreationDialog;
 use crate::quick_template;
 

@@ -1,4 +1,5 @@
 use gtk::{ListBox, EditableLabel};
+use glib::Object;
 
 use crate::quick_template;
 

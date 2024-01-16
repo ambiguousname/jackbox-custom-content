@@ -4,7 +4,7 @@ pub mod contentobj;
 use contentobj::ContentObject;
 use contentcol::ContentCol;
 
-use gtk::{ColumnView, glib::{Properties, derived_properties}, ColumnViewColumn, gio, SignalListItemFactory, ListItem, SingleSelection, BuilderListItemFactory};
+use gtk::{ColumnView, glib::{Properties, derived_properties, Object}, ColumnViewColumn, gio, SignalListItemFactory, ListItem, SingleSelection, BuilderListItemFactory};
 
 use std::{cell::{RefCell, OnceCell}, fs::{self, DirEntry}, path::PathBuf, io::Error};
 

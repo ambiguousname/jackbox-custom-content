@@ -5,7 +5,7 @@ use std::cell::OnceCell;
 
 use super::mainmenu::MainMenuWindow;
 
-use glib::Properties;
+use glib::{Object, Properties};
 
 use crate::quick_template;
 quick_template!(PreferencesWindow, "/templates/preferences/preferences.ui", Window, (gtk::Widget), (gtk::Native, gtk::Root, gtk::ShortcutManager),

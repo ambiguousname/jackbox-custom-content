@@ -1,4 +1,4 @@
-use gtk::{subclass::prelude::*, glib::{self, Value}, prelude::*};
+use gtk::{subclass::prelude::*, glib::{self, Value, Type}, prelude::*};
 use glib::{Object, Properties, derived_properties};
 
 use std::cell::OnceCell;
@@ -40,9 +40,7 @@ glib::wrapper! {
     pub struct Content(ObjectSubclass<imp::Content>);
 }
 
-
-// TODO: Connet a create button with this and an imp trait:
-type ContentCallback = fn();
+type ContentCallback = fn(String);
 
 impl Content {
     pub fn ensure_all_types() {
@@ -56,19 +54,20 @@ impl Content {
         window.set_transient_for(parent);
         if callback.is_some() {
             window.connect("content-created", false, move |values| {
-                callback.unwrap()();
+                let window : ContentWindow = values[0].get().expect("Could not get ContentWindow");
+                window.close();
+
+                callback.unwrap()(values[1].get().unwrap());
                 None
             });
         }
-        // ContentWindowImpl::create_content(&window.imp());
-        // window.create_content(callback);
         window.present();
     }
 }
 
 // Because GTK's implementation in Rust is a nightmare to read (I don't know why you would migrate an object oriented framework to something like Rust), this is the solution I've come up with to try and ensure some kind of consistency across different windows:
 mod content_window_imp {
-    use gtk::{glib::{subclass::Signal, once_cell::sync::Lazy}, Button, HeaderBar};
+    use gtk::{glib::{subclass::Signal, once_cell::sync::Lazy, clone}, Button, HeaderBar};
 
     use super::*;
 
@@ -83,7 +82,7 @@ mod content_window_imp {
     // #[repr(C)]
     // pub struct ContentWindowClass<T: ObjectSubclass> {
     //     parent_class: <T::ParentType as ObjectType>::GlibClassType,
-    //     pub content_created: Option<unsafe extern "C" fn(*mut ContentWindow)>,
+    //     pub content_created: Option<unsafe extern "C" fn(*mut ContentWindow)-> &'static [&'static dyn ToValue]>,
     // }
 
     // unsafe impl<T : ObjectSubclass> ClassStruct for ContentWindowClass<T> {
@@ -96,32 +95,18 @@ mod content_window_imp {
         type Type = super::ContentWindow;
         type ParentType = gtk::Window;
         // type Class = ContentWindowClass<Self>;
-
-        // fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
-            
-        // }
     }
 
     // #[derived_properties]
     impl ObjectImpl for ContentWindow {
         fn signals() -> &'static [Signal] {
+            // Easiest way I can imagine handling things without knowing the gtk-rs library front and back.
+            // FIXME: If there's any way someone can instead set this up with the signal experiments below, as well as minimizing the amount of boilerplate on a user's end (i.e., just a function you can override instead of making your own button and hooking that up), you would be my hero.
+            // I dunno, maybe this works better if people can set up their own windows. But I'd sort of like some sort of template consistency, so the design can be somewhat uniform.
             static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
-                vec![Signal::builder("content-created").build()]
+                vec![Signal::builder("content-created").param_types([String::static_type()]).build()]
             });
             SIGNALS.as_ref()
-        }
-
-        fn constructed(&self) {
-            self.parent_constructed();
-            
-            let create = Button::builder()
-            .label("Create")
-            .build();
-
-            let header = HeaderBar::new();
-            header.pack_end(&create);
-
-            self.obj().set_property("child", &header);
         }
     }
     impl WidgetImpl for ContentWindow {}
@@ -132,9 +117,8 @@ glib::wrapper! {
     pub struct ContentWindow(ObjectSubclass<content_window_imp::ContentWindow>) @extends gtk::Window, gtk::Widget, @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Native, gtk::Root, gtk::ShortcutManager;
 }
 
-// What would really be ideal is a way to set up some sort of trait that I can just implement or test for and be able to call like that.
-// The issue there is that the signal system (or even setting up a callback) requires knowing types ahead of time for proper GObject storage.
-// So this is what I'm stuck with for now.
+// So, I learned that this trait system is actually for creating signals.
+// I would really love for there to be some sort of designer friendly way to hook up signals, but this is what we've got.
 // Experiments commented below in case anyone wants to try them.
 pub trait ContentWindowImpl : WindowImpl {
     // fn content_created(&self) -> &[&dyn ToValue] {
@@ -144,11 +128,18 @@ pub trait ContentWindowImpl : WindowImpl {
 
 // pub trait ContentWindowImplExt : ObjectSubclass {
 //     fn parent_content_created(&self) -> &[&dyn ToValue] {
-//         &[]
+//         unsafe {
+//             let data = Self::type_data();
+//             let parent_class = data.as_ref().parent_class() as *mut content_window_imp::ContentWindowClass<Self>;
+//             // let f = (*parent_class)
+//             //     .content_created
+//             //     .expect("No parent class impl for \"content_created\"");
+//             // f(self.obj().unsafe_cast_ref::<ContentWindow>().to_glib_none().0)
+//         }
 //     }
 // }
 
-// impl<T: WindowImpl> ContentWindowImplExt for T {}
+// impl<T: ContentWindowImpl> ContentWindowImplExt for T {}
 
 unsafe impl<T: ContentWindowImpl> IsSubclassable<T> for ContentWindow {
     // fn class_init(class: &mut glib::Class<Self>) {
@@ -160,10 +151,10 @@ unsafe impl<T: ContentWindowImpl> IsSubclassable<T> for ContentWindow {
     // }
 }
 
-// unsafe extern "C" fn content_created<T: ContentWindowImpl>(ptr: *mut content_window_imp::ContentWindow) {
+// unsafe extern "C" fn content_created<T: ContentWindowImpl>(ptr: *mut content_window_imp::ContentWindow) -> &'static[&'static dyn ToValue] {
 //     let instance = &*(ptr as *mut T::Instance);
     
 
 //     let imp = instance.imp();
-//     // imp.obj().emit_by_name::<()>("content-created", imp.content_created());
+//     imp.content_created()
 // }

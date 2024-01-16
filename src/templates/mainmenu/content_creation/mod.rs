@@ -1,5 +1,5 @@
 use gtk::{gio::{self, ListStore}, Button, Window, SingleSelection, TreeListRow, AlertDialog};
-use glib::clone;
+use glib::{clone, Object};
 
 use std::cell::OnceCell;
 
@@ -98,8 +98,8 @@ impl ContentCreationDialog {
         }
 
         let current_selection : Content = current_option.and_downcast().expect("Could not get selected.");
-        current_selection.create_content(Some(self), Some(|| {
-            println!("Created");
+        current_selection.create_content(Some(self), Some(|value| {
+            println!("Created {}", value);
         }));
     }
 }
