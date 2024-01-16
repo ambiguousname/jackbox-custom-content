@@ -6,175 +6,180 @@
         <property name="margin-bottom">10</property>
         <property name="margin-top">10</property>
         <child>
-            <object class="GtkGrid">
-                <property name="column-spacing">20</property>
-                <property name="row-spacing">20</property>
+            <object class="JCCFormManager">
                 <child>
-                    <object class="JCCLabelledBox">
-                        <property name="label">Prompt Text</property>
+                    <object class="GtkGrid">
+                        <property name="column-spacing">20</property>
+                        <property name="row-spacing">20</property>
                         <child>
-                            <object class="GtkEntry">
-                                <property name="hexpand">true</property>
-                                <property name="placeholder-text">I have a strong distaste for &lt;ANYPLAYER&gt; ever since they &lt;BLANK&gt;</property>
-                            </object>
-                        </child>
-                        <layout>
-                            <property name="row">0</property>
-                            <property name="column-span">2</property>
-                            <property name="column">0</property>
-                        </layout>
-                    </object>
-                </child>
-                <child>
-                    <object class="JCCLabelledBox">
-                        <property name="label">Safety Quips</property>
-                        <child>
-                            <object class="JCCEditableList" id="response_filter">
-                                <property name="hexpand">true</property>
-                                <property name="orientation">vertical</property>
-                                <property name="width-request">154</property>
-                            </object>
-                        </child>
-                        <layout>
-                            <property name="row">1</property>
-                            <property name="column">0</property>
-                        </layout>
-                    </object>
-                </child>
-                <child>
-                    <object class="GtkBox">
-                        <property name="orientation">vertical</property>
-                        <child>
-                            <object class="GtkCheckButton">
-                                <property name="label">Includes Player Name</property>
+                            <object class="JCCLabelledBox">
+                                <property name="required">true</property>
+                                <property name="label">Prompt Text</property>
+                                <child>
+                                    <object class="GtkEntry">
+                                        <property name="hexpand">true</property>
+                                        <property name="placeholder-text">I have a strong distaste for &lt;ANYPLAYER&gt; ever since they &lt;BLANK&gt;</property>
+                                    </object>
+                                </child>
+                                <layout>
+                                    <property name="row">0</property>
+                                    <property name="column-span">2</property>
+                                    <property name="column">0</property>
+                                </layout>
                             </object>
                         </child>
                         <child>
-                            <object class="GtkCheckButton">
-                                <property name="label">Contains Adult Content</property>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkCheckButton">
-                                <property name="label">Content is US-Specific</property>
-                            </object>
-                        </child>
-                        <layout>
-                            <property name="row">1</property>
-                            <property name="column">1</property>
-                        </layout>
-                    </object>
-                </child>
-                <child>
-                    <object class="GtkBox">
-                        <layout>
-                            <property name="row">2</property>
-                            <property name="column">0</property>
-                        </layout>
-                        <child>
-                            <object class="GtkLabel">
-                                <property name="label" translatable="yes">.OGG narrating the prompt</property>
-                                <property name="hexpand">true</property>
-                                <property name="xalign">0</property>
-                                <property name="halign">start</property>
-                                <property name="mnemonic-widget">browse_prompt_read</property>
+                            <object class="JCCLabelledBox">
+                                <property name="label">Safety Quips</property>
+                                <child>
+                                    <object class="JCCEditableList" id="response_filter">
+                                        <property name="hexpand">true</property>
+                                        <property name="orientation">vertical</property>
+                                        <property name="width-request">154</property>
+                                    </object>
+                                </child>
+                                <layout>
+                                    <property name="row">1</property>
+                                    <property name="column">0</property>
+                                </layout>
                             </object>
                         </child>
                         <child>
                             <object class="GtkBox">
-                                <property name="halign">end</property>
-                                <property name="spacing">10</property>
-                                <child>
-                                    <object class="GtkInscription">
-                                        <property name="nat-chars">40</property>
-                                        <property name="nat-lines">1</property>
-                                        <property name="text-overflow">ellipsize-end</property>
-                                        <property name="valign">center</property>
-                                    </object>
-                                </child>
-                                <child>
-                                    <object class="GtkButton" id="browse_prompt_read">
-                                        <property name="valign">center</property>
-                                        <property name="label" translatable="yes">Browse</property>
-                                    </object>
-                                </child>
-                            </object>
-                        </child>
-                    </object>
-                </child>
-                <child>
-                    <object class="GtkBox" id="filter_text">
-                        <property name="spacing">10</property>
-                        <layout>
-                            <property name="row">3</property>
-                            <property name="column">0</property>
-                        </layout>
-                        <child>
-                            <object class="GtkLabel">
-                                <property name="label">Response text filter</property>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="JCCEditableList" id="safety_quips">
-                                <property name="hexpand">true</property>
                                 <property name="orientation">vertical</property>
-                                <property name="width-request">154</property>
-                            </object>
-                        </child>
-                    </object>
-                </child>
-                <child>
-                    <object class="GtkBox" id="filter_ogg">
-                        <layout>
-                            <property name="row">3</property>
-                            <property name="column">1</property>
-                        </layout>
-                        <child>
-                            <object class="GtkLabel">
-                                <property name="label" translatable="yes">.OGG response to specific text</property>
-                                <property name="hexpand">true</property>
-                                <property name="xalign">0</property>
-                                <property name="halign">start</property>
-                                <property name="mnemonic-widget">browse_response</property>
+                                <child>
+                                    <object class="GtkCheckButton">
+                                        <property name="label">Includes Player Name</property>
+                                    </object>
+                                </child>
+                                <child>
+                                    <object class="GtkCheckButton">
+                                        <property name="label">Contains Adult Content</property>
+                                    </object>
+                                </child>
+                                <child>
+                                    <object class="GtkCheckButton">
+                                        <property name="label">Content is US-Specific</property>
+                                    </object>
+                                </child>
+                                <layout>
+                                    <property name="row">1</property>
+                                    <property name="column">1</property>
+                                </layout>
                             </object>
                         </child>
                         <child>
                             <object class="GtkBox">
-                                <property name="halign">end</property>
+                                <layout>
+                                    <property name="row">2</property>
+                                    <property name="column">0</property>
+                                </layout>
+                                <child>
+                                    <object class="GtkLabel">
+                                        <property name="label" translatable="yes">.OGG narrating the prompt</property>
+                                        <property name="hexpand">true</property>
+                                        <property name="xalign">0</property>
+                                        <property name="halign">start</property>
+                                        <property name="mnemonic-widget">browse_prompt_read</property>
+                                    </object>
+                                </child>
+                                <child>
+                                    <object class="GtkBox">
+                                        <property name="halign">end</property>
+                                        <property name="spacing">10</property>
+                                        <child>
+                                            <object class="GtkInscription">
+                                                <property name="nat-chars">40</property>
+                                                <property name="nat-lines">1</property>
+                                                <property name="text-overflow">ellipsize-end</property>
+                                                <property name="valign">center</property>
+                                            </object>
+                                        </child>
+                                        <child>
+                                            <object class="GtkButton" id="browse_prompt_read">
+                                                <property name="valign">center</property>
+                                                <property name="label" translatable="yes">Browse</property>
+                                            </object>
+                                        </child>
+                                    </object>
+                                </child>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkBox" id="filter_text">
                                 <property name="spacing">10</property>
+                                <layout>
+                                    <property name="row">3</property>
+                                    <property name="column">0</property>
+                                </layout>
                                 <child>
-                                    <object class="GtkInscription">
-                                        <property name="nat-chars">40</property>
-                                        <property name="nat-lines">1</property>
-                                        <property name="text-overflow">ellipsize-end</property>
-                                        <property name="valign">center</property>
+                                    <object class="GtkLabel">
+                                        <property name="label">Response text filter</property>
                                     </object>
                                 </child>
                                 <child>
-                                    <object class="GtkButton" id="browse_response">
-                                        <property name="label" translatable="yes">Browse</property>
+                                    <object class="JCCEditableList" id="safety_quips">
+                                        <property name="hexpand">true</property>
+                                        <property name="orientation">vertical</property>
+                                        <property name="width-request">154</property>
                                     </object>
                                 </child>
                             </object>
                         </child>
-                    </object>
-                </child>
-                <child>
-                    <object class="GtkBox" id="filter_transcript">
-                        <property name="spacing">10</property>
-                        <layout>
-                            <property name="row">4</property>
-                            <property name="column">0</property>
-                            <property name="column-span">2</property>
-                        </layout>
                         <child>
-                            <object class="GtkLabel">
-                                <property name="label">Response Transcript</property>
+                            <object class="GtkBox" id="filter_ogg">
+                                <layout>
+                                    <property name="row">3</property>
+                                    <property name="column">1</property>
+                                </layout>
+                                <child>
+                                    <object class="GtkLabel">
+                                        <property name="label" translatable="yes">.OGG response to specific text</property>
+                                        <property name="hexpand">true</property>
+                                        <property name="xalign">0</property>
+                                        <property name="halign">start</property>
+                                        <property name="mnemonic-widget">browse_response</property>
+                                    </object>
+                                </child>
+                                <child>
+                                    <object class="GtkBox">
+                                        <property name="halign">end</property>
+                                        <property name="spacing">10</property>
+                                        <child>
+                                            <object class="GtkInscription">
+                                                <property name="nat-chars">40</property>
+                                                <property name="nat-lines">1</property>
+                                                <property name="text-overflow">ellipsize-end</property>
+                                                <property name="valign">center</property>
+                                            </object>
+                                        </child>
+                                        <child>
+                                            <object class="GtkButton" id="browse_response">
+                                                <property name="label" translatable="yes">Browse</property>
+                                            </object>
+                                        </child>
+                                    </object>
+                                </child>
                             </object>
                         </child>
                         <child>
-                            <object class="GtkEntry">
-                                <property name="hexpand">true</property>
+                            <object class="GtkBox" id="filter_transcript">
+                                <property name="spacing">10</property>
+                                <layout>
+                                    <property name="row">4</property>
+                                    <property name="column">0</property>
+                                    <property name="column-span">2</property>
+                                </layout>
+                                <child>
+                                    <object class="GtkLabel">
+                                        <property name="label">Response Transcript</property>
+                                    </object>
+                                </child>
+                                <child>
+                                    <object class="GtkEntry">
+                                        <property name="hexpand">true</property>
+                                    </object>
+                                </child>
                             </object>
                         </child>
                     </object>

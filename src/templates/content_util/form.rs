@@ -1,10 +1,11 @@
 // Form object for utility functions like not allowing submission if this form is not completed.
-use std::cell::RefCell;
+use std::{cell::RefCell, borrow::Borrow};
 
-// FIXME: An interface would be ideal, but I can't force myself through that right now.
 use gtk::glib::{ObjectExt, derived_properties, Properties};
 
 use crate::quick_object;
+
+use super::form_manager::FormManager;
 
 quick_object!(FormObject, gtk::Widget, (), (gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget), 
 	#[derive(Default, Properties)]
@@ -15,16 +16,25 @@ quick_object!(FormObject, gtk::Widget, (), (gtk::Accessible, gtk::Buildable, gtk
 	}
 );
 
-#[derived_properties]
-impl ObjectImpl for imp::FormObject {}
-impl WidgetImpl for imp::FormObject {}
-
-mod sealed {
-    pub trait Sealed {}
-    impl<T: super::IsA<super::FormObject>> Sealed for T {}
+impl FormObject {
+	pub fn ensure_all_types() {
+		FormObject::ensure_type();
+	}
 }
 
-pub trait FormObjectExt : IsA<FormObject> + sealed::Sealed + 'static {
+#[derived_properties]
+impl ObjectImpl for imp::FormObject {
+	fn constructed(&self) {
+		self.parent_constructed();
+
+		let obj = self.obj();
+		let manager : FormManager = obj.ancestor(FormManager::static_type()).and_downcast().expect("Could not find parent FormManager");
+
+	}
+}
+impl WidgetImpl for imp::FormObject {}
+
+pub trait FormObjectExt : IsA<FormObject> + 'static {
 	fn is_required(&self) -> bool {
 		self.property("required")
 	}

@@ -17,6 +17,10 @@ impl BoxImpl for imp::EditableList {}
 
 #[gtk::template_callbacks]
 impl EditableList {
+    pub fn ensure_all_types() {
+        EditableList::ensure_type();
+    }
+
     pub fn new() -> Self {
         Object::new()
     }

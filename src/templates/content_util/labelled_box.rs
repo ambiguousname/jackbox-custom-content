@@ -25,7 +25,6 @@ quick_template!(LabelledBox, "/templates/content_util/labelled_box.ui", FormObje
 impl ObjectImpl for imp::LabelledBox {
 	fn constructed(&self) {
 		self.parent_constructed();
-		// 
 	}
 }
 impl WidgetImpl for imp::LabelledBox {}

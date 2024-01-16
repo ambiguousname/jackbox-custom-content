@@ -1,4 +1,4 @@
-use gtk::{subclass::prelude::*, glib::{self, Value, Type}, prelude::*};
+use gtk::{subclass::prelude::*, glib::{self, Value, Type, clone}, prelude::*, gio::{SimpleActionGroup, ActionEntry}};
 use glib::{Object, Properties, derived_properties};
 
 use std::cell::OnceCell;
@@ -67,7 +67,11 @@ impl Content {
 
 // Because GTK's implementation in Rust is a nightmare to read (I don't know why you would migrate an object oriented framework to something like Rust), this is the solution I've come up with to try and ensure some kind of consistency across different windows:
 mod content_window_imp {
-    use gtk::{glib::{subclass::Signal, once_cell::sync::Lazy, clone}, Button, HeaderBar};
+    use std::cell::RefCell;
+
+    use gtk::glib::{subclass::Signal, once_cell::sync::Lazy};
+
+    use crate::templates::content_util::form::FormObject;
 
     use super::*;
 
@@ -77,6 +81,7 @@ mod content_window_imp {
     #[derive(Default)] //, Properties
     // #[properties(wrapper_type=super::ContentWindow)]
     pub struct ContentWindow {
+        pub form_objects : RefCell<Vec<FormObject>>,
     }
 
     // #[repr(C)]
@@ -116,6 +121,8 @@ mod content_window_imp {
 glib::wrapper! {
     pub struct ContentWindow(ObjectSubclass<content_window_imp::ContentWindow>) @extends gtk::Window, gtk::Widget, @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Native, gtk::Root, gtk::ShortcutManager;
 }
+
+impl ContentWindow {}
 
 // So, I learned that this trait system is actually for creating signals.
 // I would really love for there to be some sort of designer friendly way to hook up signals, but this is what we've got.
