@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="/templates/">
+    <file compressed="true" preprocess="xml-stripblanks">content_util/labelled_entry.ui</file>
 	  <file compressed="true" preprocess="xml-stripblanks">mainmenu/mainmenu.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">mainmenu/content_creation/game.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">mainmenu/content_creation/content.ui</file>

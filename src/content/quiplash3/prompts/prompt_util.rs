@@ -1,6 +1,6 @@
 use std::cell::Cell;
 
-use crate::{quick_template, templates::editable_list::EditableList};
+use crate::{quick_template, templates::{editable_list::EditableList, content_util::labelled_entry::LabelledEntry}};
 use glib::{derived_properties, Properties};
 use gtk::glib::once_cell::sync::OnceCell;
 
@@ -48,6 +48,7 @@ impl BoxImpl for imp::QuiplashGenericRoundPrompt {}
 impl QuiplashGenericRoundPrompt {
     pub fn ensure_all_types() {
         EditableList::ensure_type();
+        LabelledEntry::ensure_all_types();
         QuiplashGenericRoundPrompt::ensure_type();
     }
 }

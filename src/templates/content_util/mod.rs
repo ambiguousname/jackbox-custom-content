@@ -1,1 +1,1 @@
-pub mod entry;
+pub mod labelled_entry;

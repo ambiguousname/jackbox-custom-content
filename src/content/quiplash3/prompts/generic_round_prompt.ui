@@ -10,19 +10,10 @@
                 <property name="column-spacing">20</property>
                 <property name="row-spacing">20</property>
                 <child>
-                    <object class="GtkBox">
-                        <child>
-                            <object class="GtkLabel">
-                                <property name="label">Prompt Text</property>
-                                <property name="margin-end">5</property>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkEntry">
-                                <property name="hexpand">true</property>
-                                <property name="placeholder-text">I have a strong distaste for &lt;ANYPLAYER&gt; ever since they &lt;BLANK&gt;</property>
-                            </object>
-                        </child>
+                    <object class="JCCLabelledEntry">
+                        <property name="label">Prompt Text</property>
+                        <property name="placeholder-text">I have a strong distaste for &lt;ANYPLAYER&gt; ever since they &lt;BLANK&gt;</property>
+                        <property name="entry-hexpand">true</property>
                         <layout>
                             <property name="row">0</property>
                             <property name="column-span">2</property>

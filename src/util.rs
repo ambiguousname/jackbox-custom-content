@@ -3,51 +3,6 @@
 * Add options for Properties, Signals, Callbacks?
 */
 
-/*
-use things_to_use;
-
-mod imp {
-    use super::*;
-
-    IF PROPERTIES:
-    #[derive(Properties)]
-    #[properties(wrapper_type=super:$name)]
-    REGULAR:
-    #[derive(Default, CompositeTemplate)]
-    #[template(resource=$resource_path)]
-    pub struct $name $STRUCT_DEF
-
-    #[glib::object_subclass]
-    impl ObjectSubclass for ContentList {
-        const NAME : &'static str = "JCCContentList";
-        type Type = super::ContentList;
-        type ParentType = gtk::Box;
-
-        fn class_init(klass: &mut Self::Class) {
-            klass.bind_template();
-            Is this optional? Required for signal callbacks though.
-			klass.bind_template_instance_callbacks();
-        }
-    
-        fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
-            obj.init_template();
-        }
-    }
-
-    IF PROPERTIES:
-    #[derived_properties]
-    impl ObjectImpl for ContentList $object_impl;
-    for each $extends:
-    impl $($extends)Impl for ContentList {}
-    impl $widget_typeImpl for $name {}
-}
-
-glib::wrapper! {
-    pub struct ContentList(ObjectSubclass<imp::ContentList>) @extends $widget_type, $EXTENDS, @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Scrollable;
-}
-
-*/
-
 #[macro_export(local_inner_macros)]
 macro_rules! call_func {
     ($obj:ident, $func:ident) => {
@@ -55,6 +10,8 @@ macro_rules! call_func {
     };
 }
 
+// Problems with this system is that it assumes you have at least ONE widget you want to extend.
+// Doesn't work if you just want an object without an extension of another object.
 #[macro_export]
 macro_rules! full_object {
     ($name:ident, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), $(#[$metas:meta])+ struct $struct_def:tt, {$($subclass_stmt:tt)*}) => {
@@ -89,7 +46,8 @@ macro_rules! quick_object {
     };
 }
 
-#[macro_export]
+// Hidden because there's nothing this does that full_object! can't do.
+#[macro_export(local_inner_macros)]
 macro_rules! full_template {
     ($name:ident, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), $(#[$metas:meta])+ struct $struct_def:tt, ($($instance_callbacks:ident)?)) => {
         use gtk::CompositeTemplate;
