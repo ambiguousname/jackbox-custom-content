@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+	<template class="JCCLabelledBox" parent="GtkBox">
+		<child>
+			<object class="GtkLabel">
+				<!-- Property to change: -->
+				<binding name="label">
+					<!-- The name of the property on the object we want to associate, as well as that object's type: -->
+					<lookup name="label" type="JCCLabelledBox">
+						<!-- The object itself (identify by ID or type) -->
+						JCCLabelledBox
+					</lookup>
+				</binding>
+				<property name="margin-end">5</property>
+			</object>
+		</child>
+	</template>
+</interface>
