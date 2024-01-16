@@ -1,10 +1,13 @@
 use std::cell::{Cell, RefCell};
 
 use gtk::glib::{Properties, derived_properties};
+use crate::templates::content_util::form::FormObject;
 
 use crate::quick_template;
 
-quick_template!(LabelledBox, "/templates/content_util/labelled_box.ui", gtk::Box, (gtk::Widget), (), 
+use super::form::FormObjectImpl;
+
+quick_template!(LabelledBox, "/templates/content_util/labelled_box.ui", FormObject, (gtk::Box, gtk::Widget), (), 
 	#[derive(Default, CompositeTemplate, Properties)]
 	#[properties(wrapper_type=super::LabelledBox)]
 	struct {
@@ -19,8 +22,14 @@ quick_template!(LabelledBox, "/templates/content_util/labelled_box.ui", gtk::Box
 );
 
 #[derived_properties]
-impl ObjectImpl for imp::LabelledBox {}
+impl ObjectImpl for imp::LabelledBox {
+	fn constructed(&self) {
+		self.parent_constructed();
+		// 
+	}
+}
 impl WidgetImpl for imp::LabelledBox {}
+impl FormObjectImpl for imp::LabelledBox {}
 impl BoxImpl for imp::LabelledBox {}
 
 impl LabelledBox {

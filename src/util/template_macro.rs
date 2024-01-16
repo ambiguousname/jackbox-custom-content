@@ -1,3 +1,5 @@
+
+
 /* TODO:
 * Maybe some way to grab what we need to automatically @implements and @extends?
 * Add options for Properties, Signals, Callbacks?
@@ -82,8 +84,8 @@ macro_rules! quick_template {
     ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*)) => {
         $crate::full_template!($name, $widget_type, ($($extends),*), ($($implements),*), #[derive(CompositeTemplate, Default)] #[template(resource=$resource_path)] struct {}, ());
     };
-    ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), $(#[$metas:meta])+ struct $struct_def : tt) => {
-        $crate::full_template!($name, $widget_type, ($($extends),*), ($($implements),*), $(#[$metas])+ #[template(resource=$resource_path)] struct $struct_def, ());
+    ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), $(#[$metas:meta])+ struct {$($struct_def:tt)*}) => {
+        $crate::full_template!($name, $widget_type, ($($extends),*), ($($implements),*), $(#[$metas])+ #[template(resource=$resource_path)] struct {$($struct_def)*}, ());
     };
     ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), $(#[$metas:meta])+ handlers struct $struct_def : tt) => {
         $crate::full_template!($name, $widget_type, ($($extends),*), ($($implements),*), $(#[$metas])+ #[template(resource=$resource_path)] struct $struct_def, (bind_template_instance_callbacks));
