@@ -81,7 +81,6 @@ mod content_window_imp {
     #[derive(Default)] //, Properties
     // #[properties(wrapper_type=super::ContentWindow)]
     pub struct ContentWindow {
-        pub form_objects : RefCell<Vec<FormObject>>,
     }
 
     // #[repr(C)]

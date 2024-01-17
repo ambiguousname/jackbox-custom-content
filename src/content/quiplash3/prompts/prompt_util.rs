@@ -2,7 +2,6 @@ use std::cell::Cell;
 
 use crate::{quick_template, templates::{editable_list::EditableList, content_util::{labelled_box::LabelledBox, form_manager::FormManager}}};
 use glib::{derived_properties, Properties};
-use gtk::glib::once_cell::sync::OnceCell;
 
 quick_template!(QuiplashGenericRoundPrompt, "/content/quiplash3/prompts/generic_round_prompt.ui", gtk::Box, (gtk::Widget), (),
     #[derive(CompositeTemplate, Default, Properties)]
@@ -17,6 +16,9 @@ quick_template!(QuiplashGenericRoundPrompt, "/content/quiplash3/prompts/generic_
         pub filter_ogg : TemplateChild<gtk::Box>,
         #[template_child(id="filter_transcript")]
         pub filter_transcript : TemplateChild<gtk::Box>,
+
+        #[template_child(id="form_manager")]
+        pub form_manager : TemplateChild<FormManager>,
     }
 );
 

@@ -28,8 +28,8 @@ impl ObjectImpl for imp::LabelledBox {
 	}
 }
 impl WidgetImpl for imp::LabelledBox {}
-impl FormObjectImpl for imp::LabelledBox {}
 impl BoxImpl for imp::LabelledBox {}
+impl FormObjectImpl for imp::LabelledBox {}
 
 impl LabelledBox {
 	pub fn ensure_all_types() {
