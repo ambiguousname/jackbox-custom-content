@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-	<template class="JCCLabelledBox" parent="JCCFormObject">
+	<template class="JCCLabelledBox" parent="GtkBox">
 		<child>
 			<object class="GtkLabel">
 				<!-- Property to change: -->

@@ -1,38 +1,50 @@
 use std::cell::{Cell, RefCell};
 
+use gtk::{CompositeTemplate, subclass::prelude::*, glib, prelude::*};
 use gtk::glib::{Properties, derived_properties};
-use crate::templates::content_util::form::FormObject;
+use crate::templates::content_util::form::{FormObject, FormObjectExt};
 
-use crate::quick_template;
+mod imp {
+	use super::*;
 
-use super::form::FormObjectImpl;
-
-quick_template!(LabelledBox, "/templates/content_util/labelled_box.ui", FormObject, (gtk::Box, gtk::Widget), (), 
 	#[derive(Default, CompositeTemplate, Properties)]
+	#[template(resource="/templates/content_util/labelled_box.ui")]
 	#[properties(wrapper_type=super::LabelledBox)]
-	struct {
-		// #[template_child]
-		// pub label_child : TemplateChild<gtk::Label>,
+	pub struct LabelledBox {
+		#[template_child]
+		pub label_child : TemplateChild<gtk::Label>,
 		// #[template_child]
 		// pub entry_child : TemplateChild<gtk::Entry>,
 
 		#[property(get, set)]
 		pub label : RefCell<String>,
-	}
-);
 
-#[derived_properties]
-impl ObjectImpl for imp::LabelledBox {
-	fn constructed(&self) {
-		self.parent_constructed();
+		// FormObject requirements:
+		#[property(get, set)]
+		pub required : RefCell<bool>,
+	}
+
+	#[glib::object_subclass]
+	impl ObjectSubclass for LabelledBox {
+		const NAME : &'static str = "JCCLabelledBox";
+		type Type = super::LabelledBox;
+		type ParentType = gtk::Box;
+		type Interfaces = (FormObject,);
 	}
 }
+
+glib::wrapper! {
+	pub struct LabelledBox(ObjectSubclass<imp::LabelledBox>) @extends gtk::Box, gtk::Widget, @implements gtk::Accessible, gtk::ConstraintTarget, gtk::Buildable, FormObject;
+}
+
+#[derived_properties]
+impl ObjectImpl for imp::LabelledBox {}
 impl WidgetImpl for imp::LabelledBox {}
 impl BoxImpl for imp::LabelledBox {}
-impl FormObjectImpl for imp::LabelledBox {}
 
 impl LabelledBox {
 	pub fn ensure_all_types() {
+		FormObject::ensure_all_types();
 		LabelledBox::ensure_type();
 	}
 }

@@ -21,7 +21,7 @@ impl FormManager {
 	}
 
 	pub fn ensure_all_types() {
-		FormManager::ensure_type();
 		FormObject::ensure_all_types();
+		FormManager::ensure_type();
 	}
 }
