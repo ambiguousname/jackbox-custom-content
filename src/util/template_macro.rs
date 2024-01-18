@@ -43,17 +43,21 @@ macro_rules! full_object {
 
 #[macro_export]
 macro_rules! quick_object {
-    ($name:ident, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), $(#[$metas:meta])+ struct $struct_def:tt) => {
-        $crate::full_object!($name, $widget_type, ($($extends),*), ($($implements),*), $(#[$metas])+ struct $struct_def, {});
+    ($name:ident, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),* $(;$custom_interfaces:ty)*), $(#[$metas:meta])+ struct $struct_def:tt) => {
+        $crate::full_object!($name, $widget_type, ($($extends),*), ($($implements),* $(,$custom_interfaces)*), $(#[$metas])+ struct $struct_def, {
+            type Interfaces = ($($custom_interfaces,)*);
+        });
     };
 }
 
 // Hidden because there's nothing this does that full_object! can't do.
 #[macro_export(local_inner_macros)]
 macro_rules! full_template {
-    ($name:ident, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), $(#[$metas:meta])+ struct $struct_def:tt, ($($instance_callbacks:ident)?)) => {
+    ($name:ident, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),* $(;$custom_interfaces:ty)*), $(#[$metas:meta])+ struct $struct_def:tt, ($($instance_callbacks:ident)?)) => {
         use gtk::CompositeTemplate;
-        $crate::full_object!($name, $widget_type, ($($extends),*), (gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget $(,$implements)*), $(#[$metas])+ struct $struct_def, {
+        $crate::full_object!($name, $widget_type, ($($extends),*), (gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget $(,$implements)* $(,$custom_interfaces)*), $(#[$metas])+ struct $struct_def, {
+            type Interfaces = ($($custom_interfaces,)*);
+
             fn class_init(klass: &mut Self::Class) {
                 klass.bind_template();
                 $($crate::call_func!(klass, $instance_callbacks);)?
@@ -67,7 +71,7 @@ macro_rules! full_template {
 }
 
 /*
-Usage: quick_template!(ClassName, "path/to/template.ui", WidgetType (e.g., gtk::ScrolledWindow), (gtk::ExtendedWidgetsLike, gtk::Window, gtk::Widget), (gtk::ImplementedObjectsLike, gtk::Native, gtk::Root, gio::ShortcutMap), [props] [handlers] struct {
+Usage: quick_template!(ClassName, "path/to/template.ui", WidgetType (e.g., gtk::ScrolledWindow), (gtk::ExtendedWidgetsLike, gtk::Window, gtk::Widget; CustomInterface1; CustomInterface2), (gtk::ImplementedObjectsLike, gtk::Native, gtk::Root, gio::ShortcutMap), [props] [handlers] struct {
     structure definition here
     
     props or handlers may be inserted before the struct definition for:
@@ -81,13 +85,13 @@ It's meant to quickly fill in all the boilerplate so you can just write the code
 // TODO: Get rid of properties argument. The caller can set that up themselves with meta stuff (Just make the derive arg a list)
 #[macro_export]
 macro_rules! quick_template {
-    ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*)) => {
-        $crate::full_template!($name, $widget_type, ($($extends),*), ($($implements),*), #[derive(CompositeTemplate, Default)] #[template(resource=$resource_path)] struct {}, ());
+    ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),* $(;$custom_interfaces:ty)*)) => {
+        $crate::full_template!($name, $widget_type, ($($extends),*), ($($implements),* $(;$custom_interfaces)*), #[derive(CompositeTemplate, Default)] #[template(resource=$resource_path)] struct {}, ());
     };
-    ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), $(#[$metas:meta])+ struct {$($struct_def:tt)*}) => {
-        $crate::full_template!($name, $widget_type, ($($extends),*), ($($implements),*), $(#[$metas])+ #[template(resource=$resource_path)] struct {$($struct_def)*}, ());
+    ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),* $(;$custom_interfaces:ty)*), $(#[$metas:meta])+ struct {$($struct_def:tt)*}) => {
+        $crate::full_template!($name, $widget_type, ($($extends),*), ($($implements),* $(;$custom_interfaces)*), $(#[$metas])+ #[template(resource=$resource_path)] struct {$($struct_def)*}, ());
     };
-    ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),*), $(#[$metas:meta])+ handlers struct $struct_def : tt) => {
-        $crate::full_template!($name, $widget_type, ($($extends),*), ($($implements),*), $(#[$metas])+ #[template(resource=$resource_path)] struct $struct_def, (bind_template_instance_callbacks));
+    ($name:ident, $resource_path:literal, $widget_type:ty, ($($extends:ty),*), ($($implements:ty),* $(;$custom_interfaces:ty)*), $(#[$metas:meta])+ handlers struct $struct_def : tt) => {
+        $crate::full_template!($name, $widget_type, ($($extends),*), ($($implements),* $(;$custom_interfaces)*), $(#[$metas])+ #[template(resource=$resource_path)] struct $struct_def, (bind_template_instance_callbacks));
     };
 }
