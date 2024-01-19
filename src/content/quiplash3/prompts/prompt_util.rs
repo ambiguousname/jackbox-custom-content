@@ -50,6 +50,7 @@ impl BoxImpl for imp::QuiplashGenericRoundPrompt {}
 impl QuiplashGenericRoundPrompt {
     pub fn ensure_all_types() {
         FormManager::ensure_all_types();
+        EditableList::ensure_all_types();
         QuiplashGenericRoundPrompt::ensure_type();
     }
 
