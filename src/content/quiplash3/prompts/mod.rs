@@ -16,7 +16,9 @@ impl WidgetImpl for imp::QuiplashRoundPrompt {}
 impl WindowImpl for imp::QuiplashRoundPrompt {}
 impl ContentWindowImpl for imp::QuiplashRoundPrompt {
     fn finalize_content(&self, callback : Option<crate::content::ContentCallback>) {
-        
+        if callback.is_some() {
+            callback.unwrap()("This is a test".to_string());
+        }
     }
 }
 

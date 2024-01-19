@@ -94,7 +94,7 @@ impl MainMenuWindow {
 		let mods_folder = Path::new("./mods");
 
         if !mods_folder.exists() {
-            let result = fs::create_dir(mods_folder.clone());
+            let result = fs::create_dir(mods_folder);
             if result.is_err() {
                 eprintln!("Could not create ./mods directory.");
             }
