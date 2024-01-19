@@ -1,6 +1,6 @@
-use std::{cell::{Cell, RefCell}, sync::atomic::AtomicBool};
+use std::cell::RefCell;
 
-use gtk::glib::{Properties, derived_properties, value::ToValueOptional, Value};
+use gtk::glib::{Properties, derived_properties, Value};
 use crate::quick_template;
 use crate::templates::content_util::form::FormObject;
 
@@ -15,13 +15,8 @@ quick_template!(LabelledBox, "/templates/content_util/labelled_box.ui", gtk::Box
 		#[property(get, set)]
 		pub label : RefCell<String>,
 
-		// region: Bindings for setting is_valid:
 		#[property(get, set)]
-		pub bool_bind_valid : RefCell<Option<String>>,
-
-		#[property(get, set)]
-		pub string_bind_valid : RefCell<Option<String>>,
-		// endregion
+		pub value_property : RefCell<String>,
 
 		// FormObject requirements:
 		#[property(get, set)]
@@ -42,34 +37,11 @@ impl WidgetImpl for imp::LabelledBox {
 impl BoxImpl for imp::LabelledBox {}
 impl FormObjectImpl for imp::LabelledBox {
 	fn is_valid(&self) -> bool {
-		println!("Valid check");
-		let bool_bind_valid = self.bool_bind_valid.borrow().clone();
-		let string_bind_valid = self.string_bind_valid.borrow().clone();
-
-		if bool_bind_valid.is_some() {
-			return bool_bind_valid.unwrap() == "true";
-		} else if string_bind_valid.is_some() {
-			return !string_bind_valid.unwrap().is_empty();
-		}
-
-		false
+		self.obj().is_valid()
 	}
 
 	fn value(&self) -> Value {
-		if !self.is_valid() {
-			return None::<String>.to_value();
-		}
-		
-		let bool_bind_valid = self.bool_bind_valid.borrow().clone();
-		let string_bind_valid = self.string_bind_valid.borrow().clone();
-
-		if bool_bind_valid.is_some() {
-			return (bool_bind_valid.unwrap() == "true").to_value();
-		} else if string_bind_valid.is_some() {
-			return string_bind_valid.unwrap().to_value();
-		}
-
-		None::<String>.to_value()
+		self.obj().value()
 	}
 }
 
@@ -78,4 +50,33 @@ impl LabelledBox {
 		FormObject::ensure_all_types();
 		LabelledBox::ensure_type();
 	}
+
+	pub fn is_valid(&self) -> bool {
+		let property = self.value();
+
+		let prop_type = property.value_type();
+
+		// Not easily created as a constant:
+		let static_str_vec = Vec::<String>::static_type();
+		if prop_type.is_a(static_str_vec) {
+			return property.get::<Vec::<String>>().unwrap().is_empty();
+		}
+
+		return match prop_type {
+			// For checkboxes requiring an acknowledgement or something.
+			// Will probably never happen 
+			glib::Type::BOOL => property.get::<bool>().unwrap() == true,
+			// For things like Entries:
+			glib::Type::STRING => !property.get::<String>().unwrap().is_empty(),
+			_ => false,
+		}
+	}
+
+	pub fn value(&self) -> Value {
+		self.last_child().unwrap().property(&self.imp().value_property.borrow().clone())
+	}
 }
+
+pub trait LabelledBoxImpl : BoxImpl {}
+
+unsafe impl<T: LabelledBoxImpl> IsSubclassable<T> for LabelledBox {}

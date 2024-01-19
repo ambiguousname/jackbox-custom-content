@@ -15,7 +15,7 @@
 			</object>
         </child>
         <child>
-            <object class="GtkNotebook">
+            <object class="GtkNotebook" id="round_select">
                 <child>
                     <object class="JCCQuiplashGenericRoundPrompt">
                     </object>

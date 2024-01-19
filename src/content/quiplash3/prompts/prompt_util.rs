@@ -1,4 +1,4 @@
-use std::cell::Cell;
+use std::{cell::Cell, collections::HashMap};
 
 use crate::{quick_template, templates::{editable_list::EditableList, content_util::{labelled_box::LabelledBox, form_manager::FormManager}}};
 use glib::{derived_properties, Properties};
@@ -49,9 +49,15 @@ impl BoxImpl for imp::QuiplashGenericRoundPrompt {}
 
 impl QuiplashGenericRoundPrompt {
     pub fn ensure_all_types() {
-        EditableList::ensure_all_types();
-        LabelledBox::ensure_all_types();
         FormManager::ensure_all_types();
         QuiplashGenericRoundPrompt::ensure_type();
+    }
+
+    pub fn submit(&self) -> Option<HashMap<String, glib::Value>> {
+        self.imp().form_manager.submit()
+    }
+
+    pub fn is_valid(&self) -> bool {
+        self.imp().form_manager.is_valid()
     }
 }

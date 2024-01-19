@@ -14,13 +14,9 @@
                         <child>
                             <object class="JCCLabelledBox">
                                 <property name="name">prompt-text</property>
+                                <!-- Connect to the label property of the last child in the box (assumed to be the value you need to submit) -->
+                                <property name="value-property">label</property>
                                 <property name="required">true</property>
-                                
-                                <binding name="string-bind-valid">
-                                    <lookup name="text" type="GtkEntry">
-                                        prompt-text-entry
-                                    </lookup>
-                                </binding>
                                 <property name="label">Prompt Text</property>
                                 <child>
                                     <object class="GtkEntry" id="prompt-text-entry">
@@ -38,11 +34,10 @@
                         <child>
                             <object class="JCCLabelledBox">
                                 <property name="label">Safety Quips</property>
+                                <property name="value-property">items</property>
                                 <child>
                                     <object class="JCCEditableList" id="response_filter">
                                         <property name="hexpand">true</property>
-                                        <property name="orientation">vertical</property>
-                                        <property name="width-request">154</property>
                                     </object>
                                 </child>
                                 <layout>
