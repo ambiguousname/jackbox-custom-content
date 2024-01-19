@@ -16,7 +16,7 @@ mod imp {
 		parent : glib::gobject_ffi::GTypeInterface,
 		// Create the list of functions to be stored by our Interface definition in GTK GObject stuff:
 		pub is_valid : fn(&super::FormObject) -> bool,
-		pub value : fn(&super::FormObject) -> String,
+		pub value : fn(&super::FormObject) -> Value,
 	}
 	
 	// Default functions:
@@ -24,8 +24,8 @@ mod imp {
 		fn is_valid(_this : &super::FormObject) -> bool {
 			true
 		}
-		fn value(_this : &super::FormObject) -> String {
-			"".to_string()
+		fn value(_this : &super::FormObject) -> Value {
+			None::<String>.to_value()
 		}
 	}
 
@@ -38,25 +38,6 @@ mod imp {
 				vec![ParamSpecBoolean::builder("required").readwrite().build()]
 			});
 			PROPERTIES.as_ref()
-		}
-
-		// Signals so we can call our Impl functions from FormObjectExt.
-		fn signals() -> &'static [Signal] {
-			static SIGNALS : Lazy<Vec<Signal>> = Lazy::new(|| {
-				vec![Signal::builder("is-valid").return_type::<bool>()
-				// Class handlers connect the signals we get to the actual Impl functions we spent all this time assigning.
-				.class_handler(|_token, args| {
-					let this = args[0usize].get::<&super::FormObject>().unwrap_or_else(|e| {
-						panic!("Wrong type for argument {}: {:?}", 0usize, e)
-					});
-
-					let vtable = this.interface::<super::FormObject>().unwrap();
-					let vtable = vtable.as_ref();
-
-					Some((vtable.is_valid)(this).to_value())
-				}).build(), Signal::builder("value").return_type::<String>().build()]
-			});
-			SIGNALS.as_ref()
 		}
 
 		fn interface_init(&mut self) {
@@ -73,7 +54,7 @@ glib::wrapper!{
 // Impl definition for people to override.
 pub trait FormObjectImpl: ObjectImpl + ObjectSubclass {
 	fn is_valid(&self) -> bool;
-	fn value(&self) -> String;
+	fn value(&self) -> Value;
 }
 
 unsafe impl<T: FormObjectImpl> IsImplementable<T> for FormObject {
@@ -87,7 +68,7 @@ unsafe impl<T: FormObjectImpl> IsImplementable<T> for FormObject {
 		}
 		iface.is_valid = is_valid_trampoline::<T>;
 
-		fn value_trampoline<T: ObjectSubclass + FormObjectImpl>(obj : &FormObject) -> String {
+		fn value_trampoline<T: ObjectSubclass + FormObjectImpl>(obj : &FormObject) -> Value {
 			let this = obj.dynamic_cast_ref::<<T as ObjectSubclass>::Type>().unwrap().imp();
 			FormObjectImpl::value(this)
 		}
@@ -117,17 +98,15 @@ pub trait FormObjectExt : IsA<FormObject> + IsA<gtk::Widget> + 'static {
 	}
 
 	fn is_valid(&self) -> bool {
-		// let vtable = self.interface::<FormObject>().unwrap();
-		// let vtable = vtable.as_ref();
-		// (vtable.is_valid)(this)
-
-		let valid : bool = self.emit_by_name("is-valid", &[]);
-		valid
+		let vtable = self.interface::<FormObject>().unwrap();
+		let vtable = vtable.as_ref();
+		(vtable.is_valid)(self.upcast_ref::<FormObject>())
 	}
 
-	fn value(&self) -> String {
-		let value : String = self.emit_by_name("value", &[]);
-		value
+	fn value(&self) -> Value {
+		let vtable = self.interface::<FormObject>().unwrap();
+		let vtable = vtable.as_ref();
+		(vtable.value)(self.upcast_ref::<FormObject>())
 	}
 }
 

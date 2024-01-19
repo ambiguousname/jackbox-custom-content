@@ -17,6 +17,7 @@ impl BoxImpl for imp::FormManager {}
 
 impl FormManager {
 	pub fn add_form_object(&self, form_object : FormObject) {
+		println!("Valid: {}", form_object.is_valid());
 		self.imp().form_objects.borrow_mut().push(form_object);
 	}
 

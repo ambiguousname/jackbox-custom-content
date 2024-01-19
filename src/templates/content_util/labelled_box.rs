@@ -1,6 +1,6 @@
 use std::{cell::{Cell, RefCell}, sync::atomic::AtomicBool};
 
-use gtk::glib::{Properties, derived_properties, value::ToValueOptional};
+use gtk::glib::{Properties, derived_properties, value::ToValueOptional, Value};
 use crate::quick_template;
 use crate::templates::content_util::form::FormObject;
 
@@ -53,21 +53,21 @@ impl FormObjectImpl for imp::LabelledBox {
 		false
 	}
 
-	fn value(&self) -> String {
+	fn value(&self) -> Value {
 		if !self.is_valid() {
-			return "".to_string();
+			return None::<String>.to_value();
 		}
 		
 		let bool_bind_valid = self.bool_bind_valid.borrow().clone();
 		let string_bind_valid = self.string_bind_valid.borrow().clone();
 
 		if bool_bind_valid.is_some() {
-			return bool_bind_valid.unwrap();
+			return (bool_bind_valid.unwrap() == "true").to_value();
 		} else if string_bind_valid.is_some() {
-			return string_bind_valid.unwrap();
+			return string_bind_valid.unwrap().to_value();
 		}
 
-		"".to_string()
+		None::<String>.to_value()
 	}
 }
 
