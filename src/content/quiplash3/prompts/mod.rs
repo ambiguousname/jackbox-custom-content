@@ -1,4 +1,4 @@
-use crate::{quick_template, content::{ContentWindow, Content, ContentWindowImpl, ContentWindowExt}};
+use crate::{quick_template, content::{ContentWindow, Content, ContentWindowImpl, ContentWindowExt}, templates::content_util::form_manager::FormManager};
 
 mod prompt_util;
 use prompt_util::QuiplashGenericRoundPrompt;
@@ -7,7 +7,8 @@ use prompt_util::QuiplashGenericRoundPrompt;
 quick_template!(QuiplashRoundPrompt, "/content/quiplash3/prompts/round_prompt.ui", ContentWindow, (gtk::Window, gtk::Widget, Content), (gtk::Native, gtk::Root, gtk::ShortcutManager),
     #[derive(Default, CompositeTemplate)]
     handlers struct {
-        
+        #[template_child(id="form_manager")]
+        pub manager : TemplateChild<FormManager>,
     }
 );
 
@@ -16,6 +17,9 @@ impl WidgetImpl for imp::QuiplashRoundPrompt {}
 impl WindowImpl for imp::QuiplashRoundPrompt {}
 impl ContentWindowImpl for imp::QuiplashRoundPrompt {
     fn finalize_content(&self, callback : Option<crate::content::ContentCallback>) {
+
+        self.manager.submit();
+        
         if callback.is_some() {
             callback.unwrap()("This is a test".to_string());
         }
@@ -33,6 +37,8 @@ impl QuiplashRoundPrompt {
     #[template_callback]
     pub fn handle_create_clicked(&self) {
         // Put a call to ContentWindowImpl, with a stored callback (as explained in content/mod.rs)
-        self.finalize_content();
+        if self.imp().manager.is_valid() {
+            self.finalize_content();
+        }
     }
 }

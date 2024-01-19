@@ -1,7 +1,9 @@
+use gtk::glib::Value;
+
 use crate::{quick_object, templates::content_util::form::FormObjectExt};
 use super::form::FormObject;
 
-use std::cell::RefCell;
+use std::{cell::RefCell, collections::HashMap};
 
 quick_object!(FormManager, gtk::Box, (gtk::Widget), (gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget), 
 	#[derive(Default)]
@@ -17,11 +19,25 @@ impl BoxImpl for imp::FormManager {}
 
 impl FormManager {
 	pub fn add_form_object(&self, form_object : FormObject) {
-		println!("Valid: {}", form_object.is_valid());
 		self.imp().form_objects.borrow_mut().push(form_object);
 	}
 
-	pub fn submit(&self) -> bool {
+	pub fn submit(&self) -> Option<HashMap<String, Value>> {
+		let objects = self.imp().form_objects.borrow();
+
+		let mut map = HashMap::new();
+		for obj in objects.iter() {
+			if obj.required() {
+				if !obj.is_valid() {
+					return None;
+				}
+			}
+			map.insert(obj.name(), obj.value());
+		}
+		Some(map)
+	}
+	
+	pub fn is_valid(&self) -> bool {
 		let objects = self.imp().form_objects.borrow();
 
 		for obj in objects.iter() {
@@ -33,6 +49,7 @@ impl FormManager {
 		}
 		true
 	}
+
 
 	pub fn ensure_all_types() {
 		FormObject::ensure_all_types();

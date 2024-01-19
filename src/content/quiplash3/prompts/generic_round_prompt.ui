@@ -13,7 +13,9 @@
                         <property name="row-spacing">20</property>
                         <child>
                             <object class="JCCLabelledBox">
+                                <property name="name">prompt-text</property>
                                 <property name="required">true</property>
+                                
                                 <binding name="string-bind-valid">
                                     <lookup name="text" type="GtkEntry">
                                         prompt-text-entry

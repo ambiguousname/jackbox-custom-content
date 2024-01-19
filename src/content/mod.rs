@@ -126,6 +126,7 @@ impl ContentWindow {}
 /// The actual impl definition for any [`ContentWindow`] subclasser to override.
 pub trait ContentWindowImpl : WindowImpl {
     /// Whenever [`ContentWindow`] has finished creating content and is ready to pass along the relevant data for the mod manager, call [`ContentWindowExt::finalize_content`] and this will be called with the appropriate callback.
+    /// Automatically closes the window.
     fn finalize_content(&self, callback : Option<ContentCallback>);
 }
 

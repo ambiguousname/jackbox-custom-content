@@ -26,6 +26,8 @@ quick_template!(LabelledBox, "/templates/content_util/labelled_box.ui", gtk::Box
 		// FormObject requirements:
 		#[property(get, set)]
 		pub required : RefCell<bool>,	
+		#[property(get, set)]
+		pub name : RefCell<String>,
 	}
 );
 
