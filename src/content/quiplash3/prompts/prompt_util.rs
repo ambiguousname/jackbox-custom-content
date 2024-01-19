@@ -17,6 +17,9 @@ quick_template!(QuiplashGenericRoundPrompt, "/content/quiplash3/prompts/generic_
         #[template_child(id="filter_transcript")]
         pub filter_transcript : TemplateChild<gtk::Box>,
 
+        #[template_child(id="prompt_text_entry")]
+        pub prompt_text_entry : TemplateChild<gtk::Entry>,
+
         #[template_child(id="form_manager")]
         pub form_manager : TemplateChild<FormManager>,
     }
@@ -32,6 +35,14 @@ impl ObjectImpl for imp::QuiplashGenericRoundPrompt {
         obj.bind_property::<gtk::Box>("final-round", obj.imp().filter_ogg.as_ref(), "visible").invert_boolean().sync_create().build();
         obj.bind_property::<gtk::Box>("final-round", obj.imp().filter_text.as_ref(), "visible").invert_boolean().sync_create().build();
         obj.bind_property::<gtk::Box>("final-round", obj.imp().filter_transcript.as_ref(), "visible").invert_boolean().sync_create().build();
+
+        // Would be nice to have, but currently not supported by GtkEntry.
+        // self.prompt_text_entry.connect_notify(Some("text"), |entry, _| {
+        //     // TODO: Find all instances of <BLANK> and <ANYPLAYER> and highlight them.
+
+        //     let buffer = entry.buffer();
+        //     buffer.
+        // });
 
         // let final_round = self.final_round.get();
         
