@@ -40,6 +40,7 @@ impl WidgetImpl for imp::LabelledBox {
 impl BoxImpl for imp::LabelledBox {}
 impl FormObjectImpl for imp::LabelledBox {
 	fn is_valid(&self) -> bool {
+		println!("Valid check");
 		let bool_bind_valid = self.bool_bind_valid.borrow().clone();
 		let string_bind_valid = self.string_bind_valid.borrow().clone();
 
@@ -50,6 +51,23 @@ impl FormObjectImpl for imp::LabelledBox {
 		}
 
 		false
+	}
+
+	fn value(&self) -> String {
+		if !self.is_valid() {
+			return "".to_string();
+		}
+		
+		let bool_bind_valid = self.bool_bind_valid.borrow().clone();
+		let string_bind_valid = self.string_bind_valid.borrow().clone();
+
+		if bool_bind_valid.is_some() {
+			return bool_bind_valid.unwrap();
+		} else if string_bind_valid.is_some() {
+			return string_bind_valid.unwrap();
+		}
+
+		"".to_string()
 	}
 }
 

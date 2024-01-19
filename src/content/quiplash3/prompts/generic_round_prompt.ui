@@ -16,12 +16,12 @@
                                 <property name="required">true</property>
                                 <binding name="string-bind-valid">
                                     <lookup name="text" type="GtkEntry">
-                                        prompt-text
+                                        prompt-text-entry
                                     </lookup>
                                 </binding>
                                 <property name="label">Prompt Text</property>
                                 <child>
-                                    <object class="GtkEntry" id="prompt-text">
+                                    <object class="GtkEntry" id="prompt-text-entry">
                                         <property name="hexpand">true</property>
                                         <property name="placeholder-text">I have a strong distaste for &lt;ANYPLAYER&gt; ever since they &lt;BLANK&gt;</property>
                                     </object>
