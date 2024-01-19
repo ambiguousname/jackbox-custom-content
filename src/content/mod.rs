@@ -1,11 +1,18 @@
-use gtk::{subclass::prelude::*, glib::{self, Value, Type, clone}, prelude::*, gio::{SimpleActionGroup, ActionEntry}};
+//! A combination of two "classes" (GObject classes, a whole lot of Rust structs and interfaces):
+//! Content - ListItem to be displayed in templates/mainmenu/content_creation (i.e., when you click to create a new piece of content). Lots of properties for relevant display information.
+//! ContentWindow - A subclassable window that implements methods for creating content according to the Jackbox system.
+
+use gtk::{subclass::prelude::*, glib, prelude::*};
 use glib::{Object, Properties, derived_properties};
 
 use std::cell::OnceCell;
 
+use crate::quick_object;
+
 pub mod quiplash3;
 
-// TODO: Can re-do this if there's a ensure type problem.
+// There's an automation in /build/content_list.rs. It auto generates this file based on the content/content_list.ui XML file (instructions on how to integrate it with that automation are in there) to avoid errors when including any of these windows in that very XML definition (mostly by calling ensure_all_types, as defined in the ContentWindowImpl trait.)
+// Can re-do this if there's a ensure type problem.
 include!(concat!(env!("OUT_DIR"), "/content_list.rs"));
 
 mod imp {
@@ -20,6 +27,7 @@ mod imp {
         #[property(get, set)]
         pub window_path : OnceCell<String>,
 
+        /// In the XML definition (content_list.ui), every piece of Content has an associated window property. This makes it much easier to quickly set up a definition for a window, then add it to the list of existing content. Less work for devs, but more work in the background.
         #[property(get, set)]
         pub window : OnceCell<ContentWindow>,
     }
@@ -32,87 +40,79 @@ mod imp {
 	}
 
     #[derived_properties]
-	impl ObjectImpl for Content {
-    }
+	impl ObjectImpl for Content {}
 }
 
 glib::wrapper! {
     pub struct Content(ObjectSubclass<imp::Content>);
 }
 
+/// Direct function that the mod manager uses to organize files after creation.
+/// TODO: Actually get this working as intended.
 type ContentCallback = fn(String);
 
 impl Content {
     pub fn ensure_all_types() {
         Content::ensure_type();
+        // Calls the function created in the include! call above.
         ensure_types();
     }
 
+    /// Creates the content window from the properties and sets up the appropriate [`ContentCallback`] to the window. 
     pub fn create_content(&self, parent : Option<&impl IsA<gtk::Window>>, callback : Option<ContentCallback>) {
         let window = self.window();
         window.set_hide_on_close(true);
         window.set_transient_for(parent);
-        if callback.is_some() {
-            window.connect("content-created", false, move |values| {
-                let window : ContentWindow = values[0].get().expect("Could not get ContentWindow");
-                window.close();
-
-                callback.unwrap()(values[1].get().unwrap());
-                None
-            });
-        }
+        window.create_content_window(callback);
         window.present();
     }
 }
 
-// Because GTK's implementation in Rust is a nightmare to read (I don't know why you would migrate an object oriented framework to something like Rust), this is the solution I've come up with to try and ensure some kind of consistency across different windows:
 mod content_window_imp {
     use std::cell::RefCell;
 
-    use gtk::glib::{subclass::Signal, once_cell::sync::Lazy};
-
-    use crate::templates::content_util::form::FormObject;
-
     use super::*;
 
-    
-    // TODO: add a create button to this subclass so new windows don't have to call the signal themselves every time.
-    // And make it a property.
-    #[derive(Default)] //, Properties
-    // #[properties(wrapper_type=super::ContentWindow)]
+    #[derive(Default)]
     pub struct ContentWindow {
+        /// The callback set by [`Content::create_content`]. 
+        pub content_callback : RefCell<Option<ContentCallback>>,
     }
 
-    // #[repr(C)]
-    // pub struct ContentWindowClass<T: ObjectSubclass> {
-    //     parent_class: <T::ParentType as ObjectType>::GlibClassType,
-    //     pub content_created: Option<unsafe extern "C" fn(*mut ContentWindow)-> &'static [&'static dyn ToValue]>,
-    // }
+    /// The struct used for virtual functions. You should override this in your custom ContentWindow extension (see [`quiplash3::prompts::QuiplashRoundPrompt`] for an example of this.)
+    #[repr(C)]
+    pub struct ContentWindowClass<T: ObjectSubclass> {
+        parent_class: <T::ParentType as ObjectType>::GlibClassType,
+        /// Called by the ContentWindow itself (although indirectly), for when content creation is done and it's ready to pass along info to the callback.
+        /// This is sort of an intermediary between [`ContentWindowImpl::finalize_content`] and [`ContentWindow`]'s call of it. This will pass along the callback to [`ContentWindowImpl`] and call it.
+        /// Set in [`IsSubclassable<T: ContentWindowImpl>::class_init`]
+        pub finalize_content : fn(&super::ContentWindow),
+    }
 
-    // unsafe impl<T : ObjectSubclass> ClassStruct for ContentWindowClass<T> {
-    //     type Type = T;
-    // }
+    /// Custom class structure to be able to use [`ContentWindowClass`]
+    /// Sets the default callback for [`ContentWindowClass<T>::finalize_content`]
+    unsafe impl<T : ObjectSubclass> ClassStruct for ContentWindowClass<T> {
+        type Type = T;
+        fn class_init(&mut self) {
+            self.finalize_content = ContentWindow::finalize_content;
+        }
+    }
+
+    /// Default implementations. Nothing special here.
+    impl ContentWindow {
+        fn finalize_content(_this : &super::ContentWindow) {}
+    }
 
     #[glib::object_subclass]
     impl ObjectSubclass for ContentWindow {
         const NAME: &'static str = "JCCContentWindow";
         type Type = super::ContentWindow;
         type ParentType = gtk::Window;
-        // type Class = ContentWindowClass<Self>;
+        type Class = ContentWindowClass<Self>;
     }
 
     // #[derived_properties]
-    impl ObjectImpl for ContentWindow {
-        fn signals() -> &'static [Signal] {
-            // Easiest way I can imagine handling things without knowing the gtk-rs library front and back.
-            // FIXME: If there's any way someone can instead set this up with the signal experiments below, as well as minimizing the amount of boilerplate on a user's end (i.e., just a function you can override instead of making your own button and hooking that up), you would be my hero.
-            // I dunno, maybe this works better if people can set up their own windows. But I'd sort of like some sort of template consistency, so the design can be somewhat uniform.
-            static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
-                vec![Signal::builder("content-created").param_types([String::static_type()]).build()]
-            });
-            SIGNALS.as_ref()
-        }
-    }
+    impl ObjectImpl for ContentWindow {}
     impl WidgetImpl for ContentWindow {}
     impl WindowImpl for ContentWindow {}
 }
@@ -123,44 +123,51 @@ glib::wrapper! {
 
 impl ContentWindow {}
 
-// So, I learned that this trait system is actually for creating signals.
-// I would really love for there to be some sort of designer friendly way to hook up signals, but this is what we've got.
-// Experiments commented below in case anyone wants to try them.
+/// The actual impl definition for any [`ContentWindow`] subclasser to override.
 pub trait ContentWindowImpl : WindowImpl {
-    // fn content_created(&self) -> &[&dyn ToValue] {
-    //     self.parent_content_created()
-    // }
+    /// Whenever [`ContentWindow`] has finished creating content and is ready to pass along the relevant data for the mod manager, call [`ContentWindowExt::finalize_content`] and this will be called with the appropriate callback.
+    fn finalize_content(&self, callback : Option<ContentCallback>);
 }
 
-// pub trait ContentWindowImplExt : ObjectSubclass {
-//     fn parent_content_created(&self) -> &[&dyn ToValue] {
-//         unsafe {
-//             let data = Self::type_data();
-//             let parent_class = data.as_ref().parent_class() as *mut content_window_imp::ContentWindowClass<Self>;
-//             // let f = (*parent_class)
-//             //     .content_created
-//             //     .expect("No parent class impl for \"content_created\"");
-//             // f(self.obj().unsafe_cast_ref::<ContentWindow>().to_glib_none().0)
-//         }
-//     }
-// }
-
-// impl<T: ContentWindowImpl> ContentWindowImplExt for T {}
-
+/// Assigns the actual functions to be called (this is mostly based on templates/content_util/form.rs, as well as https://github.com/sdroege/gst-plugin-rs/blob/95c007953c0874bc46152078775d673cf44cc255/net/webrtc/src/signaller/iface.rs).
 unsafe impl<T: ContentWindowImpl> IsSubclassable<T> for ContentWindow {
-    // fn class_init(class: &mut glib::Class<Self>) {
-    //     Self::parent_class_init::<T>(class);
+    fn class_init(class: &mut glib::Class<Self>) {
+        Self::parent_class_init::<T>(class);
         
-        
-    //     let klass = class.as_mut();
-    //     klass.content_created = Some(content_created::<T>);
-    // }
+        let klass = class.as_mut();
+
+        /// Grab the callback from [`content_window_imp::ContentWindow::content_callback`] and then call [`ContentWindowImpl::finalize_content`] with that callback.
+        /// Will also automatically close the window for you.
+        fn finalize_content_trampoline<T: ObjectSubclass + ContentWindowImpl>(obj : &ContentWindow) {
+            let this = obj.dynamic_cast_ref::<<T as ObjectSubclass>::Type>().unwrap().imp();
+
+            let imp = obj.imp();
+            let content_callback = imp.content_callback.borrow().clone();
+            ContentWindowImpl::finalize_content(this, content_callback);
+            obj.close();
+        }
+        klass.finalize_content = finalize_content_trampoline::<T>;
+    }
 }
 
-// unsafe extern "C" fn content_created<T: ContentWindowImpl>(ptr: *mut content_window_imp::ContentWindow) -> &'static[&'static dyn ToValue] {
-//     let instance = &*(ptr as *mut T::Instance);
-    
+/// The outward facing functions.
+pub trait ContentWindowExt : IsA<ContentWindow> + 'static {
+    /// Called by [`Content::create_content`], sets up the callback.
+    fn create_content_window(&self, callback : Option<ContentCallback>) {
+        let window = self.upcast_ref::<ContentWindow>();
 
-//     let imp = instance.imp();
-//     imp.content_created()
-// }
+        window.imp().content_callback.replace(callback);
+    }
+
+    /// Should be called by [`ContentWindow`] when the window is done, will call [`content_window_imp::ContentWindowClass<T>::finalize_content`] as an intermediary step.
+    /// This will automatically close the window.
+    fn finalize_content(&self) {
+        let window = self.upcast_ref::<ContentWindow>();
+        let klass = window.class().as_ref();
+
+        (klass.finalize_content)(window);
+    }
+}
+
+/// Just exposes ContentWindowExt for everybody.
+impl <T: IsA<ContentWindow>> ContentWindowExt for T {}

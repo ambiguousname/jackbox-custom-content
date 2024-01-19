@@ -1,4 +1,4 @@
-use crate::{quick_template, content::{ContentWindow, Content, ContentWindowImpl}};
+use crate::{quick_template, content::{ContentWindow, Content, ContentWindowImpl, ContentWindowExt}};
 
 mod prompt_util;
 use prompt_util::QuiplashGenericRoundPrompt;
@@ -14,17 +14,23 @@ quick_template!(QuiplashRoundPrompt, "/content/quiplash3/prompts/round_prompt.ui
 impl ObjectImpl for imp::QuiplashRoundPrompt {}
 impl WidgetImpl for imp::QuiplashRoundPrompt {}
 impl WindowImpl for imp::QuiplashRoundPrompt {}
-impl ContentWindowImpl for imp::QuiplashRoundPrompt {}
+impl ContentWindowImpl for imp::QuiplashRoundPrompt {
+    fn finalize_content(&self, callback : Option<crate::content::ContentCallback>) {
+        
+    }
+}
 
 #[gtk::template_callbacks]
 impl QuiplashRoundPrompt {
-    #[template_callback]
-    pub fn handle_create_clicked(&self) {
-        self.emit_by_name::<()>("content-created", &[&"Test Value"]);
-    }
-    
+    // This is here for visibility by the automated build/content_list.rs function.
     pub fn ensure_all_types() {
         QuiplashGenericRoundPrompt::ensure_all_types();
         QuiplashRoundPrompt::ensure_type();
+    }
+
+    #[template_callback]
+    pub fn handle_create_clicked(&self) {
+        // Put a call to ContentWindowImpl, with a stored callback (as explained in content/mod.rs)
+        self.finalize_content();
     }
 }

@@ -60,7 +60,7 @@ pub trait FormObjectImpl: ObjectImpl + ObjectSubclass {
 unsafe impl<T: FormObjectImpl> IsImplementable<T> for FormObject {
 	// Assign our struct functions to their actual values (i.e., the Impl definitions from implementors)
 	fn interface_init(iface: &mut glib::Interface<Self>) {
-		let iface = ::std::convert::AsMut::as_mut(iface);
+		let iface = iface.as_mut();
 
 		fn is_valid_trampoline<T: ObjectSubclass + FormObjectImpl>(obj : &FormObject) -> bool {
 			let this = obj.dynamic_cast_ref::<<T as ObjectSubclass>::Type>().unwrap().imp();
