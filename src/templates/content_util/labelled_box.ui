@@ -2,7 +2,7 @@
 <interface>
 	<template class="JCCLabelledBox" parent="GtkBox">
 		<child>
-			<object class="GtkLabel">
+			<object class="GtkLabel" id="label_child">
 				<!-- Property to change: -->
 				<binding name="label">
 					<!-- The name of the property on the object we want to associate, as well as that object's type: -->

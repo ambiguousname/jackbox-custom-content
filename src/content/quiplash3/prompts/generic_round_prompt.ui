@@ -14,7 +14,7 @@
                         <child>
                             <object class="JCCLabelledBox">
                                 <!-- Connect to the label property of the last child in the box (assumed to be the value you need to submit) -->
-                                <property name="value-property">label</property>
+                                <property name="value-property">text</property>
                                 <property name="required">true</property>
                                 <property name="label">Prompt Text</property>
                                 <child>

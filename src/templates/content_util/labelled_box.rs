@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use gtk::glib::{Properties, derived_properties, Value};
+use gtk::glib::{Properties, derived_properties, Value, clone};
 use crate::quick_template;
 use crate::templates::content_util::form::FormObject;
 
@@ -22,15 +22,29 @@ quick_template!(LabelledBox, "/templates/content_util/labelled_box.ui", gtk::Box
 		
 		#[property(get, set)]
 		pub label : RefCell<String>,
+
+		#[template_child(id="label_child")]
+		pub label_child : TemplateChild<gtk::Label>,
 	}
 );
 
 #[derived_properties]
-impl ObjectImpl for imp::LabelledBox {}
+impl ObjectImpl for imp::LabelledBox {
+	fn constructed(&self) {
+		self.parent_constructed();
+	}
+}
 impl WidgetImpl for imp::LabelledBox {
 	fn realize(&self) {
 		self.parent_realize();
 		self.obj().construct_form_obj();
+		
+		let last_child = self.obj().last_child().expect("Could not get LabelledBox last child.");
+		// Clear error when the property we're monitoring changes:
+		last_child.connect_notify(Some(&self.value_property.borrow().clone()), move |child, _| {
+			let parent = child.ancestor(LabelledBox::static_type()).and_downcast::<LabelledBox>().expect("Could not get parent.");
+			parent.display_error(None);
+		});
 	}
 }
 impl BoxImpl for imp::LabelledBox {}
@@ -41,6 +55,12 @@ impl FormObjectImpl for imp::LabelledBox {
 
 	fn value(&self) -> Value {
 		self.obj().value()
+	}
+	fn display_error(&self, error : Option<super::form::FormError>) {
+		match error {
+			Some(super::form::FormError::INVALID) => self.label_child.add_css_class("error"),
+			_ => self.label_child.remove_css_class("error"),
+		}
 	}
 }
 
@@ -72,7 +92,7 @@ impl LabelledBox {
 	}
 
 	pub fn value(&self) -> Value {
-		self.last_child().unwrap().property(&self.imp().value_property.borrow().clone())
+		self.last_child().expect("Could not get LabelledBox last child.").property(&self.imp().value_property.borrow().clone())
 	}
 }
 

@@ -42,14 +42,19 @@ impl FormManager {
 	pub fn is_valid(&self) -> bool {
 		let objects = self.imp().form_objects.borrow();
 
+		let mut is_valid = true;
 		for obj in objects.iter() {
 			if obj.required() {
+				// TODO: Hook up more complex object validation to errors (i.e., ContentWindow specific validation)? Rather than this more roundabout way.
 				if !obj.is_valid() {
-					return false;
+					is_valid = false;
+					obj.display_error(Some(super::form::FormError::INVALID));
+				} else {
+					obj.display_error(None);
 				}
 			}
 		}
-		true
+		return is_valid;
 	}
 
 

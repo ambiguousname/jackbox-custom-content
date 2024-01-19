@@ -5,6 +5,12 @@ use gtk::{subclass::prelude::*, glib::{self, Value}, prelude::*};
 
 use super::form_manager::FormManager;
 
+pub enum FormError {
+	/// Generic invalid statement. Just highlight the form object without showing anything special.
+	INVALID,
+	// Might add more error types later, but this is fine for now.
+}
+
 mod imp {
 	use gtk::glib::{Properties, ParamSpec, once_cell::sync::Lazy, ParamSpecBoolean, subclass::{prelude::*, Signal}, ParamSpecString};
 
@@ -17,6 +23,7 @@ mod imp {
 		// Create the list of functions to be stored by our Interface definition in GTK GObject stuff:
 		pub is_valid : fn(&super::FormObject) -> bool,
 		pub value : fn(&super::FormObject) -> Value,
+		pub display_error : fn(&super::FormObject, Option<FormError>),
 	}
 	
 	// Default functions:
@@ -27,6 +34,9 @@ mod imp {
 		fn value(_this : &super::FormObject) -> Value {
 			None::<String>.to_value()
 		}
+		fn display_error(_this : &super::FormObject, _error : Option<FormError>) {
+
+		} 
 	}
 
 	#[glib::object_interface]
@@ -43,6 +53,7 @@ mod imp {
 		fn interface_init(&mut self) {
 			self.is_valid = FormObject::is_valid;
 			self.value = FormObject::value;
+			self.display_error = FormObject::display_error;
 		}
 	}
 }
@@ -55,6 +66,7 @@ glib::wrapper!{
 pub trait FormObjectImpl: ObjectImpl + ObjectSubclass {
 	fn is_valid(&self) -> bool;
 	fn value(&self) -> Value;
+	fn display_error(&self, error : Option<FormError>);
 }
 
 unsafe impl<T: FormObjectImpl> IsImplementable<T> for FormObject {
@@ -73,6 +85,12 @@ unsafe impl<T: FormObjectImpl> IsImplementable<T> for FormObject {
 			FormObjectImpl::value(this)
 		}
 		iface.value = value_trampoline::<T>;
+
+		fn display_error_trampoline<T: ObjectSubclass + FormObjectImpl>(obj : &FormObject, error : Option<FormError>) {
+			let this = obj.dynamic_cast_ref::<<T as ObjectSubclass>::Type>().unwrap().imp();
+			FormObjectImpl::display_error(this, error);
+		}
+		iface.display_error = display_error_trampoline::<T>;
 	}
 }
 
@@ -111,6 +129,12 @@ pub trait FormObjectExt : IsA<FormObject> + IsA<gtk::Widget> + 'static {
 		let vtable = self.interface::<FormObject>().unwrap();
 		let vtable = vtable.as_ref();
 		(vtable.value)(self.upcast_ref::<FormObject>())
+	}
+
+	fn display_error(&self, error: Option<FormError>) {
+		let vtable = self.interface::<FormObject>().unwrap();
+		let vtable = vtable.as_ref();
+		(vtable.display_error)(self.upcast_ref::<FormObject>(), error);
 	}
 }
 
