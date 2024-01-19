@@ -13,7 +13,6 @@
                         <property name="row-spacing">20</property>
                         <child>
                             <object class="JCCLabelledBox">
-                                <property name="name">prompt-text</property>
                                 <!-- Connect to the label property of the last child in the box (assumed to be the value you need to submit) -->
                                 <property name="value-property">label</property>
                                 <property name="required">true</property>

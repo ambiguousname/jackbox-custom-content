@@ -12,17 +12,16 @@ quick_template!(LabelledBox, "/templates/content_util/labelled_box.ui", gtk::Box
 	#[derive(Default, CompositeTemplate, Properties)]
 	#[properties(wrapper_type=super::LabelledBox)]
 	struct {
-		#[property(get, set)]
-		pub label : RefCell<String>,
 
 		#[property(get, set)]
 		pub value_property : RefCell<String>,
 
 		// FormObject requirements:
 		#[property(get, set)]
-		pub required : RefCell<bool>,	
+		pub required : RefCell<bool>,
+		
 		#[property(get, set)]
-		pub name : RefCell<String>,
+		pub label : RefCell<String>,
 	}
 );
 

@@ -35,7 +35,7 @@ mod imp {
 
 		fn properties() -> &'static [ParamSpec] {
 			static PROPERTIES : Lazy<Vec<ParamSpec>> = Lazy::new(|| {
-				vec![ParamSpecBoolean::builder("required").readwrite().build(), ParamSpecString::builder("name").readwrite().build()]
+				vec![ParamSpecBoolean::builder("required").readwrite().build(), ParamSpecString::builder("label").readwrite().build()]
 			});
 			PROPERTIES.as_ref()
 		}
@@ -103,8 +103,8 @@ pub trait FormObjectExt : IsA<FormObject> + IsA<gtk::Widget> + 'static {
 		(vtable.is_valid)(self.upcast_ref::<FormObject>())
 	}
 
-	fn name(&self) -> String {
-		self.property("name")
+	fn label(&self) -> String {
+		self.property("label")
 	}
 
 	fn value(&self) -> Value {

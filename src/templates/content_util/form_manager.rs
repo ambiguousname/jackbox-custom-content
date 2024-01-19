@@ -22,6 +22,8 @@ impl FormManager {
 		self.imp().form_objects.borrow_mut().push(form_object);
 	}
 
+	/// "Submit" the form by getting all the values from each of the form objects, mapped from their labels to their values.
+	/// TODO: Might want to change to something like IDs. But I'd ideally like to use the Buildable ID system, which you can't really access.
 	pub fn submit(&self) -> Option<HashMap<String, Value>> {
 		let objects = self.imp().form_objects.borrow();
 
@@ -32,7 +34,7 @@ impl FormManager {
 					return None;
 				}
 			}
-			map.insert(obj.name(), obj.value());
+			map.insert(obj.label(), obj.value());
 		}
 		Some(map)
 	}
