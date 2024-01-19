@@ -4,7 +4,7 @@ use gtk::{subclass::prelude::*, glib, prelude::*};
 use super::form_manager::FormManager;
 
 mod imp {
-	use gtk::glib::{Properties, ParamSpec, once_cell::sync::Lazy, ParamSpecBoolean};
+	use gtk::glib::{Properties, ParamSpec, once_cell::sync::Lazy, ParamSpecBoolean, subclass::{prelude::*, Signal}};
 
 	use super::*;
 
@@ -12,6 +12,7 @@ mod imp {
 	#[repr(C)]
 	pub struct FormObject {
 		parent : glib::gobject_ffi::GTypeInterface,
+
 	}
 
 	#[glib::object_interface]
@@ -25,14 +26,25 @@ mod imp {
 			});
 			PROPERTIES.as_ref()
 		}
+
+		fn signals() -> &'static [Signal] {
+			static SIGNALS : Lazy<Vec<Signal>> = Lazy::new(|| {
+				vec![Signal::builder("is-valid").return_type::<bool>().build()]
+			});
+			SIGNALS.as_ref()
+		}
 	}
 }
 
 glib::wrapper!{
-	pub struct FormObject(ObjectInterface<imp::FormObject>);
+	pub struct FormObject(ObjectInterface<imp::FormObject>) @requires gtk::Widget;
 }
 
-unsafe impl<T: ObjectSubclass> IsImplementable<T> for FormObject {}
+pub trait FormObjectImpl: ObjectImpl + ObjectSubclass {
+	fn is_valid(&self) -> bool;
+}
+
+unsafe impl<T: FormObjectImpl> IsImplementable<T> for FormObject {}
 
 impl FormObject {
 	pub fn ensure_all_types() {
@@ -40,7 +52,13 @@ impl FormObject {
 	}
 }
 
-pub trait FormObjectExt : IsA<FormObject> + 'static {
+pub trait FormObjectExt : IsA<FormObject> + IsA<gtk::Widget> + 'static {
+	// FIXME: This would be nice to do automatically on constructed/realized/whatever.
+	fn construct_form_obj(&self) {
+		let ancestor : FormManager = self.ancestor(FormManager::static_type()).and_downcast().expect("Could not get FormManager.");
+		ancestor.add_form_object(self.clone().into());
+	}
+
 	fn required(&self) -> bool {
 		self.property("required")
 	}
@@ -48,6 +66,11 @@ pub trait FormObjectExt : IsA<FormObject> + 'static {
 	fn set_required(&self, required : bool) {
 		self.set_property("required", required);
 	}
+
+	fn is_valid(&self) -> bool {
+		let valid : bool = self.emit_by_name("is-valid", &[]);
+		valid
+	}
 }
 
-impl <T: IsA<FormObject>> FormObjectExt for T {}
+impl <T: IsA<FormObject> + IsA<gtk::Widget>> FormObjectExt for T {}
