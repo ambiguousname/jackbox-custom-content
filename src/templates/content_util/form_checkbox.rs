@@ -21,8 +21,8 @@ impl CheckButtonImpl for imp::FormCheckbox {}
 impl FormObjectImpl for imp::FormCheckbox {
 	fn display_error(&self, error : Option<super::form::FormError>) {
 		match error {
-			Some(super::form::FormError::INVALID) => self.obj().add_css_class("error"),
-			_ => self.obj().remove_css_class("error"),
+			Some(super::form::FormError::INVALID) => self.obj().child().unwrap().next_sibling().unwrap().add_css_class("error"),
+			_ => self.obj().child().unwrap().next_sibling().unwrap().remove_css_class("error"),
 		};
 	}
 
