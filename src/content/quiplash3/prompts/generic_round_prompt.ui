@@ -69,40 +69,15 @@
                                 </layout>
                             </object>
                         </child>
-                        <child>
-                            <object class="JCCLabelledBox">
+                        <!-- <child>
+                            <object class="JCCFormFilebrowse">
                                 <layout>
                                     <property name="row">2</property>
                                     <property name="column">0</property>
                                 </layout>
                                 <property name="label" translatable="yes">.OGG narrating the prompt</property>
-                                <property name="label-hexpand">true</property>
-                                <property name="label-xalign">0</property>
-                                <property name="label-halign">1</property>
-                                <property name="label-mnemonic-widget">browse_prompt_read</property>
-                                <!-- <property name="value-property">file</property> -->
-                                <child>
-                                    <object class="GtkBox">
-                                        <property name="halign">end</property>
-                                        <property name="spacing">10</property>
-                                        <child>
-                                            <object class="GtkInscription">
-                                                <property name="nat-chars">40</property>
-                                                <property name="nat-lines">1</property>
-                                                <property name="text-overflow">ellipsize-end</property>
-                                                <property name="valign">center</property>
-                                            </object>
-                                        </child>
-                                        <child>
-                                            <object class="GtkButton" id="browse_prompt_read">
-                                                <property name="valign">center</property>
-                                                <property name="label" translatable="yes">Browse</property>
-                                            </object>
-                                        </child>
-                                    </object>
-                                </child>
                             </object>
-                        </child>
+                        </child> -->
                         <child>
                             <object class="GtkBox" id="filter_text">
                                 <property name="spacing">10</property>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+	<template class="JCCFormFilebrowse" parent="JCCLabelledBox">
+		<property name="label-hexpand">true</property>
+		<property name="label-xalign">0</property>
+		<property name="label-halign">1</property>
+		<property name="label-mnemonic-widget">browse</property>
+		<child>
+			<object class="GtkBox">
+				<property name="halign">end</property>
+				<property name="spacing">10</property>
+				<child>
+					<object class="GtkInscription">
+						<property name="nat-chars">40</property>
+						<property name="nat-lines">1</property>
+						<property name="text-overflow">ellipsize-end</property>
+						<property name="valign">center</property>
+					</object>
+				</child>
+				<child>
+					<object class="GtkButton" id="browse">
+						<property name="valign">center</property>
+						<property name="label" translatable="yes">Browse</property>
+					</object>
+				</child>
+			</object>
+		</child>
+	</template>
+</interface>
