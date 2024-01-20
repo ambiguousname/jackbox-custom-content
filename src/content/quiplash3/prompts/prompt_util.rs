@@ -38,10 +38,10 @@ impl ObjectImpl for imp::QuiplashGenericRoundPrompt {
 
         // Would be nice to have, but currently not supported by GtkEntry.
         // self.prompt_text_entry.connect_notify(Some("text"), |entry, _| {
-        //     // TODO: Find all instances of <BLANK> and <ANYPLAYER> and highlight them.
+        //     // Find all instances of <BLANK> and <ANYPLAYER> and highlight them.
 
-        //     let buffer = entry.buffer();
-        //     buffer.
+        //     let text_val = entry.text();
+        //     let text_child : gtk::Text = entry.first_child().and_downcast().expect("Could not get Text child.");
         // });
 
         // let final_round = self.final_round.get();
