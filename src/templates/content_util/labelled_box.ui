@@ -11,6 +11,41 @@
 						JCCLabelledBox
 					</lookup>
 				</binding>
+				<binding name="hexpand">
+					<lookup name="label-hexpand" type="JCCLabelledBox">
+						JCCLabelledBox
+					</lookup>
+				</binding>
+				<binding name="halign">
+					<lookup name="label-halign" type="JCCLabelledBox">
+						JCCLabelledBox
+					</lookup>
+				</binding>
+				<binding name="valign">
+					<lookup name="label-valign" type="JCCLabelledBox">
+						JCCLabelledBox
+					</lookup>
+				</binding>
+				<binding name="vexpand">
+					<lookup name="label-vexpand" type="JCCLabelledBox">
+						JCCLabelledBox
+					</lookup>
+				</binding>
+				<binding name="xalign">
+					<lookup name="label-xalign" type="JCCLabelledBox">
+						JCCLabelledBox
+					</lookup>
+				</binding>
+				<binding name="yalign">
+					<lookup name="label-yalign" type="JCCLabelledBox">
+						JCCLabelledBox
+					</lookup>
+				</binding>
+				<binding name="mnemonic-widget">
+					<lookup name="label-mnemonic-widget" type="JCCLabelledBox">
+						JCCLabelledBox
+					</lookup>
+				</binding>
 				<property name="margin-end">5</property>
 			</object>
 		</child>

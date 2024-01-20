@@ -16,11 +16,11 @@
                                 <!-- Connect to the label property of the last child in the box (assumed to be the value you need to submit) -->
                                 <property name="value-property">text</property>
                                 <property name="required">true</property>
-                                <property name="label">Prompt Text</property>
+                                <property name="label" translatable="yes">Prompt Text</property>
                                 <child>
                                     <object class="GtkEntry" id="prompt_text_entry">
                                         <property name="hexpand">true</property>
-                                        <property name="placeholder-text">I have a strong distaste for &lt;ANYPLAYER&gt; ever since they &lt;BLANK&gt;</property>
+                                        <property name="placeholder-text" translatable="yes">I have a strong distaste for &lt;ANYPLAYER&gt; ever since they &lt;BLANK&gt;</property>
                                     </object>
                                 </child>
                                 <layout>
@@ -32,7 +32,7 @@
                         </child>
                         <child>
                             <object class="JCCLabelledBox">
-                                <property name="label">Safety Quips</property>
+                                <property name="label" translatable="yes">Safety Quips</property>
                                 <property name="value-property">items</property>
                                 <child>
                                     <object class="JCCEditableList" id="response_filter">
@@ -50,17 +50,17 @@
                                 <property name="orientation">vertical</property>
                                 <child>
                                     <object class="JCCFormCheckbox">
-                                        <property name="label">Includes Player Name</property>
+                                        <property name="label" translatable="yes">Includes Player Name</property>
                                     </object>
                                 </child>
                                 <child>
                                     <object class="JCCFormCheckbox">
-                                        <property name="label">Contains Adult Content</property>
+                                        <property name="label" translatable="yes">Contains Adult Content</property>
                                     </object>
                                 </child>
                                 <child>
                                     <object class="JCCFormCheckbox">
-                                        <property name="label">Content is US-Specific</property>
+                                        <property name="label" translatable="yes">Content is US-Specific</property>
                                     </object>
                                 </child>
                                 <layout>
@@ -70,20 +70,17 @@
                             </object>
                         </child>
                         <child>
-                            <object class="GtkBox">
+                            <object class="JCCLabelledBox">
                                 <layout>
                                     <property name="row">2</property>
                                     <property name="column">0</property>
                                 </layout>
-                                <child>
-                                    <object class="GtkLabel">
-                                        <property name="label" translatable="yes">.OGG narrating the prompt</property>
-                                        <property name="hexpand">true</property>
-                                        <property name="xalign">0</property>
-                                        <property name="halign">start</property>
-                                        <property name="mnemonic-widget">browse_prompt_read</property>
-                                    </object>
-                                </child>
+                                <property name="label" translatable="yes">.OGG narrating the prompt</property>
+                                <property name="label-hexpand">true</property>
+                                <property name="label-xalign">0</property>
+                                <property name="label-halign">1</property>
+                                <property name="label-mnemonic-widget">browse_prompt_read</property>
+                                <!-- <property name="value-property">file</property> -->
                                 <child>
                                     <object class="GtkBox">
                                         <property name="halign">end</property>

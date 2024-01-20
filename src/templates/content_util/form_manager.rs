@@ -1,4 +1,4 @@
-use gtk::glib::Value;
+use gtk::{glib::Value, CssProvider};
 
 use crate::{quick_object, templates::content_util::form::FormObjectExt};
 use super::{form::FormObject, labelled_box::LabelledBox, form_checkbox::FormCheckbox};

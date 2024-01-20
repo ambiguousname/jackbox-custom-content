@@ -12,9 +12,24 @@ quick_template!(LabelledBox, "/templates/content_util/labelled_box.ui", gtk::Box
 	#[derive(Default, CompositeTemplate, Properties)]
 	#[properties(wrapper_type=super::LabelledBox)]
 	struct {
-
 		#[property(get, set)]
 		pub value_property : RefCell<String>,
+
+		// Attached label properties:
+		#[property(get, set)]
+		pub label_hexpand : RefCell<bool>,
+		#[property(get, set)]
+		pub label_vexpand : RefCell<bool>,
+		#[property(get, set)]
+		pub label_valign : RefCell<i32>,
+		#[property(get, set)]
+		pub label_halign : RefCell<i32>,
+		#[property(get, set)]
+		pub label_xalign : RefCell<f32>,
+		#[property(get, set)]
+		pub label_yalign : RefCell<f32>,
+		#[property(get, set)]
+		pub label_mnemonic_widget : RefCell<Option<gtk::Widget>>,
 
 		// FormObject requirements:
 		#[property(get, set)]
