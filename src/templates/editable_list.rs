@@ -1,4 +1,4 @@
-use gtk::{ListBox, EditableLabel, glib::{derived_properties, clone}};
+use gtk::{ListBox, EditableLabel, glib::{derived_properties, clone}, ListBoxRow};
 use glib::{Object, Properties};
 use std::cell::RefCell;
 
@@ -44,7 +44,8 @@ impl EditableList {
 
         let mut curr_child = self.imp().item_list.first_child();
         while curr_child.is_some() {
-            let label = curr_child.clone().and_downcast::<EditableLabel>().expect("Could not get editable label");
+            let row = curr_child.clone().and_downcast::<ListBoxRow>().expect("Could not get ListBoxRow.");
+            let label = row.child().and_downcast::<EditableLabel>().expect("Could not get EditableLabel.");
             vec.push(label.text().to_string());
 
             curr_child = curr_child.unwrap().next_sibling();
