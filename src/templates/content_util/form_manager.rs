@@ -1,7 +1,7 @@
 use gtk::glib::Value;
 
 use crate::{quick_object, templates::content_util::form::FormObjectExt};
-use super::{form::FormObject, labelled_box::LabelledBox};
+use super::{form::FormObject, labelled_box::LabelledBox, form_checkbox::FormCheckbox};
 
 use std::{cell::RefCell, collections::HashMap};
 
@@ -61,6 +61,7 @@ impl FormManager {
 	pub fn ensure_all_types() {
 		FormObject::ensure_all_types();
         LabelledBox::ensure_all_types();
+		FormCheckbox::ensure_all_types();
 		FormManager::ensure_type();
 	}
 }

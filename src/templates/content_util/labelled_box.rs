@@ -29,11 +29,7 @@ quick_template!(LabelledBox, "/templates/content_util/labelled_box.ui", gtk::Box
 );
 
 #[derived_properties]
-impl ObjectImpl for imp::LabelledBox {
-	fn constructed(&self) {
-		self.parent_constructed();
-	}
-}
+impl ObjectImpl for imp::LabelledBox {}
 impl WidgetImpl for imp::LabelledBox {
 	fn realize(&self) {
 		self.parent_realize();

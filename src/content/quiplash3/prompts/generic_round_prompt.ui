@@ -49,17 +49,17 @@
                             <object class="GtkBox">
                                 <property name="orientation">vertical</property>
                                 <child>
-                                    <object class="GtkCheckButton">
+                                    <object class="JCCFormCheckbox">
                                         <property name="label">Includes Player Name</property>
                                     </object>
                                 </child>
                                 <child>
-                                    <object class="GtkCheckButton">
+                                    <object class="JCCFormCheckbox">
                                         <property name="label">Contains Adult Content</property>
                                     </object>
                                 </child>
                                 <child>
-                                    <object class="GtkCheckButton">
+                                    <object class="JCCFormCheckbox">
                                         <property name="label">Content is US-Specific</property>
                                     </object>
                                 </child>

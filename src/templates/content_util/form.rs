@@ -64,6 +64,7 @@ glib::wrapper!{
 
 // Impl definition for people to override.
 pub trait FormObjectImpl: ObjectImpl + ObjectSubclass {
+	/// Only called if the property required is true.
 	fn is_valid(&self) -> bool;
 	fn value(&self) -> Value;
 	fn display_error(&self, error : Option<FormError>);
