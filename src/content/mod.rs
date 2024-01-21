@@ -59,10 +59,9 @@ impl Content {
     }
 
     /// Creates the content window from the properties and sets up the appropriate [`ContentCallback`] to the window. 
-    pub fn create_content(&self, parent : Option<&impl IsA<gtk::Window>>, callback : Option<ContentCallback>) {
+    pub fn create_content(&self, callback : Option<ContentCallback>) {
         let window = self.window();
         window.set_hide_on_close(true);
-        window.set_transient_for(parent);
         window.create_content_window(callback);
         window.present();
     }

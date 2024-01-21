@@ -65,7 +65,8 @@ impl FormFilebrowse {
 			file_chooser = file_chooser.default_filter(&filter.unwrap());
 		}
 		let file_chooser = file_chooser.build();
-		file_chooser.open(None::<&Window>, None::<&Cancellable>, |res| {
+		let parent = self.ancestor(Window::static_type()).and_downcast::<Window>().unwrap();
+		file_chooser.open(Some(&parent), None::<&Cancellable>, |res| {
 
 		});
 	}
