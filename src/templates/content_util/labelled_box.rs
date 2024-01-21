@@ -53,9 +53,6 @@ mod imp {
 
 	unsafe impl<T: ObjectSubclass> ClassStruct for LabelledBoxClass<T> {
 		type Type = T;
-		fn class_init(&mut self) {
-			self.get_value_obj = LabelledBox::get_value_obj;
-		}
 	}
 
 	impl LabelledBox {
@@ -73,6 +70,7 @@ mod imp {
 		type Class = LabelledBoxClass<Self>;
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
+			klass.get_value_obj = LabelledBox::get_value_obj;
         }
         fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
             obj.init_template();

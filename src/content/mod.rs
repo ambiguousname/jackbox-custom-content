@@ -93,9 +93,6 @@ mod content_window_imp {
     /// Sets the default callback for [`ContentWindowClass<T>::finalize_content`]
     unsafe impl<T : ObjectSubclass> ClassStruct for ContentWindowClass<T> {
         type Type = T;
-        fn class_init(&mut self) {
-            self.finalize_content = ContentWindow::finalize_content;
-        }
     }
 
     /// Default implementations. Nothing special here.
@@ -109,6 +106,9 @@ mod content_window_imp {
         type Type = super::ContentWindow;
         type ParentType = gtk::Window;
         type Class = ContentWindowClass<Self>;
+        fn class_init(klass: &mut Self::Class) {
+            klass.finalize_content = ContentWindow::finalize_content;
+        }
     }
 
     // #[derived_properties]
