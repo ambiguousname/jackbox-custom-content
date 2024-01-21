@@ -22,7 +22,7 @@ mod imp {
 		pub label_hexpand : RefCell<bool>,
 		#[property(get, set)]
 		pub label_vexpand : RefCell<bool>,
-		#[property(get, set)]
+		#[property(get, set, default=3)]
 		pub label_valign : RefCell<i32>,
 		#[property(get, set)]
 		pub label_halign : RefCell<i32>,
