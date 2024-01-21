@@ -69,7 +69,7 @@
                                 </layout>
                             </object>
                         </child>
-                        <!-- <child>
+                        <child>
                             <object class="JCCFormFilebrowse">
                                 <layout>
                                     <property name="row">2</property>
@@ -77,7 +77,7 @@
                                 </layout>
                                 <property name="label" translatable="yes">.OGG narrating the prompt</property>
                             </object>
-                        </child> -->
+                        </child>
                         <child>
                             <object class="GtkBox" id="filter_text">
                                 <property name="spacing">10</property>

@@ -19,6 +19,7 @@
 				</child>
 				<child>
 					<object class="GtkButton" id="browse">
+						<signal name="clicked" swapped="true" handler="handle_browse"/>
 						<property name="valign">center</property>
 						<property name="label" translatable="yes">Browse</property>
 					</object>
