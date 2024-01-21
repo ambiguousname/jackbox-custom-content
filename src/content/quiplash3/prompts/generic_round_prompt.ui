@@ -13,6 +13,11 @@
                         <property name="row-spacing">20</property>
                         <child>
                             <object class="JCCLabelledBox">
+                                <layout>
+                                    <property name="row">0</property>
+                                    <property name="column-span">2</property>
+                                    <property name="column">0</property>
+                                </layout>
                                 <!-- Connect to the label property of the last child in the box (assumed to be the value you need to submit) -->
                                 <property name="value-property">text</property>
                                 <property name="required">true</property>
@@ -23,15 +28,15 @@
                                         <property name="placeholder-text" translatable="yes">I have a strong distaste for &lt;ANYPLAYER&gt; ever since they &lt;BLANK&gt;</property>
                                     </object>
                                 </child>
-                                <layout>
-                                    <property name="row">0</property>
-                                    <property name="column-span">2</property>
-                                    <property name="column">0</property>
-                                </layout>
                             </object>
                         </child>
                         <child>
                             <object class="JCCLabelledBox">
+                                <layout>
+                                    <property name="row">1</property>
+                                    <property name="column">0</property>
+                                </layout>
+                                <property name="spacing">10</property>
                                 <property name="label" translatable="yes">Safety Quips</property>
                                 <property name="value-property">items</property>
                                 <child>
@@ -39,14 +44,14 @@
                                         <property name="hexpand">true</property>
                                     </object>
                                 </child>
-                                <layout>
-                                    <property name="row">1</property>
-                                    <property name="column">0</property>
-                                </layout>
                             </object>
                         </child>
                         <child>
                             <object class="GtkBox">
+                                <layout>
+                                    <property name="row">1</property>
+                                    <property name="column">1</property>
+                                </layout>
                                 <property name="orientation">vertical</property>
                                 <child>
                                     <object class="JCCFormCheckbox">
@@ -63,10 +68,6 @@
                                         <property name="label" translatable="yes">Content is US-Specific</property>
                                     </object>
                                 </child>
-                                <layout>
-                                    <property name="row">1</property>
-                                    <property name="column">1</property>
-                                </layout>
                             </object>
                         </child>
                         <child>
@@ -93,22 +94,17 @@
                             </object>
                         </child>
                         <child>
-                            <object class="GtkBox" id="filter_text">
-                                <property name="spacing">10</property>
+                            <object class="JCCLabelledBox" id="filter_text">
                                 <layout>
                                     <property name="row">3</property>
                                     <property name="column">0</property>
                                 </layout>
-                                <child>
-                                    <object class="GtkLabel">
-                                        <property name="label">Response text filter</property>
-                                    </object>
-                                </child>
+                                <property name="spacing">10</property>
+                                <property name="label">Response text filter</property>
+                                <property name="value-property">items</property>
                                 <child>
                                     <object class="JCCEditableList" id="safety_quips">
                                         <property name="hexpand">true</property>
-                                        <property name="orientation">vertical</property>
-                                        <property name="width-request">154</property>
                                     </object>
                                 </child>
                             </object>
