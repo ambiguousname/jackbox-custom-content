@@ -157,6 +157,7 @@ impl MainMenuWindow {
 	
 	pub fn toggle_creation_visibility(&self, visible: bool) {
 		self.imp().mod_editor.set_visible(visible);
+		self.imp().first_new_mod.set_visible(visible);
 		self.imp().new_content.set_visible(visible);
 	}
 	// endregion
