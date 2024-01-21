@@ -1,4 +1,4 @@
-use gtk::{glib::Properties, FileDialog, gio::Cancellable, Window};
+use gtk::{glib::{Properties, clone, derived_properties}, FileDialog, gio::Cancellable, Window};
 
 use crate::quick_template;
 use super::{form::{FormObject, FormObjectImpl, FormObjectExt}, labelled_box::{LabelledBox, LabelledBoxImpl}};
@@ -8,15 +8,20 @@ quick_template!(FormFilebrowse, "/templates/content_util/form_filebrowse.ui", La
 	#[derive(Default, CompositeTemplate, Properties)]
 	#[properties(wrapper_type=super::FormFilebrowse)]
 	handlers struct {
+		#[template_child(id="inscription")]
+		pub inscription : TemplateChild<gtk::Inscription>,
+
 		#[property(get, set)]
-		pub filter : RefCell<Option<gtk::FileFilter>>,
+		pub filters : RefCell<Option<gtk::gio::ListModel>>,
 		#[property(get)]
 		pub file : RefCell<Option<gtk::gio::File>>,
 	}
 );
 
+#[derived_properties]
 impl ObjectImpl for imp::FormFilebrowse {
 	fn constructed(&self) {
+		self.parent_constructed();
 		let obj = self.obj();
 		let self_box = obj.upcast_ref::<LabelledBox>();
 		self_box.set_value_property("file");
@@ -56,18 +61,31 @@ impl FormFilebrowse {
 		FormFilebrowse::ensure_type();
 	}
 
+	pub fn update_inscription(&self) {
+		let file = self.imp().file.borrow().clone();
+		if file.is_some() {
+			let pth = file.unwrap().path().unwrap();
+			let file_path = pth.to_str();
+
+			let inscr = self.imp().inscription.clone();
+			inscr.set_text(file_path);
+			inscr.set_tooltip_text(file_path);
+		}
+	}
+
 	#[template_callback]
 	fn handle_browse(&self) {
 		let mut file_chooser = FileDialog::builder();
 
-		let filter = self.imp().filter.borrow().clone();
-		if filter.is_some() {
-			file_chooser = file_chooser.default_filter(&filter.unwrap());
+		let filters = self.imp().filters.borrow().clone();
+		if filters.is_some() {
+			file_chooser = file_chooser.filters(&filters.unwrap());
 		}
 		let file_chooser = file_chooser.build();
 		let parent = self.ancestor(Window::static_type()).and_downcast::<Window>().unwrap();
-		file_chooser.open(Some(&parent), None::<&Cancellable>, |res| {
-
-		});
+		file_chooser.open(Some(&parent), None::<&Cancellable>, clone!(@weak self as f => move |res| {
+			f.imp().file.replace(res.ok());
+			f.update_inscription();
+		}));
 	}
 }

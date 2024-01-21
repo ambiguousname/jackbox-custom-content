@@ -74,8 +74,22 @@
                                 <layout>
                                     <property name="row">2</property>
                                     <property name="column">0</property>
+                                    <property name="column-span">2</property>
                                 </layout>
                                 <property name="label" translatable="yes">.OGG narrating the prompt</property>
+                                <property name="filters">
+                                    <object class="GListStore">
+                                        <property name="item-type">GtkFileFilter</property>
+                                        <child>
+                                            <object class="GtkFileFilter">
+                                                <property name="name" translatable="yes">.OGG File</property>
+                                                <mime-types>
+                                                    <mime-type>audio/ogg</mime-type>
+                                                </mime-types>
+                                            </object>
+                                        </child>
+                                    </object>
+                                </property>
                             </object>
                         </child>
                         <child>

@@ -10,7 +10,7 @@
 				<property name="halign">end</property>
 				<property name="spacing">10</property>
 				<child>
-					<object class="GtkInscription">
+					<object class="GtkInscription" id="inscription">
 						<property name="nat-chars">40</property>
 						<property name="nat-lines">1</property>
 						<property name="text-overflow">ellipsize-end</property>
