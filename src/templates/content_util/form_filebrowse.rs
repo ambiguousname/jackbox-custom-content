@@ -63,14 +63,17 @@ impl FormFilebrowse {
 
 	pub fn update_inscription(&self) {
 		let file = self.imp().file.borrow().clone();
+		let mut file_path = None::<&str>;
+		let pth;
 		if file.is_some() {
-			let pth = file.unwrap().path().unwrap();
-			let file_path = pth.to_str();
-
-			let inscr = self.imp().inscription.clone();
-			inscr.set_text(file_path);
-			inscr.set_tooltip_text(file_path);
+			pth = file.unwrap().path().unwrap();
+			// .map(|p| {&p.to_string()});
+			file_path = file_path.or(pth.to_str());
 		}
+
+		let inscr = self.imp().inscription.clone();		
+		inscr.set_text(file_path);
+		inscr.set_tooltip_text(file_path);
 	}
 
 	#[template_callback]
@@ -87,5 +90,11 @@ impl FormFilebrowse {
 			f.imp().file.replace(res.ok());
 			f.update_inscription();
 		}));
+	}
+
+	#[template_callback]
+	fn handle_clear(&self) {
+		self.imp().file.replace(None);
+		self.update_inscription();
 	}
 }

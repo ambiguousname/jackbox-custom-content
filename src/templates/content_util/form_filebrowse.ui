@@ -18,6 +18,13 @@
 					</object>
 				</child>
 				<child>
+					<object class="GtkButton" id="clear">
+						<signal name="clicked" swapped="true" handler="handle_clear"/>
+						<property name="valign">center</property>
+						<property name="label" translatable="yes">Clear</property>
+					</object>
+				</child>
+				<child>
 					<object class="GtkButton" id="browse">
 						<signal name="clicked" swapped="true" handler="handle_browse"/>
 						<property name="valign">center</property>
