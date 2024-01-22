@@ -21,9 +21,13 @@ impl ContentWindowImpl for imp::QuiplashRoundPrompt {
 
         let selected = self.obj().get_selected();
         let map = selected.submit().unwrap();
+
+        let prompt_text = map.get("Prompt Text").and_then(|text| {
+            text.get::<String>().ok()
+        }).unwrap();
         
         if callback.is_some() {
-            callback.unwrap()("This is a test".to_string());
+            callback.unwrap()(prompt_text);
         }
     }
 }
