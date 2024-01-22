@@ -144,7 +144,7 @@ impl LabelledBox {
 	}
 
 	pub fn value(&self) -> Value {
-		self.last_child().expect("Could not get LabelledBox last child.").property(&self.imp().value_property.borrow().clone())
+		self.value_obj().property(&self.imp().value_property.borrow().clone())
 	}
 
 	pub fn display_error(&self, error : Option<super::form::FormError>) {
