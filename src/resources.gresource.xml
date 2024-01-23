@@ -7,10 +7,12 @@
     <file compressed="true" preprocess="xml-stripblanks">mainmenu/content_creation/game.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">mainmenu/content_creation/content.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">mainmenu/content_creation/content_creation.ui</file>
-    <file compressed="true" preprocess="xml-stripblanks">mainmenu/content_view/contentlist.ui</file>
-    <file compressed="true" preprocess="xml-stripblanks">mainmenu/content_view/contentlistitem.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">editable_list.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">preferences/preferences.ui</file>
+  </gresource>
+  <gresource prefix="/mod_manager/">
+    <file compressed="true" preprocess="xml-stripblanks">mod_store.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">mod_store_item.ui</file>
   </gresource>
   <gresource prefix="/content/">
     <file compressed="true" preprocess="xml-stripblanks">quiplash3/prompts/generic_round_prompt.ui</file>

@@ -2,9 +2,22 @@
 <interface>
 	<template class="JCCContentList" parent="GtkBox">
         <property name="orientation">horizontal</property>
-        
         <child>
             <object class="GtkColumnView" id="column_view">
+                <property name="row-factory">
+                    <object class="GtkBuilderListItemFactory">
+                        <property name="resource">/templates/mainmenu/content_view/mod_store_item.ui</property>
+                    </object>
+                </property>
+                <property name="model">
+                    <object class="GtkSingleSelection">
+                        <property name="model">
+                            <object class="GListStore">
+                                <property name="type">JCCModData</property>
+                            </object>
+                        </property>
+                    </object>
+                </property>
                 <child>
                     <object class="GtkColumnViewColumn">
                         <property name="title">Enabled</property>

@@ -16,7 +16,7 @@ fn compile(out_path : PathBuf) {
 
 	println!("cargo:rerun-if-changed=src/com.ambiguousname.JackboxCustomContent.gschema.xml");
 
-	glib_build_tools::compile_resources(&["src/templates/", "src/content/"], "src/resources.gresource.xml", "resources.gresource");
+	glib_build_tools::compile_resources(&["src/templates/", "src/content/", "src/mod_manager"], "src/resources.gresource.xml", "resources.gresource");
 }
 
 // From https://stackoverflow.com/questions/26958489/how-to-copy-a-folder-recursively-in-rust
