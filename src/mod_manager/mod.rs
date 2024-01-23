@@ -3,32 +3,51 @@ mod mod_data;
 
 use std::{collections::HashMap, fs::{self, DirEntry}, path::Path};
 
-use gtk::{gio::Cancellable, glib::{self, clone}, prelude::*, AlertDialog, Window};
+use gtk::{gio::Cancellable, glib::{self, subclass::prelude::*, Object}, prelude::*, AlertDialog, Window};
 
 use crate::templates::mainmenu::MainMenuWindow;
 
 use self::mod_store::ModStore;
 
-pub struct ModManager {
-	mod_creation : Option<Window>,
-	main_menu : MainMenuWindow,
-	mods : HashMap<String, ModStore>,
+// This would be really nice as its own Rust structure, but Glib annoyances (like proper signal connectivity) means that this will have to do.
+
+mod imp {
+	use super::*;
+
+	#[derive(Default)]
+	pub struct ModManager {
+		mod_creation : Option<Window>,
+		main_menu : Option<MainMenuWindow>,
+		mods : HashMap<String, ModStore>,
+	}
+
+	#[glib::object_subclass]
+	impl ObjectSubclass for ModManager {
+		const NAME: &'static str = "JCCModManager";
+		type Type = super::ModManager;
+	}
+
+	impl ObjectImpl for ModManager {}
+}
+
+glib::wrapper!{
+	pub struct ModManager(ObjectSubclass<imp::ModManager>);
 }
 
 impl ModManager {
 	pub fn new(main_menu : MainMenuWindow) -> Self{
-
-		let manager = ModManager {
-			// Need to set up a callback before adding the window:
-			mod_creation: None,
-			main_menu: main_menu,
-			mods: HashMap::new(),
-		};
-		manager.setup_mod_creation_dialog();
-		manager
+		Object::new()
+		// let manager =  ModManager {
+		// 	// Need to set up a callback before adding the window:
+		// 	mod_creation: None,
+		// 	main_menu: Some(main_menu),
+		// 	mods: HashMap::new(),
+		// };
+		// manager.setup_mod_creation_dialog();
+		// manager
 	}
 
-	fn setup_mod_creation_dialog(&self) {
+	fn setup_mod_creation_dialog(self) {
 		let grid = gtk::Grid::builder()
 		.build();
 
@@ -90,23 +109,23 @@ impl ModManager {
 	}
 
 	// region: Add Mods
-	fn add_mod(&self, mod_store : ModStore) {
+	fn add_mod(self, mod_store : ModStore) {
 		self.mods.insert(mod_store.name(), mod_store.clone());
-		self.main_menu.add_mod_to_stack(mod_store.name(), &mod_store);
+		self.main_menu.as_ref().unwrap().add_mod_to_stack(mod_store.name(), &mod_store);
 	}
 
 	pub(super) fn new_mod(&self) {
-		self.mod_creation.unwrap().present();
+		self.mod_creation.as_ref().unwrap().present();
 	}
 
-	fn mod_creation_finish(&self, name : String) {
+	fn mod_creation_finish(self, name : String) {
 		// Create new ModStore:
 		let result = ModStore::new(name.clone());
 		if result.is_err() {
 			let error = result.err().unwrap();
 			AlertDialog::builder()
 			.message("Could not create mod folder.")
-			.detail(error.to_string()).build().show(Some(&self.main_menu));
+			.detail(error.to_string()).build().show(self.main_menu.as_ref());
 			return;
 		}
 
@@ -114,7 +133,7 @@ impl ModManager {
 		self.add_mod(mod_store);
 	}
 
-	fn load_mod_from_dir(&self, dir : DirEntry) {
+	fn load_mod_from_dir(self, dir : DirEntry) {
 		let result = ModStore::from_folder(dir);
 		let mod_store = result.unwrap();
 		self.add_mod(mod_store);
@@ -124,8 +143,8 @@ impl ModManager {
 
 	// region: Mod Deletion
 
-	pub(super) fn start_mod_deletion(&self) {
-		let visible_child = self.main_menu.visible_mod_stack_name();
+	pub(super) fn start_mod_deletion(self) {
+		let visible_child = self.main_menu.as_ref().unwrap().visible_mod_stack_name();
 		if visible_child.is_none() {
 			return;
 		}
@@ -138,7 +157,7 @@ impl ModManager {
 		.detail("This action cannot be undone.")
 		.build();
 
-		warn.choose(Some(&self.main_menu), Some(&Cancellable::new()), move |result| {
+		warn.choose(self.main_menu.as_ref(), Some(&Cancellable::new()), move |result| {
 			let option = result.expect("Could not get warn option.");
 			if option == 0 {
 				self.delete_mod(mod_name);
@@ -146,7 +165,7 @@ impl ModManager {
 		});
 	}
 
-	fn delete_mod(&self, mod_name : String) {
+	fn delete_mod(self, mod_name : String) {
 		let mods_folder = Path::new("./mods");
 		let mod_folder = mods_folder.join(mod_name.clone());
 		
@@ -159,12 +178,12 @@ impl ModManager {
 			.detail(result.err().unwrap().to_string())
 			.build();
 
-			err.show(Some(&self.main_menu));
+			err.show(self.main_menu.as_ref());
 			return;
 		}
 
 		self.mods.remove(&mod_name.clone());
-		self.main_menu.remove_mod_from_stack(mod_name);
+		self.main_menu.as_ref().unwrap().remove_mod_from_stack(mod_name);
 	}
 
 	// endregion

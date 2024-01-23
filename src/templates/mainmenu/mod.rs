@@ -256,7 +256,7 @@ impl MainMenuWindow {
 	// region: Misc Template Callbacks
 	#[template_callback]
 	fn handle_new_mod(&self) {
-		self.imp().mod_manager.borrow().unwrap().new_mod();
+		self.imp().mod_manager.borrow().clone().unwrap().new_mod();
 	}
 	// endregion
 }
