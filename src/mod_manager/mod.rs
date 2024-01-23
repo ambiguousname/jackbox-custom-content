@@ -1,9 +1,9 @@
 pub mod mod_store;
 mod mod_data;
 
-use std::{collections::HashMap, fs::{self, DirEntry}, path::Path};
+use std::{collections::HashMap, fs::{self, DirEntry}, cell::RefCell, path::Path};
 
-use gtk::{gio::Cancellable, glib::{self, subclass::prelude::*, Object}, prelude::*, AlertDialog, Window};
+use gtk::{gio::Cancellable, glib::{self, clone, subclass::prelude::*, Object}, prelude::*, AlertDialog, Window};
 
 use crate::templates::mainmenu::MainMenuWindow;
 
@@ -16,9 +16,9 @@ mod imp {
 
 	#[derive(Default)]
 	pub struct ModManager {
-		mod_creation : Option<Window>,
-		main_menu : Option<MainMenuWindow>,
-		mods : HashMap<String, ModStore>,
+		pub mod_creation : RefCell<Option<Window>>,
+		pub main_menu : RefCell<Option<MainMenuWindow>>,
+		pub mods : RefCell<HashMap<String, ModStore>>,
 	}
 
 	#[glib::object_subclass]
@@ -65,10 +65,10 @@ impl ModManager {
 		.build();
 		grid.attach(&submit, 0, 1, 1, 1);
 
-		submit.connect_clicked(move |_| {
-			self.mod_creation_finish(entry.text().to_string());
+		submit.connect_clicked(clone!(@weak self as m => move |_| {
+			m.mod_creation_finish(entry.text().to_string());
 			entry.set_text("");
-		});
+		}));
 
 		let cancel = gtk::Button::builder()
 		.label("Cancel")
@@ -85,7 +85,7 @@ impl ModManager {
 		.hide_on_close(true)
 		.build();
 
-		self.mod_creation = Some(dlg);
+		self.imp().mod_creation.replace(Some(dlg));
 	}
 
 	fn load_mods(&self) {
@@ -102,7 +102,7 @@ impl ModManager {
 
         for directory in fs::read_dir(mods_folder).unwrap() {
             let dir = directory.expect("Could not get child directory.");
-            self.load_mod_from_dir(dir);
+            self.clone().load_mod_from_dir(dir);
         }
 		// let gesture = &self.imp().sidebar_gesture;
 		// gesture.set_property("widget", self.imp().mod_stack_sidebar.to_value());
@@ -110,12 +110,12 @@ impl ModManager {
 
 	// region: Add Mods
 	fn add_mod(self, mod_store : ModStore) {
-		self.mods.insert(mod_store.name(), mod_store.clone());
-		self.main_menu.as_ref().unwrap().add_mod_to_stack(mod_store.name(), &mod_store);
+		self.imp().mods.borrow_mut().insert(mod_store.name(), mod_store.clone());
+		self.imp().main_menu.borrow().clone().unwrap().add_mod_to_stack(mod_store.name(), &mod_store);
 	}
 
 	pub(super) fn new_mod(&self) {
-		self.mod_creation.as_ref().unwrap().present();
+		self.imp().mod_creation.borrow().clone().unwrap().present();
 	}
 
 	fn mod_creation_finish(self, name : String) {
@@ -125,7 +125,7 @@ impl ModManager {
 			let error = result.err().unwrap();
 			AlertDialog::builder()
 			.message("Could not create mod folder.")
-			.detail(error.to_string()).build().show(self.main_menu.as_ref());
+			.detail(error.to_string()).build().show(self.imp().main_menu.borrow().as_ref());
 			return;
 		}
 
@@ -144,7 +144,8 @@ impl ModManager {
 	// region: Mod Deletion
 
 	pub(super) fn start_mod_deletion(self) {
-		let visible_child = self.main_menu.as_ref().unwrap().visible_mod_stack_name();
+		let main_menu = self.imp().main_menu.borrow().clone().unwrap();
+		let visible_child = main_menu.visible_mod_stack_name();
 		if visible_child.is_none() {
 			return;
 		}
@@ -157,7 +158,7 @@ impl ModManager {
 		.detail("This action cannot be undone.")
 		.build();
 
-		warn.choose(self.main_menu.as_ref(), Some(&Cancellable::new()), move |result| {
+		warn.choose(Some(&main_menu), Some(&Cancellable::new()), move |result| {
 			let option = result.expect("Could not get warn option.");
 			if option == 0 {
 				self.delete_mod(mod_name);
@@ -178,12 +179,13 @@ impl ModManager {
 			.detail(result.err().unwrap().to_string())
 			.build();
 
-			err.show(self.main_menu.as_ref());
+			err.show(self.imp().main_menu.borrow().as_ref());
 			return;
 		}
 
-		self.mods.remove(&mod_name.clone());
-		self.main_menu.as_ref().unwrap().remove_mod_from_stack(mod_name);
+		self.imp().mods.borrow_mut().remove(&mod_name.clone());
+		let main_menu = self.imp().main_menu.borrow().clone().unwrap();
+		main_menu.remove_mod_from_stack(mod_name);
 	}
 
 	// endregion

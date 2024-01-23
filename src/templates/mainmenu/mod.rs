@@ -81,13 +81,13 @@ impl MainMenuWindow {
 	fn setup_actions(&self) {
 		let new_action = ActionEntry::builder("new")
 		.activate(|window : &MainMenuWindow, _, _| {
-			window.imp().mod_manager.borrow().unwrap().new_mod();
+			window.imp().mod_manager.borrow().clone().unwrap().new_mod();
 		})
 		.build();
 
 		let delete_action = ActionEntry::builder("delete")
 		.activate(|window : &MainMenuWindow, _, _| {
-			window.imp().mod_manager.borrow().unwrap().start_mod_deletion();
+			window.imp().mod_manager.borrow().clone().unwrap().start_mod_deletion();
 		})
 		.build();
 
