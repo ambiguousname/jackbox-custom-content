@@ -4,7 +4,6 @@ use std::path::PathBuf;
 use gtk::gio::Cancellable;
 use gtk::subclass::prelude::*;
 use gtk::{prelude::*, Window, DialogError};
-use gtk::traits::ButtonExt;
 use gtk::{FileDialog, AlertDialog};
 
 use gtk::{glib, gio};

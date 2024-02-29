@@ -12,7 +12,8 @@ pub enum FormError {
 }
 
 mod imp {
-	use gtk::glib::{Properties, ParamSpec, once_cell::sync::Lazy, ParamSpecBoolean, subclass::{prelude::*, Signal}, ParamSpecString};
+	use gtk::glib::{Properties, ParamSpec, ParamSpecBoolean, subclass::{prelude::*, Signal}, ParamSpecString};
+	use std::sync::OnceLock;
 
 	use super::*;
 
@@ -44,10 +45,11 @@ mod imp {
 		const NAME : &'static str = "JCCFormObject";
 
 		fn properties() -> &'static [ParamSpec] {
-			static PROPERTIES : Lazy<Vec<ParamSpec>> = Lazy::new(|| {
+			static PROPERTIES : OnceLock<Vec<ParamSpec>> = OnceLock::new(); 
+			
+			PROPERTIES.get_or_init(|| {
 				vec![ParamSpecBoolean::builder("required").readwrite().build(), ParamSpecString::builder("label").readwrite().build()]
-			});
-			PROPERTIES.as_ref()
+			})
 		}
 
 		fn interface_init(&mut self) {

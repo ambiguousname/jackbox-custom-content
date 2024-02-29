@@ -4,8 +4,7 @@ use gtk::glib::{self, Properties};
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 
-use glib::{Object, Value, ParamSpec, ParamSpecBoolean, once_cell};
-use once_cell::sync::Lazy;
+use glib::{Object, Value, ParamSpec, ParamSpecBoolean};
 
 // TODO: Use properties.
 mod imp {
