@@ -35,7 +35,7 @@ glib::wrapper!{
 }
 
 impl ModManager {
-	pub fn new(main_menu : MainMenuWindow) -> Self{
+	pub fn new(main_menu : MainMenuWindow) -> Self {
 		Object::new()
 		// let manager =  ModManager {
 		// 	// Need to set up a callback before adding the window:
@@ -47,7 +47,7 @@ impl ModManager {
 		// manager
 	}
 
-	fn setup_mod_creation_dialog(self) {
+	fn setup_mod_creation_dialog(&self) {
 		let grid = gtk::Grid::builder()
 		.build();
 
@@ -109,7 +109,7 @@ impl ModManager {
 	}
 
 	// region: Add Mods
-	fn add_mod(self, mod_store : ModStore) {
+	fn add_mod(&self, mod_store : ModStore) {
 		self.imp().mods.borrow_mut().insert(mod_store.name(), mod_store.clone());
 		self.imp().main_menu.borrow().clone().unwrap().add_mod_to_stack(mod_store.name(), &mod_store);
 	}
@@ -118,7 +118,7 @@ impl ModManager {
 		self.imp().mod_creation.borrow().clone().unwrap().present();
 	}
 
-	fn mod_creation_finish(self, name : String) {
+	fn mod_creation_finish(&self, name : String) {
 		// Create new ModStore:
 		let result = ModStore::new(name.clone());
 		if result.is_err() {
@@ -133,7 +133,7 @@ impl ModManager {
 		self.add_mod(mod_store);
 	}
 
-	fn load_mod_from_dir(self, dir : DirEntry) {
+	fn load_mod_from_dir(&self, dir : DirEntry) {
 		let result = ModStore::from_folder(dir);
 		let mod_store = result.unwrap();
 		self.add_mod(mod_store);
@@ -143,7 +143,7 @@ impl ModManager {
 
 	// region: Mod Deletion
 
-	pub(super) fn start_mod_deletion(self) {
+	pub(super) fn start_mod_deletion(&self) {
 		let main_menu = self.imp().main_menu.borrow().clone().unwrap();
 		let visible_child = main_menu.visible_mod_stack_name();
 		if visible_child.is_none() {
@@ -158,15 +158,15 @@ impl ModManager {
 		.detail("This action cannot be undone.")
 		.build();
 
-		warn.choose(Some(&main_menu), Some(&Cancellable::new()), move |result| {
+		warn.choose(Some(&main_menu), Some(&Cancellable::new()), clone!(@weak self as w => move |result| {
 			let option = result.expect("Could not get warn option.");
 			if option == 0 {
-				self.delete_mod(mod_name);
+				w.delete_mod(mod_name);
 			}
-		});
+		}));
 	}
 
-	fn delete_mod(self, mod_name : String) {
+	fn delete_mod(&self, mod_name : String) {
 		let mods_folder = Path::new("./mods");
 		let mod_folder = mods_folder.join(mod_name.clone());
 		
