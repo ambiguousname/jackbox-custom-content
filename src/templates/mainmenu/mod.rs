@@ -1,10 +1,10 @@
 mod content_creation;
 mod folder_selection;
 
-use std::{cell::{RefCell, OnceCell}, vec::Vec};
+use std::{cell::RefCell, sync::OnceLock, vec::Vec};
 
 // Template construction:
-use gtk::{Application, Box, Button, Stack, StackSwitcher, gio::{self, ActionEntry, Settings}, Window, AlertDialog, AboutDialog};
+use gtk::{Application, Box, Button, Stack, StackSwitcher, gio::{self, ActionEntry, Settings}, AlertDialog, AboutDialog};
 
 use glib::Object;
 
@@ -41,12 +41,12 @@ quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::Applicat
 
 		#[template_child(id="new_content")]
 		pub new_content : TemplateChild<Button>,
-		pub content_creation_dialog: RefCell<Option<ContentCreationDialog>>,
+		pub content_creation_dialog: OnceLock<ContentCreationDialog>,
 
-		pub mod_manager : RefCell<Option<ModManager>>,
+		pub mod_manager : OnceLock<ModManager>,
 
-		pub preferences_window : RefCell<Option<PreferencesWindow>>,
-		pub config : OnceCell<Settings>,
+		pub preferences_window : OnceLock<PreferencesWindow>,
+		pub config : OnceLock<Settings>,
 	}
 );
 
@@ -58,11 +58,10 @@ impl ObjectImpl for imp::MainMenuWindow {
 
 		obj.setup_actions();
 
-		obj.setup_config();
+		obj.setup_stack();
 
-		obj.setup_add_content();
-
-		obj.setup_mod_manager();
+		// Quickly set up our prefs window:
+		obj.preferences_window();
 
 		obj.setup_folder_selection();
 	}
@@ -81,13 +80,13 @@ impl MainMenuWindow {
 	fn setup_actions(&self) {
 		let new_action = ActionEntry::builder("new")
 		.activate(|window : &MainMenuWindow, _, _| {
-			window.imp().mod_manager.borrow().clone().unwrap().new_mod();
+			window.mod_manager().new_mod();
 		})
 		.build();
 
 		let delete_action = ActionEntry::builder("delete")
 		.activate(|window : &MainMenuWindow, _, _| {
-			window.imp().mod_manager.borrow().clone().unwrap().start_mod_deletion();
+			window.mod_manager().start_mod_deletion();
 		})
 		.build();
 
@@ -106,7 +105,7 @@ impl MainMenuWindow {
 
 		let prefs_action = ActionEntry::builder("prefs")
 		.activate(|window : &MainMenuWindow, _, _| {
-			window.imp().preferences_window.borrow().clone().expect("Could not get prefs window").present();
+			window.preferences_window().present();
 		}).build();
 
 		let content_action = ActionEntry::builder("new_content")
@@ -161,9 +160,10 @@ impl MainMenuWindow {
 
 	// region: Mod display
 
-	fn setup_mod_manager(&self) {
-		self.imp().mod_manager.replace(Some(ModManager::new(self.clone())));
-		self.setup_stack();
+	fn mod_manager(&self) -> &ModManager {
+		self.imp().mod_manager.get_or_init(|| {
+			ModManager::new(self.clone())
+		})
 	}
 
 	fn setup_stack(&self) {
@@ -222,7 +222,9 @@ impl MainMenuWindow {
 
 	// region: Settings config
 	fn config(&self) -> &Settings {
-		self.imp().config.get().expect("Could not get config.")
+		self.imp().config.get_or_init(|| {
+			Settings::new(crate::APP_ID)
+		})
 	}
 
 	// Remove the _ if this ends up getting used.
@@ -230,33 +232,31 @@ impl MainMenuWindow {
 		self.config().reset("game-folder");
 	}
 
-	fn setup_config(&self) {
-		let cfg = Settings::new(crate::APP_ID);
-		self.imp().config.set(cfg.clone()).expect("Could not set initial config.");
-
-		let prefs_window = PreferencesWindow::new(self, &cfg);
-		self.imp().preferences_window.replace(Some(prefs_window));
+	fn preferences_window(&self) -> &PreferencesWindow {
+		self.imp().preferences_window.get_or_init(|| {
+			PreferencesWindow::new(self, self.config())
+		})
 	}
 	// endregion
 
 	// region: Content creation
 
-	fn setup_add_content(&self) {
-		let dialog = ContentCreationDialog::new(self);
-		self.imp().content_creation_dialog.replace(Some(dialog));
-	}
+	fn content_creation_dialog(&self) -> &ContentCreationDialog {
+		self.imp().content_creation_dialog.get_or_init(|| {
+			ContentCreationDialog::new(self)
+		})
+	} 
 
 	#[template_callback]
 	fn handle_create_content_clicked(&self) {
-		let d = self.imp().content_creation_dialog.borrow().clone().expect("Could not get content creation dialog.");
-		d.present();
+		self.content_creation_dialog().present();
 	}
 	// endregion
 
 	// region: Misc Template Callbacks
 	#[template_callback]
 	fn handle_new_mod(&self) {
-		self.imp().mod_manager.borrow().clone().unwrap().new_mod();
+		self.mod_manager().new_mod();
 	}
 	// endregion
 }
