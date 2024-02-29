@@ -1,4 +1,4 @@
-use gtk::{prelude::*, Application, glib::ExitCode, CssProvider, gdk::Display, AboutDialog};
+use gtk::{prelude::*, Application, glib::ExitCode};
 // mod util;
 // mod content;
 #[allow(unused_parens)]
