@@ -1,6 +1,6 @@
-use gtk::{ColumnView, glib::{Properties, derived_properties, Object}, ColumnViewColumn, gio, SignalListItemFactory, ListItem, SingleSelection, BuilderListItemFactory};
+use gtk::{ColumnView, glib::{Properties, derived_properties, Object}};
 
-use std::{cell::{RefCell, OnceCell}, fs::{self, DirEntry}, path::PathBuf, io::Error};
+use std::{cell::OnceCell, fs::{self, DirEntry}, path::PathBuf, io::Error};
 
 use crate::quick_template;
 
@@ -26,7 +26,20 @@ impl WidgetImpl for imp::ModStore {}
 impl BoxImpl for imp::ModStore {}
 
 impl ModStore {
-    pub fn new(name : String) -> Result<Self, Error> {
+    fn new(name : String) -> Result<Self, Error> {
+		let id = ModStore::string_to_id(name.clone());
+		let this = Object::new::<Self>();
+		this.imp().name.set(name).or_else(|err| {
+			Err(Error::new(std::io::ErrorKind::Other, err))
+		})?;
+		this.imp().id.set(id).or_else(|err| {
+			Err(Error::new(std::io::ErrorKind::Other, err))
+		})?;
+
+		Ok(this)
+    }
+
+	pub fn new_folder(name : String) -> Result<Self, Error> {
 		// Create mod folder:
 		let mod_dir = PathBuf::from("./mods/").join(name.clone());
 		if mod_dir.exists() {
@@ -35,15 +48,9 @@ impl ModStore {
 		}
 		fs::create_dir(mod_dir.clone())?;
 		fs::create_dir(mod_dir.join("The Jackbox Party Pack 7"))?;
-		
-		let id = ModStore::string_to_id(name.clone());
 
-		let this = Object::new::<Self>();
-		this.imp().name.set(name);
-		this.imp().id.set(id);
-
-		Ok(this)
-    }
+		ModStore::new(name)
+	}
 
 	pub fn from_folder(dir : DirEntry) -> Result<Self, Error> {
 		ModStore::new(dir.file_name().into_string().expect("Could not get directory string."))

@@ -1,7 +1,7 @@
 mod content_creation;
 mod folder_selection;
 
-use std::{cell::RefCell, sync::OnceLock, vec::Vec};
+use std::{sync::OnceLock, vec::Vec};
 
 // Template construction:
 use gtk::{Application, Box, Button, Stack, StackSwitcher, gio::{self, ActionEntry, Settings}, AlertDialog, AboutDialog};
@@ -62,6 +62,9 @@ impl ObjectImpl for imp::MainMenuWindow {
 
 		// Quickly set up our prefs window:
 		obj.preferences_window();
+
+		// Same with mod manager:
+		obj.mod_manager();
 
 		obj.setup_folder_selection();
 	}

@@ -7,7 +7,7 @@ use gtk::{gio::Cancellable, glib::{self, clone, subclass::prelude::*, Object}, p
 
 use crate::templates::mainmenu::MainMenuWindow;
 
-use self::mod_store::ModStore;
+use self::{mod_data::ModData, mod_store::ModStore};
 
 // This would be really nice as its own Rust structure, but Glib annoyances (like proper signal connectivity) means that this will have to do.
 
@@ -36,10 +36,13 @@ glib::wrapper!{
 
 impl ModManager {
 	pub fn new(main_menu : MainMenuWindow) -> Self {
-		let manager : ModManager = Object::new();
+		ModStore::ensure_type();
+		ModData::ensure_type();
+		let manager : Self = Object::new();
 		manager.imp().main_menu.get_or_init(|| {
 			main_menu
 		});
+		manager.load_mods();
 		manager
 		// let manager =  ModManager {
 		// 	// Need to set up a callback before adding the window:
@@ -110,7 +113,7 @@ impl ModManager {
 
         for directory in fs::read_dir(mods_folder).unwrap() {
             let dir = directory.expect("Could not get child directory.");
-            self.clone().load_mod_from_dir(dir);
+            self.load_mod_from_dir(dir);
         }
 		// let gesture = &self.imp().sidebar_gesture;
 		// gesture.set_property("widget", self.imp().mod_stack_sidebar.to_value());
@@ -128,7 +131,7 @@ impl ModManager {
 
 	fn mod_creation_finish(&self, name : String) {
 		// Create new ModStore:
-		let result = ModStore::new(name.clone());
+		let result = ModStore::new_folder(name.clone());
 		if result.is_err() {
 			let error = result.err().unwrap();
 			AlertDialog::builder()

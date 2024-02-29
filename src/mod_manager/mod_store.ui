@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-	<template class="JCCContentList" parent="GtkBox">
+	<template class="JCCModStore" parent="GtkBox">
         <property name="orientation">horizontal</property>
         <child>
             <object class="GtkColumnView" id="column_view">
                 <property name="row-factory">
                     <object class="GtkBuilderListItemFactory">
-                        <property name="resource">/templates/mainmenu/content_view/mod_store_item.ui</property>
+                        <property name="resource">/mod_manager/mod_store_item.ui</property>
                     </object>
                 </property>
                 <property name="model">
                     <object class="GtkSingleSelection">
                         <property name="model">
                             <object class="GListStore">
-                                <property name="type">JCCModData</property>
+                                <property name="item-type">JCCModData</property>
                             </object>
                         </property>
                     </object>
