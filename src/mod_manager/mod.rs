@@ -1,7 +1,7 @@
 pub mod mod_store;
 mod mod_data;
 
-use std::{collections::HashMap, fs::{self, DirEntry}, cell::RefCell, path::Path};
+use std::{collections::HashMap, fs::{self, DirEntry}, cell::RefCell, sync::OnceLock, path::Path};
 
 use gtk::{gio::Cancellable, glib::{self, clone, subclass::prelude::*, Object}, prelude::*, AlertDialog, Window};
 
@@ -16,8 +16,8 @@ mod imp {
 
 	#[derive(Default)]
 	pub struct ModManager {
-		pub mod_creation : RefCell<Option<Window>>,
-		pub main_menu : RefCell<Option<MainMenuWindow>>,
+		pub mod_creation : OnceLock<Window>,
+		pub main_menu : OnceLock<MainMenuWindow>,
 		pub mods : RefCell<HashMap<String, ModStore>>,
 	}
 
@@ -36,7 +36,11 @@ glib::wrapper!{
 
 impl ModManager {
 	pub fn new(main_menu : MainMenuWindow) -> Self {
-		Object::new()
+		let manager : ModManager = Object::new();
+		manager.imp().main_menu.get_or_init(|| {
+			main_menu
+		});
+		manager
 		// let manager =  ModManager {
 		// 	// Need to set up a callback before adding the window:
 		// 	mod_creation: None,
@@ -47,45 +51,49 @@ impl ModManager {
 		// manager
 	}
 
-	fn setup_mod_creation_dialog(&self) {
-		let grid = gtk::Grid::builder()
-		.build();
+	fn main_menu(&self) -> &MainMenuWindow {
+		self.imp().main_menu.get().unwrap()
+	}
 
-		let entry = gtk::Entry::builder()
-		.hexpand(true)
-		.vexpand(true)
-		.placeholder_text("Mod Name")
-		.build();
-		grid.attach(&entry, 0, 0, 2, 1);
-
-		let submit = gtk::Button::builder()
-		.hexpand(true)
-		.vexpand(true)
-		.label("Ok")
-		.build();
-		grid.attach(&submit, 0, 1, 1, 1);
-
-		submit.connect_clicked(clone!(@weak self as m => move |_| {
-			m.mod_creation_finish(entry.text().to_string());
-			entry.set_text("");
-		}));
-
-		let cancel = gtk::Button::builder()
-		.label("Cancel")
-		.build();
-		grid.attach(&cancel, 1, 1, 1, 1);
-		
-		cancel.connect_clicked(|this| {
-			this.ancestor(Window::static_type()).and_downcast::<Window>().expect("Could not get window.").close();
-		});
-
-		let dlg = Window::builder()
-		.name("Mod Creation Dialog")
-		.child(&grid)
-		.hide_on_close(true)
-		.build();
-
-		self.imp().mod_creation.replace(Some(dlg));
+	fn mod_creation(&self) -> &Window {
+		self.imp().mod_creation.get_or_init(|| {
+			let grid = gtk::Grid::builder()
+			.build();
+	
+			let entry = gtk::Entry::builder()
+			.hexpand(true)
+			.vexpand(true)
+			.placeholder_text("Mod Name")
+			.build();
+			grid.attach(&entry, 0, 0, 2, 1);
+	
+			let submit = gtk::Button::builder()
+			.hexpand(true)
+			.vexpand(true)
+			.label("Ok")
+			.build();
+			grid.attach(&submit, 0, 1, 1, 1);
+	
+			submit.connect_clicked(clone!(@weak self as m => move |_| {
+				m.mod_creation_finish(entry.text().to_string());
+				entry.set_text("");
+			}));
+	
+			let cancel = gtk::Button::builder()
+			.label("Cancel")
+			.build();
+			grid.attach(&cancel, 1, 1, 1, 1);
+			
+			cancel.connect_clicked(|this| {
+				this.ancestor(Window::static_type()).and_downcast::<Window>().expect("Could not get window.").close();
+			});
+	
+			Window::builder()
+			.name("Mod Creation Dialog")
+			.child(&grid)
+			.hide_on_close(true)
+			.build()
+		})
 	}
 
 	fn load_mods(&self) {
@@ -111,11 +119,11 @@ impl ModManager {
 	// region: Add Mods
 	fn add_mod(&self, mod_store : ModStore) {
 		self.imp().mods.borrow_mut().insert(mod_store.name(), mod_store.clone());
-		self.imp().main_menu.borrow().clone().unwrap().add_mod_to_stack(mod_store.name(), &mod_store);
+		self.main_menu().add_mod_to_stack(mod_store.name(), &mod_store);
 	}
 
 	pub(super) fn new_mod(&self) {
-		self.imp().mod_creation.borrow().clone().unwrap().present();
+		self.mod_creation().present();
 	}
 
 	fn mod_creation_finish(&self, name : String) {
@@ -125,7 +133,7 @@ impl ModManager {
 			let error = result.err().unwrap();
 			AlertDialog::builder()
 			.message("Could not create mod folder.")
-			.detail(error.to_string()).build().show(self.imp().main_menu.borrow().as_ref());
+			.detail(error.to_string()).build().show(Some(self.main_menu()));
 			return;
 		}
 
@@ -144,7 +152,7 @@ impl ModManager {
 	// region: Mod Deletion
 
 	pub(super) fn start_mod_deletion(&self) {
-		let main_menu = self.imp().main_menu.borrow().clone().unwrap();
+		let main_menu = self.main_menu();
 		let visible_child = main_menu.visible_mod_stack_name();
 		if visible_child.is_none() {
 			return;
@@ -158,7 +166,7 @@ impl ModManager {
 		.detail("This action cannot be undone.")
 		.build();
 
-		warn.choose(Some(&main_menu), Some(&Cancellable::new()), clone!(@weak self as w => move |result| {
+		warn.choose(Some(main_menu), Some(&Cancellable::new()), clone!(@weak self as w => move |result| {
 			let option = result.expect("Could not get warn option.");
 			if option == 0 {
 				w.delete_mod(mod_name);
@@ -179,12 +187,12 @@ impl ModManager {
 			.detail(result.err().unwrap().to_string())
 			.build();
 
-			err.show(self.imp().main_menu.borrow().as_ref());
+			err.show(Some(self.main_menu()));
 			return;
 		}
 
 		self.imp().mods.borrow_mut().remove(&mod_name.clone());
-		let main_menu = self.imp().main_menu.borrow().clone().unwrap();
+		let main_menu = self.main_menu();
 		main_menu.remove_mod_from_stack(mod_name);
 	}
 
