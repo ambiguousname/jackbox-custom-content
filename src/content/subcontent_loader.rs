@@ -1,0 +1,2 @@
+// TODO: Set game directories and other relevant loading info in content_list.ui.
+// Use this info to then load content and subcontent, and convert it into one content_data bundle for each piece of content.

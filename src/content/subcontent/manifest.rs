@@ -7,16 +7,20 @@ pub struct Manifest {
 
 impl Manifest {
 	pub fn new(name : Option<String>) -> Self {
-		Manifest {name: name.or(Some("manifest.jet".to_string())).unwrap()}
+		Manifest {name: name.unwrap_or("manifest.jet".to_string())}
 	}
 }
 
 impl Subcontent for Manifest {
 	fn write_to_game(&self) {
-		
+		todo!()
 	}
 
 	fn write_to_mod(&self) {
-		
+		todo!()
 	}
+	
+	fn load_from_dir(&self) {
+			todo!()
+		}
 }

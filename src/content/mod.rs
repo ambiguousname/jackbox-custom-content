@@ -49,9 +49,9 @@ glib::wrapper! {
     pub struct Content(ObjectSubclass<imp::Content>);
 }
 
+type SubcontentBox = Box<dyn Subcontent>;
 /// Direct function that the mod manager uses to organize files after creation.
-/// TODO: Actually get this working as intended.
-type ContentCallback = fn(String);
+type ContentCallback = fn(Vec<SubcontentBox>);
 
 impl Content {
     pub fn ensure_all_types() {
@@ -88,9 +88,6 @@ mod content_window_imp {
         /// This is sort of an intermediary between [`ContentWindowImpl::finalize_content`] and [`ContentWindow`]'s call of it. This will pass along the callback to [`ContentWindowImpl`] and call it.
         /// Set in [`IsSubclassable<T: ContentWindowImpl>::class_init`]
         pub finalize_content : fn(&super::ContentWindow),
-
-        /// List of the [`Subcontent`] being implemented.
-        pub subcontent : fn() -> &'static [SubcontentBox],
     }
 
     /// Custom class structure to be able to use [`ContentWindowClass`]
@@ -127,15 +124,11 @@ glib::wrapper! {
 
 impl ContentWindow {}
 
-type SubcontentBox = Box<dyn Subcontent + Send + Sync>;
-
 /// The actual impl definition for any [`ContentWindow`] subclasser to override.
 pub trait ContentWindowImpl : WindowImpl {
     /// Whenever [`ContentWindow`] has finished creating content and is ready to pass along the relevant data for the mod manager, call [`ContentWindowExt::finalize_content`] and this will be called with the appropriate callback.
     /// Automatically closes the window.
     fn finalize_content(&self, callback : Option<ContentCallback>);
-
-    fn subcontent() -> &'static [SubcontentBox];
 }
 
 /// Assigns the actual functions to be called (this is mostly based on templates/content_util/form.rs, as well as https://github.com/sdroege/gst-plugin-rs/blob/95c007953c0874bc46152078775d673cf44cc255/net/webrtc/src/signaller/iface.rs).
@@ -156,11 +149,6 @@ unsafe impl<T: ContentWindowImpl> IsSubclassable<T> for ContentWindow {
             obj.close();
         }
         klass.finalize_content = finalize_content_trampoline::<T>;
-
-        fn subcontent_trampoline<T: ObjectSubclass + ContentWindowImpl>() -> &'static [SubcontentBox] {
-            T::subcontent()
-        }
-        klass.subcontent = subcontent_trampoline::<T>;
     }
 }
 
@@ -179,14 +167,7 @@ pub trait ContentWindowExt : IsA<ContentWindow> + 'static {
         let window = self.upcast_ref::<ContentWindow>();
         let klass = window.class().as_ref();
 
-        (klass.finalize_content)(window);
-    }
-
-    fn subcontent(&self) -> &'static [SubcontentBox] {
-        let window = self.upcast_ref::<ContentWindow>();
-        let klass = window.class().as_ref();
-
-        (klass.subcontent)()
+        (klass.finalize_content)(window)
     }
 }
 

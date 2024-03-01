@@ -1,6 +1,6 @@
 use std::sync::OnceLock;
 
-use crate::{content::{subcontent::{manifest::Manifest, Subcontent}, Content, ContentWindow, ContentWindowExt, ContentWindowImpl, SubcontentBox}, quick_template, templates::content_util::form_manager::FormManager};
+use crate::{content::{subcontent::{manifest::Manifest, Subcontent}, Content, ContentWindow, ContentWindowExt, ContentWindowImpl}, quick_template};
 
 mod prompt_util;
 use gtk::Notebook;
@@ -20,24 +20,31 @@ impl WidgetImpl for imp::QuiplashRoundPrompt {}
 impl WindowImpl for imp::QuiplashRoundPrompt {}
 impl ContentWindowImpl for imp::QuiplashRoundPrompt {
     fn finalize_content(&self, callback : Option<crate::content::ContentCallback>) {
+        let obj = self.obj();
 
-        let selected = self.obj().get_selected();
+        let selected = obj.get_selected();
         let map = selected.submit().unwrap();
+
+        let mut subcontent_vec = Vec::new();
 
         let prompt_text = map.get("Prompt Text").and_then(|text| {
             text.get::<String>().ok()
         }).unwrap();
+
+        let quip_manifest = Manifest::new(
+            match obj.get_selected_idx() {
+                Some(0) => Some("Quiplash3Round1Question.jet".to_string()),
+                Some(1) => Some("Quiplash3Round2Question.jet".to_string()),
+                Some(2) => Some("Quiplash3FinalQuestion.jet".to_string()),
+                _ => None
+            }
+        );
+        let quip_box : Box<dyn Subcontent> = Box::new(quip_manifest);
+        subcontent_vec.push(quip_box);
         
         if callback.is_some() {
-            callback.unwrap()(prompt_text);
+            callback.unwrap()(subcontent_vec);
         }
-    }
-
-    fn subcontent() -> &'static [SubcontentBox] {
-        static SUBCONTENT : OnceLock<Vec<SubcontentBox>> = OnceLock::new();
-        SUBCONTENT.get_or_init(|| {
-            vec![Box::new(Manifest::new(None))]
-        })
     }
 }
 
@@ -49,8 +56,12 @@ impl QuiplashRoundPrompt {
         QuiplashRoundPrompt::ensure_type();
     }
 
+    fn get_selected_idx(&self) -> Option<u32> {
+        self.imp().round_select.current_page()
+    }
+
     fn get_selected(&self) -> QuiplashGenericRoundPrompt {
-        let idx = self.imp().round_select.current_page();
+        let idx = self.get_selected_idx();
         self.imp().round_select.nth_page(idx).and_downcast::<QuiplashGenericRoundPrompt>().expect("Could not get QuiplashGenericRoundPrompt.")
     }
 
