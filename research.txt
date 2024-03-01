@@ -22,3 +22,16 @@ Data in the mods folder needs to contain:
 Requirement 1: A mod folder should be structured as similarly to the real thing as possible. We should just be able to point it to a directory and we can either copy over files or merge them (like with a manifest.jet).
 
 Solution: Subcontent is a trait/derived struct that can be used to indicate how content should be loaded in and written. Content windows can use this however they'd like in some static variables that determine the folder structure. Mod Manager uses this information to load in files and transfer them over.
+
+finalize_content needs to be re-written.
+
+ContentWindow has three actions that a designer should define relating to data: 
+1. Making new content.
+2. Editing existing content. (Could just be loading the data from subcontent and then calling finalize_content)
+3. Loading content from a folder. (not dependent on a window instance)
+
+Subcontent should not be used to define how it self-loads from a folder. There are too many programmatic factors that are context-sensitive (i.e., for Quiplash3 round prompts, what round are we on?). Subcontent should define a load function for use after those context-sensitive factors have been found.
+
+subcontent_loader should handle this first part. And it should grab the information for the *places to search* and other context sensitive factors either from the ContentWindow definition, content_list.ui, or somewhere else.
+
+In fact, it'd be great if build/content_list.rs read files dynamically rather than include_str, so all the definitions could be found without the designer needing to point it in the right direction. Then we could just have subcontent_loader.rs be a script built at runtime that attaches to the definition of the relevant ContentWindows to provide a function to load from a folder based on designer definition.
