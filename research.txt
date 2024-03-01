@@ -5,3 +5,20 @@ How stuff works:
 	- Easiest way to avoid copying over images would just be creating a relative path to the mod images from the Jackbox folder.
 - There's a jbg.config.jet file in each game folder, and it includes a reference to the serverURL.
 	- Probably usable with something like https://github.com/InvoxiPlayGames/johnbox
+
+Need something to write any possible combination of data files:
+- A sub-folder with data.jet (in the mod folder, should just be a named sub-folder)
+- A sub-folder with audio
+- Writing to the manifest.jet file. (in the mod folder, should be one manifest.jet file relating to the content)
+
+None of these always hold true.
+
+We also have Content windows which do a lot of UI work. They will call what we want to save the data we need to in the mods folder.
+
+Data in the mods folder needs to contain:
+1. Information for converting what we write to ModStore (and sub-data like ModData) for editing.
+2. Information about how to move that ModData into the right folder.
+
+Requirement 1: A mod folder should be structured as similarly to the real thing as possible. We should just be able to point it to a directory and we can either copy over files or merge them (like with a manifest.jet).
+
+Solution: content_list.ui defines the overall architecture for the mod folder sub-items by content, and Mod Manager uses that to load in files and transfer them over. For what to write specifically, utilities should be put in to content/mod.rs, but leave it up to each Content window to write the specific things. Just give them the folder they're writing to.
