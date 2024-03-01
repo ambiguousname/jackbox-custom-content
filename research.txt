@@ -21,4 +21,4 @@ Data in the mods folder needs to contain:
 
 Requirement 1: A mod folder should be structured as similarly to the real thing as possible. We should just be able to point it to a directory and we can either copy over files or merge them (like with a manifest.jet).
 
-Solution: content_list.ui defines the overall architecture for the mod folder sub-items by content, and Mod Manager uses that to load in files and transfer them over. For what to write specifically, utilities should be put in to content/mod.rs, but leave it up to each Content window to write the specific things. Just give them the folder they're writing to.
+Solution: Subcontent is a trait/derived struct that can be used to indicate how content should be loaded in and written. Content windows can use this however they'd like in some static variables that determine the folder structure. Mod Manager uses this information to load in files and transfer them over.

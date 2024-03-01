@@ -7,15 +7,17 @@ use glib::{Object, Properties, derived_properties};
 
 use std::cell::OnceCell;
 
-use crate::quick_object;
+use self::subcontent::Subcontent;
 
 pub mod quiplash3;
+pub mod subcontent;
 
 // There's an automation in /build/content_list.rs. It auto generates this file based on the content/content_list.ui XML file (instructions on how to integrate it with that automation are in there) to avoid errors when including any of these windows in that very XML definition (mostly by calling ensure_all_types, as defined in the ContentWindowImpl trait.)
 // Can re-do this if there's a ensure type problem.
 include!(concat!(env!("OUT_DIR"), "/content_list.rs"));
 
 mod imp {
+
     use super::*;
 
     #[derive(Default, Properties)]
@@ -86,6 +88,9 @@ mod content_window_imp {
         /// This is sort of an intermediary between [`ContentWindowImpl::finalize_content`] and [`ContentWindow`]'s call of it. This will pass along the callback to [`ContentWindowImpl`] and call it.
         /// Set in [`IsSubclassable<T: ContentWindowImpl>::class_init`]
         pub finalize_content : fn(&super::ContentWindow),
+
+        /// List of the [`Subcontent`] being implemented.
+        pub subcontent : fn(&super::ContentWindow) -> &'static [SubcontentBox],
     }
 
     /// Custom class structure to be able to use [`ContentWindowClass`]
@@ -122,11 +127,15 @@ glib::wrapper! {
 
 impl ContentWindow {}
 
+type SubcontentBox = Box<dyn Subcontent + Send + Sync>;
+
 /// The actual impl definition for any [`ContentWindow`] subclasser to override.
 pub trait ContentWindowImpl : WindowImpl {
     /// Whenever [`ContentWindow`] has finished creating content and is ready to pass along the relevant data for the mod manager, call [`ContentWindowExt::finalize_content`] and this will be called with the appropriate callback.
     /// Automatically closes the window.
     fn finalize_content(&self, callback : Option<ContentCallback>);
+
+    fn subcontent(&self) -> &'static [SubcontentBox];
 }
 
 /// Assigns the actual functions to be called (this is mostly based on templates/content_util/form.rs, as well as https://github.com/sdroege/gst-plugin-rs/blob/95c007953c0874bc46152078775d673cf44cc255/net/webrtc/src/signaller/iface.rs).
@@ -147,6 +156,12 @@ unsafe impl<T: ContentWindowImpl> IsSubclassable<T> for ContentWindow {
             obj.close();
         }
         klass.finalize_content = finalize_content_trampoline::<T>;
+
+        fn subcontent_trampoline<T: ObjectSubclass + ContentWindowImpl>(obj : &ContentWindow) -> &'static [SubcontentBox] {
+            let this = obj.dynamic_cast_ref::<<T as ObjectSubclass>::Type>().unwrap().imp();
+            ContentWindowImpl::subcontent(this)
+        }
+        klass.subcontent = subcontent_trampoline::<T>;
     }
 }
 
@@ -166,6 +181,13 @@ pub trait ContentWindowExt : IsA<ContentWindow> + 'static {
         let klass = window.class().as_ref();
 
         (klass.finalize_content)(window);
+    }
+
+    fn subcontent(&self) -> &'static [SubcontentBox] {
+        let window = self.upcast_ref::<ContentWindow>();
+        let klass = window.class().as_ref();
+        
+        (klass.subcontent)(window)
     }
 }
 

@@ -1,4 +1,6 @@
-use crate::{quick_template, content::{ContentWindow, Content, ContentWindowImpl, ContentWindowExt}, templates::content_util::form_manager::FormManager};
+use std::sync::OnceLock;
+
+use crate::{content::{subcontent::{manifest::Manifest, Subcontent}, Content, ContentWindow, ContentWindowExt, ContentWindowImpl, SubcontentBox}, quick_template, templates::content_util::form_manager::FormManager};
 
 mod prompt_util;
 use gtk::Notebook;
@@ -29,6 +31,13 @@ impl ContentWindowImpl for imp::QuiplashRoundPrompt {
         if callback.is_some() {
             callback.unwrap()(prompt_text);
         }
+    }
+
+    fn subcontent(&self) -> &'static [SubcontentBox] {
+        static SUBCONTENT : OnceLock<Vec<SubcontentBox>> = OnceLock::new();
+        SUBCONTENT.get_or_init(|| {
+            vec![Box::new(Manifest::new(None))]
+        })
     }
 }
 
