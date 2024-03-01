@@ -33,7 +33,7 @@ impl ContentWindowImpl for imp::QuiplashRoundPrompt {
         }
     }
 
-    fn subcontent(&self) -> &'static [SubcontentBox] {
+    fn subcontent() -> &'static [SubcontentBox] {
         static SUBCONTENT : OnceLock<Vec<SubcontentBox>> = OnceLock::new();
         SUBCONTENT.get_or_init(|| {
             vec![Box::new(Manifest::new(None))]

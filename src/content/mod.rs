@@ -90,7 +90,7 @@ mod content_window_imp {
         pub finalize_content : fn(&super::ContentWindow),
 
         /// List of the [`Subcontent`] being implemented.
-        pub subcontent : fn(&super::ContentWindow) -> &'static [SubcontentBox],
+        pub subcontent : fn() -> &'static [SubcontentBox],
     }
 
     /// Custom class structure to be able to use [`ContentWindowClass`]
@@ -135,7 +135,7 @@ pub trait ContentWindowImpl : WindowImpl {
     /// Automatically closes the window.
     fn finalize_content(&self, callback : Option<ContentCallback>);
 
-    fn subcontent(&self) -> &'static [SubcontentBox];
+    fn subcontent() -> &'static [SubcontentBox];
 }
 
 /// Assigns the actual functions to be called (this is mostly based on templates/content_util/form.rs, as well as https://github.com/sdroege/gst-plugin-rs/blob/95c007953c0874bc46152078775d673cf44cc255/net/webrtc/src/signaller/iface.rs).
@@ -152,14 +152,13 @@ unsafe impl<T: ContentWindowImpl> IsSubclassable<T> for ContentWindow {
 
             let imp = obj.imp();
             let content_callback = imp.content_callback.borrow().clone();
-            ContentWindowImpl::finalize_content(this, content_callback);
+            T::finalize_content(this, content_callback);
             obj.close();
         }
         klass.finalize_content = finalize_content_trampoline::<T>;
 
-        fn subcontent_trampoline<T: ObjectSubclass + ContentWindowImpl>(obj : &ContentWindow) -> &'static [SubcontentBox] {
-            let this = obj.dynamic_cast_ref::<<T as ObjectSubclass>::Type>().unwrap().imp();
-            ContentWindowImpl::subcontent(this)
+        fn subcontent_trampoline<T: ObjectSubclass + ContentWindowImpl>() -> &'static [SubcontentBox] {
+            T::subcontent()
         }
         klass.subcontent = subcontent_trampoline::<T>;
     }
@@ -186,8 +185,8 @@ pub trait ContentWindowExt : IsA<ContentWindow> + 'static {
     fn subcontent(&self) -> &'static [SubcontentBox] {
         let window = self.upcast_ref::<ContentWindow>();
         let klass = window.class().as_ref();
-        
-        (klass.subcontent)(window)
+
+        (klass.subcontent)()
     }
 }
 
