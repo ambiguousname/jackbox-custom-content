@@ -10,28 +10,27 @@ use glib::Object;
 mod imp {
 	use super::*;
 	#[derive(Default, Properties)]
-	#[properties(wrapper_type=super::ModData)]
-	pub struct ModData {
+	#[properties(wrapper_type=super::ContentData)]
+	pub struct ContentData {
 		// Allow this to be written to JSON?
 		#[property(get, set)]
 		pub enabled : RefCell<bool>,
-		// pub data: RefCell<Option<ContentData>>,
 	}
 
 	#[glib::object_subclass]
-	impl ObjectSubclass for ModData {
-		const NAME: &'static str = "JCCModData";
-		type Type = super::ModData;
+	impl ObjectSubclass for ContentData {
+		const NAME: &'static str = "JCCContentData";
+		type Type = super::ContentData;
 	}
 
-	impl ObjectImpl for ModData {}
+	impl ObjectImpl for ContentData {}
 }
 
 glib::wrapper!{
-	pub struct ModData(ObjectSubclass<imp::ModData>);
+	pub struct ContentData(ObjectSubclass<imp::ContentData>);
 }
 
-impl ModData {
+impl ContentData {
 	pub fn new(enabled: bool) -> Self{
 		Object::builder()
 		.property("enabled", enabled)

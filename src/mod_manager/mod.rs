@@ -1,5 +1,5 @@
 pub mod mod_store;
-mod mod_data;
+mod content_data;
 
 use std::{collections::HashMap, fs::{self, DirEntry}, cell::RefCell, sync::OnceLock, path::Path};
 
@@ -7,7 +7,7 @@ use gtk::{gio::Cancellable, glib::{self, clone, subclass::prelude::*, Object}, p
 
 use crate::templates::mainmenu::MainMenuWindow;
 
-use self::{mod_data::ModData, mod_store::ModStore};
+use self::{content_data::ContentData, mod_store::ModStore};
 
 // This would be really nice as its own Rust structure, but Glib annoyances (like proper signal connectivity) means that this will have to do.
 
@@ -37,7 +37,7 @@ glib::wrapper!{
 impl ModManager {
 	pub fn new(main_menu : MainMenuWindow) -> Self {
 		ModStore::ensure_type();
-		ModData::ensure_type();
+		ContentData::ensure_type();
 		let manager : Self = Object::new();
 		manager.imp().main_menu.get_or_init(|| {
 			main_menu
@@ -54,6 +54,7 @@ impl ModManager {
 		// manager
 	}
 
+	// region: Getters
 	fn main_menu(&self) -> &MainMenuWindow {
 		self.imp().main_menu.get().unwrap()
 	}
@@ -99,25 +100,7 @@ impl ModManager {
 		})
 	}
 
-	fn load_mods(&self) {
-		// TODO: Make an "All" content list that doesn't use traditional mod loading.
-		// self.add_mod("All".to_string());
-		let mods_folder = Path::new("./mods");
-
-        if !mods_folder.exists() {
-            let result = fs::create_dir(mods_folder);
-            if result.is_err() {
-                eprintln!("Could not create ./mods directory.");
-            }
-        }
-
-        for directory in fs::read_dir(mods_folder).unwrap() {
-            let dir = directory.expect("Could not get child directory.");
-            self.load_mod_from_dir(dir);
-        }
-		// let gesture = &self.imp().sidebar_gesture;
-		// gesture.set_property("widget", self.imp().mod_stack_sidebar.to_value());
-	}
+	// endregion
 
 	// region: Add Mods
 	fn add_mod(&self, mod_store : ModStore) {
@@ -142,6 +125,26 @@ impl ModManager {
 
 		let mod_store = result.unwrap();
 		self.add_mod(mod_store);
+	}
+
+	fn load_mods(&self) {
+		// TODO: Make an "All" content list that doesn't use traditional mod loading.
+		// self.add_mod("All".to_string());
+		let mods_folder = Path::new("./mods");
+
+        if !mods_folder.exists() {
+            let result = fs::create_dir(mods_folder);
+            if result.is_err() {
+                eprintln!("Could not create ./mods directory.");
+            }
+        }
+
+        for directory in fs::read_dir(mods_folder).unwrap() {
+            let dir = directory.expect("Could not get child directory.");
+            self.load_mod_from_dir(dir);
+        }
+		// let gesture = &self.imp().sidebar_gesture;
+		// gesture.set_property("widget", self.imp().mod_stack_sidebar.to_value());
 	}
 
 	fn load_mod_from_dir(&self, dir : DirEntry) {

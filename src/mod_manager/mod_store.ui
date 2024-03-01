@@ -13,7 +13,7 @@
                     <object class="GtkSingleSelection">
                         <property name="model">
                             <object class="GListStore">
-                                <property name="item-type">JCCModData</property>
+                                <property name="item-type">JCCContentData</property>
                             </object>
                         </property>
                     </object>
