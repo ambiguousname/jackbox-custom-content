@@ -11,11 +11,15 @@ publish=false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-gtk = { version = "0.8.0", package = "gtk4", features = ["v4_12"]}
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-open = "5.0.1"
+open = "5.1.2"
+
+[dependencies.gtk]
+package = "gtk4"
+version = "0.8.1"
+features = ["v4_12"]
 
 [build-dependencies]
-glib-build-tools = "0.17.0"
-regex = "1.10.2"
+glib-build-tools = "0.19.0"
+regex = "1.10.3"
