@@ -22,4 +22,6 @@ features = ["v4_12"]
 
 [build-dependencies]
 glib-build-tools = "0.19.0"
+serde-xml-rs="0.6.0"
+serde= {version="1.0", features = ["derive"]}
 regex = "1.10.3"

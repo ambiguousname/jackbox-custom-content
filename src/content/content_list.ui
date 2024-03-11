@@ -18,16 +18,13 @@
 										<child>
 											<object class="JCCContent">
 												<property name="title">Round Prompt</property>
-												<!-- build/content_list.rs uses a regex search to find these two and ensure correct typing so the build system works.
-												Don't add any properties between these two, otherwise the Regex won't work.
+												<!-- build/content_list.rs uses a regex search to find the xml-definition.
 
-												window-path is the path to the window's .rs file (the window should implement an ensure_all_types function).
-												window is just the object (for the list store to read).
+												xml-definition is the path to the window's .xml file. The XML defintion does not define how to render the window, but rather how to create content from the window. The XML definition also locates the window for us from within Rust modules/the file structure pretty handily.
+												
+												See quiplash3/prompts/round_prompt.xml for an example. 
 												-->
-												<property name="window-path">quiplash3::prompts</property>
-												<property name="window">
-													<object class="JCCQuiplashRoundPrompt"></object>
-												</property>
+												<property name="xml-definition">quiplash3/prompts/round_prompt.xml</property>
 											</object>
 										</child>
 									</object>

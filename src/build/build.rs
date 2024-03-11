@@ -1,5 +1,5 @@
 use std::process::Command;
-use std::{fs, io, env, path::PathBuf};
+use std::{fs, env, path::PathBuf};
 
 // Tries to make a distribution as close to https://www.gtk.org/docs/installations/windows/#building-and-distributing-your-application as possible.
 fn compile(out_path : PathBuf) {
@@ -63,7 +63,6 @@ fn compile(out_path : PathBuf) {
 // }
 
 mod content_list;
-
 use content_list::compile_content_list;
 
 #[allow(unused_parens)]

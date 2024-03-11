@@ -26,11 +26,12 @@ mod imp {
         #[property(get, set)]
         pub title : OnceCell<String>,
 
+        /// Path for where the window definition is located and how to create it.
+        /// See subcontent_list.ui for a more thorough explanation.
         #[property(get, set)]
-        pub window_path : OnceCell<String>,
+        pub xml_definition : OnceCell<String>,
 
-        /// In the XML definition (content_list.ui), every piece of Content has an associated window property. This makes it much easier to quickly set up a definition for a window, then add it to the list of existing content. Less work for devs, but more work in the background.
-        #[property(get, set)]
+        #[property(get)]
         pub window : OnceCell<ContentWindow>,
     }
 
@@ -56,13 +57,14 @@ type ContentCallback = fn(Vec<SubcontentBox>);
 impl Content {
     pub fn ensure_all_types() {
         Content::ensure_type();
-        // Calls the function created in the include! call above.
-        ensure_types();
     }
 
     /// Creates the content window from the properties and sets up the appropriate [`ContentCallback`] to the window. 
     pub fn create_content(&self, callback : Option<ContentCallback>) {
-        let window = self.window();
+        let xml_def = self.xml_definition();
+        let window = self.imp().window.get_or_init(|| {
+            create_window(xml_def)
+        });
         window.set_hide_on_close(true);
         window.create_content_window(callback);
         window.present();

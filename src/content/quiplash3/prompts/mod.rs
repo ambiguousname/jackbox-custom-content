@@ -68,7 +68,6 @@ impl QuiplashRoundPrompt {
     #[template_callback]
     pub fn handle_create_clicked(&self) {
         // Put a call to ContentWindowImpl, with a stored callback (as explained in content/mod.rs)
-
         
         if self.get_selected().is_valid() {
             self.finalize_content();
