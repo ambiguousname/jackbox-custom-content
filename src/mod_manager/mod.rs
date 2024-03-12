@@ -5,7 +5,7 @@ use std::{collections::HashMap, fs::{self, DirEntry}, cell::RefCell, sync::OnceL
 
 use gtk::{gio::Cancellable, glib::{self, clone, subclass::prelude::*, Object}, prelude::*, AlertDialog, Window};
 
-use crate::{templates::mainmenu::MainMenuWindow};
+use crate::templates::mainmenu::MainMenuWindow;
 
 use self::{content_data::ContentData, mod_store::ModStore};
 
@@ -206,5 +206,25 @@ impl ModManager {
 		main_menu.remove_mod_from_stack(mod_name);
 	}
 
+	// endregion
+
+	// region: Editing Mods
+	pub fn add_content_to_mod(&self, mod_name : String, content : crate::content::Content) {
+		content.create_content(clone!(@weak self as m => move |subcontent_type, subcontent| {
+			let curr_mod = m.get_mod(mod_name).expect("Could not get mod of given name.");
+			// TODO: Write this.
+
+			let id : String = curr_mod.id();
+			let mod_id : String = content_data.len().to_string();
+
+			let content_id = format!("{}_{}", id, mod_id);
+			let new_content_data = ContentData::new(content_id.clone());
+			for s in subcontent {
+				s.write_to_mod(content_id.clone());
+			}
+			
+			curr_mod.add_content(new_content_data);
+		}));
+	}
 	// endregion
 }

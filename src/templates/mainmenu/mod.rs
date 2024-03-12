@@ -4,7 +4,7 @@ mod folder_selection;
 use std::{sync::OnceLock, vec::Vec};
 
 // Template construction:
-use gtk::{Application, Box, Button, Stack, StackSwitcher, gio::{self, ActionEntry, Settings}, AlertDialog, AboutDialog};
+use gtk::{gio::{self, ActionEntry, Settings}, glib::clone, AboutDialog, AlertDialog, Application, Box, Button, Stack, StackSwitcher};
 
 use glib::Object;
 
@@ -222,9 +222,8 @@ impl MainMenuWindow {
 	}
 
 	pub fn add_content_to_mod(&self, content: crate::content::Content) {
-		let mod_name = self.visible_mod_stack_name().unwrap();
-		let curr_mod = self.mod_manager().get_mod(mod_name.to_string()).expect("Could not find mod.");
-		curr_mod.add_content(content);
+		let mod_name = self.visible_mod_stack_name().expect("Nothing visible on the stack.");
+		self.mod_manager().add_content_to_mod(mod_name.to_string(), content);
 	}
 
 	// endregion

@@ -42,20 +42,8 @@ impl ModStore {
 		Ok(this)
     }
 
-	pub fn add_content(&self, content : Content) {
-		content.create_content(clone!(@weak self as m => move |subcontent_type, subcontent| {
-			// TODO: Write this.
-			let content_data = m.imp().content_data.borrow();
-
-			let id : String = m.id();
-			let mod_id : String = content_data.len().to_string();
-
-			let content_id = format!("{}_{}", id, mod_id);
-			let new_content_data = ContentData::new(content_id.clone());
-			for s in subcontent {
-				s.write_to_mod(content_id.clone());
-			}
-		}));
+	pub fn add_content(&self, content_data : ContentData) {
+		
 	}
 
 	pub fn create_content() {
