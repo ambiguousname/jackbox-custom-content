@@ -11,9 +11,17 @@ impl ManifestItem {
 	pub fn new(item_content : serde_json::Value) -> Self {
 		ManifestItem {item_content: item_content}
 	}
+
+	pub fn content(&self) -> serde_json::Value {
+		self.item_content.clone()
+	}
 }
 
 impl Subcontent for ManifestItem {
+	fn as_any(&self) -> &dyn std::any::Any {
+		self
+	}
+
 	fn write_to_game(&self, id: String) {
 		todo!()
 	}

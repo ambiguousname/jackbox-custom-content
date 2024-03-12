@@ -6,6 +6,10 @@ pub struct ContentFolder {
 }
 
 impl Subcontent for ContentFolder {
+	fn as_any(&self) -> &dyn std::any::Any {
+		self
+	}
+
 	fn write_to_mod(&self, id: String) {
 		todo!()
 	}

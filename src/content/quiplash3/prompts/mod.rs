@@ -75,8 +75,8 @@ impl ContentWindowImpl for imp::QuiplashRoundPrompt {
         
         if callback.is_some() {
             let round_str = match obj.get_selected_idx() {
-                Some(0) => "Round 1",
-                Some(1) => "Round 2",
+                Some(0) => "Round1",
+                Some(1) => "Round2",
                 Some(2) => "FinalRound",
                 _ => unreachable!("Invalid round selection found"),
             };
@@ -84,16 +84,38 @@ impl ContentWindowImpl for imp::QuiplashRoundPrompt {
         }
     }
 
-    fn load_content(&self, subcontent_type : String, subcontent : Vec<crate::content::SubcontentBox>) {
+    fn load_content(&self, subcontent_type : String, subcontent : Vec<crate::content::SubcontentBox>) -> Result<(), String> {
         let obj = self.obj();
         
         let selected = obj.get_selected();
 
-        let values : HashMap<String, glib::Value> = HashMap::new();
+        let mut values : HashMap<String, glib::Value> = HashMap::new();
         
-        let manifest_item : ManifestItem = subcontent[0].try_into().expect("Could not get manifest item.");
+        let manifest_item = subcontent[0].downcast_ref::<ManifestItem>().expect("Could not get manifest item.");
+        let read_manifest = serde_json::from_value::<Quiplash3RoundManifestItem>(manifest_item.content());
+
+        if read_manifest.is_err() {
+            return Err(format!("Could not read manifest."));
+        }
+
+        let quiplash_manifest = read_manifest.unwrap();
+        
+
+        values.insert(String::from("Prompt Text"), quiplash_manifest.prompt.to_value());
+        values.insert(String::from("Includes Player Name"), quiplash_manifest.includes_player_name.to_value());
+        values.insert(String::from("Safety Quips"), quiplash_manifest.safety_quips.to_value());
+        values.insert(String::from("Content is US-Specific"), quiplash_manifest.us.to_value());
+        values.insert(String::from("Contains Adult Content"), quiplash_manifest.x.to_value());
 
         selected.update_form(values);
+
+        obj.set_selected_idx(match subcontent_type.as_str() {
+            "Round1" => Some(0),
+            "Round2" => Some(1),
+            "FinalRound" => Some(2),
+            _ => None,
+        });
+        Ok(())
     }
 }
 
@@ -107,6 +129,10 @@ impl QuiplashRoundPrompt {
 
     fn get_selected_idx(&self) -> Option<u32> {
         self.imp().round_select.current_page()
+    }
+
+    fn set_selected_idx(&self, idx : Option<u32>) {
+        self.imp().round_select.set_current_page(idx);
     }
 
     fn get_selected(&self) -> QuiplashGenericRoundPrompt {

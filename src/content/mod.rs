@@ -90,7 +90,7 @@ mod content_window_imp {
         /// This is sort of an intermediary between [`ContentWindowImpl::finalize_content`] and [`ContentWindow`]'s call of it. This will pass along the callback to [`ContentWindowImpl`] and call it.
         /// Set in [`IsSubclassable<T: ContentWindowImpl>::class_init`]
         pub finalize_content : fn(&super::ContentWindow),
-        pub load_content : fn(&super::ContentWindow, String, Vec<SubcontentBox>),
+        pub load_content : fn(&super::ContentWindow, String, Vec<SubcontentBox>) -> Result<(), String>,
     }
 
     /// Custom class structure to be able to use [`ContentWindowClass`]
@@ -102,7 +102,7 @@ mod content_window_imp {
     /// Default implementations. Nothing special here.
     impl ContentWindow {
         fn finalize_content(_this : &super::ContentWindow) {}
-        fn load_content(_this : &super::ContentWindow, subcontent_type : String, subcontent : Vec<SubcontentBox>) {}
+        fn load_content(_this : &super::ContentWindow, subcontent_type : String, subcontent : Vec<SubcontentBox>) -> Result<(), String> { Ok(()) }
     }
 
     #[glib::object_subclass]
@@ -136,7 +136,7 @@ pub trait ContentWindowImpl : WindowImpl {
     fn finalize_content(&self, callback : Option<ContentCallback>);
 
     /// Called when [`ContentWindow`] needs to load a specific subcontent type.
-    fn load_content(&self, subcontent_type : String, subcontent : Vec<SubcontentBox>);
+    fn load_content(&self, subcontent_type : String, subcontent : Vec<SubcontentBox>) -> Result<(), String>;
 }
 
 /// Assigns the actual functions to be called (this is mostly based on templates/content_util/form.rs, as well as https://github.com/sdroege/gst-plugin-rs/blob/95c007953c0874bc46152078775d673cf44cc255/net/webrtc/src/signaller/iface.rs).
@@ -158,10 +158,10 @@ unsafe impl<T: ContentWindowImpl> IsSubclassable<T> for ContentWindow {
         }
         klass.finalize_content = finalize_content_trampoline::<T>;
 
-        fn load_content_trampoline<T: ObjectSubclass + ContentWindowImpl>(obj : &ContentWindow, subcontent_type : String, subcontent : Vec<SubcontentBox>) {
+        fn load_content_trampoline<T: ObjectSubclass + ContentWindowImpl>(obj : &ContentWindow, subcontent_type : String, subcontent : Vec<SubcontentBox>) -> Result<(), String> {
             let this = obj.dynamic_cast_ref::<<T as ObjectSubclass>::Type>().unwrap().imp();
 
-            T::load_content(this, subcontent_type, subcontent);
+            T::load_content(this, subcontent_type, subcontent)
         }
         klass.load_content = load_content_trampoline::<T>;
     }

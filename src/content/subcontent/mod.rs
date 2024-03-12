@@ -1,3 +1,5 @@
+use std::any::Any;
+
 pub mod manifest;
 pub mod subfolder;
 pub mod content_folder;
@@ -18,4 +20,12 @@ pub trait Subcontent {
 	fn write_to_game(&self, id: String);
 	/// Called when reading the mod folder.
 	fn load_from_dir(&self);
+
+	fn as_any(&self) -> &dyn Any;
+}
+
+impl dyn Subcontent   {
+	pub fn downcast_ref<T : Subcontent + Any>(&self) -> Option<&T> {
+		self.as_any().downcast_ref::<T>()
+	}
 }

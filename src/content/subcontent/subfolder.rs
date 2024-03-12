@@ -15,6 +15,10 @@ impl Subfolder {
 }
 
 impl Subcontent for Subfolder {
+	fn as_any(&self) -> &dyn std::any::Any {
+		self
+	}
+
 	fn write_to_game(&self, id: String) {
 		todo!()
 	}
