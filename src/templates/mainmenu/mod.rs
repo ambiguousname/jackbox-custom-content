@@ -9,7 +9,7 @@ use gtk::{Application, Box, Button, Stack, StackSwitcher, gio::{self, ActionEntr
 use glib::Object;
 
 use content_creation::ContentCreationDialog;
-use crate::{mod_manager::{ModManager, mod_store::ModStore}, quick_template};
+use crate::{mod_manager::{mod_store::ModStore, ModManager}, quick_template};
 
 use super::preferences::PreferencesWindow;
 
@@ -219,6 +219,12 @@ impl MainMenuWindow {
 		} else {
 			window.imp().new_content.set_visible(false);
 		}
+	}
+
+	pub fn add_content_to_mod(&self, content: crate::content::Content) {
+		let mod_name = self.visible_mod_stack_name().unwrap();
+		let curr_mod = self.mod_manager().get_mod(mod_name.to_string()).expect("Could not find mod.");
+		curr_mod.add_content(content);
 	}
 
 	// endregion

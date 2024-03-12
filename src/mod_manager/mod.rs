@@ -5,7 +5,7 @@ use std::{collections::HashMap, fs::{self, DirEntry}, cell::RefCell, sync::OnceL
 
 use gtk::{gio::Cancellable, glib::{self, clone, subclass::prelude::*, Object}, prelude::*, AlertDialog, Window};
 
-use crate::templates::mainmenu::MainMenuWindow;
+use crate::{templates::mainmenu::MainMenuWindow};
 
 use self::{content_data::ContentData, mod_store::ModStore};
 
@@ -100,6 +100,10 @@ impl ModManager {
 		})
 	}
 
+	pub fn get_mod(&self, mod_name : String) -> Option<ModStore> {
+		let store = self.imp().mods.borrow();
+		store.get(&mod_name).and_then(|val| {Some(val.clone())})
+	}
 	// endregion
 
 	// region: Add Mods

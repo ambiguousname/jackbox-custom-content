@@ -9,6 +9,8 @@ mod game_list;
 
 use self::game_list::GameListItem;
 
+use super::MainMenuWindow;
+
 quick_template!(ContentCreationDialog, "/templates/mainmenu/content_creation/content_creation.ui", gtk::Window, (gtk::Widget), (gtk::Native, gtk::Root, gtk::ShortcutManager),
     #[derive(Default, CompositeTemplate)]
     handlers struct {
@@ -98,8 +100,7 @@ impl ContentCreationDialog {
         }
 
         let current_selection : Content = current_option.and_downcast().expect("Could not get selected.");
-        current_selection.create_content(|subcontent_type, subcontent| {
-            todo!()
-        });
+        let main_menu = self.transient_for().and_downcast::<MainMenuWindow>().unwrap();
+        main_menu.add_content_to_mod(current_selection);
     }
 }
