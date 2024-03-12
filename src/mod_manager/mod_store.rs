@@ -1,8 +1,9 @@
 use gtk::{ColumnView, glib::{Properties, derived_properties, Object}};
 
-use std::{cell::OnceCell, fs::{self, DirEntry}, path::PathBuf, io::Error};
+use std::{cell::{OnceCell, RefCell}, collections::HashMap, fs::{self, DirEntry}, path::PathBuf, io::Error};
 
 use crate::{content::Content, quick_template};
+use super::ContentData;
 
 quick_template!(ModStore, "/mod_manager/mod_store.ui", gtk::Box, (gtk::Widget), (gtk::Orientable),
 	#[derive(Default, CompositeTemplate, Properties)]
@@ -17,6 +18,8 @@ quick_template!(ModStore, "/mod_manager/mod_store.ui", gtk::Box, (gtk::Widget), 
 		pub name : OnceCell<String>,
 		#[property(get)]
 		pub id: OnceCell<String>,
+
+		pub content_data : RefCell<Vec<ContentData>>,
 	}
 );
 
@@ -40,12 +43,15 @@ impl ModStore {
     }
 
 	pub fn add_content(&self, content : Content) {
+		let content_data = self.imp().content_data.borrow();
 		content.create_content(|subcontent_type, subcontent| {
 			// TODO: Write this.
-			let content_id = format!("");
+			/*let id : String = self.id();
+			let mod_id : String = content_data.len();
+			let new_content_data = ContentData::new(format!("{}_{}", id, mod_id));
 			for s in subcontent {
 				s.write_to_mod(content_id.clone());
-			}
+			}*/
 		});
 	}
 

@@ -5,7 +5,7 @@
 use gtk::{subclass::prelude::*, glib, prelude::*};
 use glib::{Object, Properties, derived_properties};
 
-use std::cell::OnceCell;
+use std::{cell::{OnceCell, RefCell}, rc::Rc};
 
 use self::subcontent::Subcontent;
 
@@ -50,9 +50,10 @@ glib::wrapper! {
     pub struct Content(ObjectSubclass<imp::Content>);
 }
 
-type SubcontentBox = Box<dyn Subcontent>;
+pub type SubcontentBox = Box<dyn Subcontent>;
 /// Direct function that the mod manager uses to organize files after creation.
-type ContentCallback = fn(subcontent_type: String, subcontent: Vec<SubcontentBox>);
+type ContentCallback = dyn Fn(String, Vec<SubcontentBox>);
+type ContentCallbackBox = Box<ContentCallback>;
 
 impl Content {
     pub fn ensure_all_types() {
@@ -60,26 +61,25 @@ impl Content {
     }
 
     /// Creates the content window from the properties and sets up the appropriate [`ContentCallback`] to the window. 
-    pub fn create_content(&self, callback : ContentCallback) {
+    pub fn create_content(&self, callback : impl Fn(String, Vec<SubcontentBox>) + 'static) {
         let xml_def = self.xml_definition();
         let window = self.imp().window.get_or_init(|| {
             create_window(xml_def)
         });
         window.set_hide_on_close(true);
-        window.create_content_window(callback);
+        window.create_content_window(Box::new(callback));
         window.present();
     }
 }
 
 mod content_window_imp {
-    use std::cell::RefCell;
 
     use super::*;
 
     #[derive(Default)]
     pub struct ContentWindow {
         /// The callback set by [`Content::create_content`]. 
-        pub content_callback : RefCell<Option<ContentCallback>>,
+        pub content_callback : RefCell<Option<Rc<ContentCallbackBox>>>,
     }
 
     /// The struct used for virtual functions. You should override this in your custom ContentWindow extension (see [`quiplash3::prompts::QuiplashRoundPrompt`] for an example of this.)
@@ -133,7 +133,7 @@ impl ContentWindow {}
 pub trait ContentWindowImpl : WindowImpl {
     /// Whenever [`ContentWindow`] has finished creating content and is ready to pass along the relevant data for the mod manager, call [`ContentWindowExt::finalize_content`] and this will be called with the appropriate callback.
     /// Automatically closes the window.
-    fn finalize_content(&self, callback : ContentCallback);
+    fn finalize_content(&self, callback : &ContentCallback);
 
     /// Called when [`ContentWindow`] needs to load a specific subcontent type.
     fn load_content(&self, subcontent_type : String, subcontent : Vec<SubcontentBox>) -> Result<(), String>;
@@ -152,8 +152,10 @@ unsafe impl<T: ContentWindowImpl> IsSubclassable<T> for ContentWindow {
             let this = obj.dynamic_cast_ref::<<T as ObjectSubclass>::Type>().unwrap().imp();
 
             let imp = obj.imp();
-            let content_callback = imp.content_callback.borrow().clone().unwrap();
-            T::finalize_content(this, content_callback);
+            let content_callback = imp.content_callback.borrow().clone();
+            let rc = content_callback.unwrap().clone();
+            let content_callback = rc.as_ref();
+            T::finalize_content(this, content_callback.as_ref());
             obj.close();
         }
         klass.finalize_content = finalize_content_trampoline::<T>;
@@ -170,10 +172,11 @@ unsafe impl<T: ContentWindowImpl> IsSubclassable<T> for ContentWindow {
 /// The outward facing functions.
 pub trait ContentWindowExt : IsA<ContentWindow> + 'static {
     /// Called by [`Content::create_content`], sets up the callback.
-    fn create_content_window(&self, callback : ContentCallback) {
+    fn create_content_window(&self, callback : ContentCallbackBox) {
         let window = self.upcast_ref::<ContentWindow>();
 
-        window.imp().content_callback.replace(Some(callback));
+        let mut content_callback = window.imp().content_callback.borrow_mut();
+        content_callback.replace(Rc::new(callback));
     }
 
     /// Should be called by [`ContentWindow`] when the window is done, will call [`content_window_imp::ContentWindowClass<T>::finalize_content`] as an intermediary step.

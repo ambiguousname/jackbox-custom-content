@@ -31,7 +31,7 @@ struct Quiplash3RoundManifestItem {
 }
 
 impl ContentWindowImpl for imp::QuiplashRoundPrompt {
-    fn finalize_content(&self, callback : crate::content::ContentCallback) {
+    fn finalize_content(&self, callback : &crate::content::ContentCallback) {
         let obj = self.obj();
 
         let selected = obj.get_selected();
