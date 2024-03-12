@@ -1,4 +1,4 @@
-use gtk::{ColumnView, glib::{Properties, derived_properties, Object}};
+use gtk::{glib::{clone, derived_properties, Object, Properties}, ColumnView};
 
 use std::{cell::{OnceCell, RefCell}, collections::HashMap, fs::{self, DirEntry}, path::PathBuf, io::Error};
 
@@ -43,16 +43,19 @@ impl ModStore {
     }
 
 	pub fn add_content(&self, content : Content) {
-		let content_data = self.imp().content_data.borrow();
-		content.create_content(|subcontent_type, subcontent| {
+		content.create_content(clone!(@weak self as m => move |subcontent_type, subcontent| {
 			// TODO: Write this.
-			/*let id : String = self.id();
-			let mod_id : String = content_data.len();
-			let new_content_data = ContentData::new(format!("{}_{}", id, mod_id));
+			let content_data = m.imp().content_data.borrow();
+
+			let id : String = m.id();
+			let mod_id : String = content_data.len().to_string();
+
+			let content_id = format!("{}_{}", id, mod_id);
+			let new_content_data = ContentData::new(content_id.clone());
 			for s in subcontent {
 				s.write_to_mod(content_id.clone());
-			}*/
-		});
+			}
+		}));
 	}
 
 	pub fn create_content() {
