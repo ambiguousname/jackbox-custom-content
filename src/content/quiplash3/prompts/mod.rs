@@ -31,7 +31,7 @@ struct Quiplash3RoundManifestItem {
 }
 
 impl ContentWindowImpl for imp::QuiplashRoundPrompt {
-    fn finalize_content(&self, callback : Option<crate::content::ContentCallback>) {
+    fn finalize_content(&self, callback : crate::content::ContentCallback) {
         let obj = self.obj();
 
         let selected = obj.get_selected();
@@ -68,20 +68,17 @@ impl ContentWindowImpl for imp::QuiplashRoundPrompt {
             x
         };
 
-        // TODO: Migrate this to some sort of subcontent manager, and just have this switch between subcontent types instead, then feed it the data it wants.
         let quip_manifest = ManifestItem::new(serde_json::to_value(manifest_data).unwrap());
         let quip_box : Box<dyn Subcontent> = Box::new(quip_manifest);
         subcontent_vec.push(quip_box);
         
-        if callback.is_some() {
-            let round_str = match obj.get_selected_idx() {
-                Some(0) => "Round1",
-                Some(1) => "Round2",
-                Some(2) => "FinalRound",
-                _ => unreachable!("Invalid round selection found"),
-            };
-            callback.unwrap()(round_str.to_string(), subcontent_vec);
-        }
+        let round_str = match obj.get_selected_idx() {
+            Some(0) => "Round1",
+            Some(1) => "Round2",
+            Some(2) => "FinalRound",
+            _ => unreachable!("Invalid round selection found"),
+        };
+        (callback)(round_str.to_string(), subcontent_vec);
     }
 
     fn load_content(&self, subcontent_type : String, subcontent : Vec<crate::content::SubcontentBox>) -> Result<(), String> {

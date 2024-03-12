@@ -60,7 +60,7 @@ impl Content {
     }
 
     /// Creates the content window from the properties and sets up the appropriate [`ContentCallback`] to the window. 
-    pub fn create_content(&self, callback : Option<ContentCallback>) {
+    pub fn create_content(&self, callback : ContentCallback) {
         let xml_def = self.xml_definition();
         let window = self.imp().window.get_or_init(|| {
             create_window(xml_def)
@@ -133,7 +133,7 @@ impl ContentWindow {}
 pub trait ContentWindowImpl : WindowImpl {
     /// Whenever [`ContentWindow`] has finished creating content and is ready to pass along the relevant data for the mod manager, call [`ContentWindowExt::finalize_content`] and this will be called with the appropriate callback.
     /// Automatically closes the window.
-    fn finalize_content(&self, callback : Option<ContentCallback>);
+    fn finalize_content(&self, callback : ContentCallback);
 
     /// Called when [`ContentWindow`] needs to load a specific subcontent type.
     fn load_content(&self, subcontent_type : String, subcontent : Vec<SubcontentBox>) -> Result<(), String>;
@@ -152,7 +152,7 @@ unsafe impl<T: ContentWindowImpl> IsSubclassable<T> for ContentWindow {
             let this = obj.dynamic_cast_ref::<<T as ObjectSubclass>::Type>().unwrap().imp();
 
             let imp = obj.imp();
-            let content_callback = imp.content_callback.borrow().clone();
+            let content_callback = imp.content_callback.borrow().clone().unwrap();
             T::finalize_content(this, content_callback);
             obj.close();
         }
@@ -170,10 +170,10 @@ unsafe impl<T: ContentWindowImpl> IsSubclassable<T> for ContentWindow {
 /// The outward facing functions.
 pub trait ContentWindowExt : IsA<ContentWindow> + 'static {
     /// Called by [`Content::create_content`], sets up the callback.
-    fn create_content_window(&self, callback : Option<ContentCallback>) {
+    fn create_content_window(&self, callback : ContentCallback) {
         let window = self.upcast_ref::<ContentWindow>();
 
-        window.imp().content_callback.replace(callback);
+        window.imp().content_callback.replace(Some(callback));
     }
 
     /// Should be called by [`ContentWindow`] when the window is done, will call [`content_window_imp::ContentWindowClass<T>::finalize_content`] as an intermediary step.

@@ -22,7 +22,7 @@ impl Subcontent for ManifestItem {
 		self
 	}
 
-	fn write_to_game(&self, id: String) {
+	fn write_to_game(&self) {
 		todo!()
 	}
 

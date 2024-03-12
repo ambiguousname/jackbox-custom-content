@@ -14,7 +14,7 @@ impl Subcontent for ContentFolder {
 		todo!()
 	}
 
-	fn write_to_game(&self, id: String) {
+	fn write_to_game(&self) {
 		todo!()
 	}
 

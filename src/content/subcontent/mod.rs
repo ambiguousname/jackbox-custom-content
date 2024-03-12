@@ -17,7 +17,7 @@ pub trait Subcontent {
 	/// Called when the Subcontent should be written to the mod folder.
 	fn write_to_mod(&self, id: String);
 	/// Called when the Subcontent should be written to the game folder.
-	fn write_to_game(&self, id: String);
+	fn write_to_game(&self);
 	/// Called when reading the mod folder.
 	fn load_from_dir(&self);
 
