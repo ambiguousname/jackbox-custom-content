@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use super::Subcontent;
 
-/// Represents a sub-folder 
+/// Represents a sub-folder of a game's content folder for content to be in.
 pub struct Subfolder {
 	/// The location that this subfolder should go into.
 	sublocation : PathBuf,
@@ -15,11 +15,11 @@ impl Subfolder {
 }
 
 impl Subcontent for Subfolder {
-	fn write_to_game(&self) {
+	fn write_to_game(&self, id: String) {
 		todo!()
 	}
 
-	fn write_to_mod(&self) {
+	fn write_to_mod(&self, id: String) {
 		todo!()
 	}
 

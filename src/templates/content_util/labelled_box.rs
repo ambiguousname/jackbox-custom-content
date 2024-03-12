@@ -106,6 +106,11 @@ impl FormObjectImpl for imp::LabelledBox {
 	fn value(&self) -> Value {
 		self.obj().value()
 	}
+
+	fn set_value(&self, value: Value) {
+		self.obj().set_value(value);
+	}
+	
 	fn display_error(&self, error : Option<super::form::FormError>) {
 		self.obj().display_error(error);
 	}
@@ -145,6 +150,10 @@ impl LabelledBox {
 
 	pub fn value(&self) -> Value {
 		self.value_obj().property(&self.imp().value_property.borrow().clone())
+	}
+
+	pub fn set_value(&self, value : Value) {
+		self.value_obj().set_property(&self.imp().value_property.borrow().clone(), value);
 	}
 
 	pub fn display_error(&self, error : Option<super::form::FormError>) {

@@ -6,11 +6,11 @@ pub struct ContentFolder {
 }
 
 impl Subcontent for ContentFolder {
-	fn write_to_mod(&self) {
+	fn write_to_mod(&self, id: String) {
 		todo!()
 	}
 
-	fn write_to_game(&self) {
+	fn write_to_game(&self, id: String) {
 		todo!()
 	}
 

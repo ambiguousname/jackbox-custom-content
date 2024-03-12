@@ -65,6 +65,10 @@ impl QuiplashGenericRoundPrompt {
         QuiplashGenericRoundPrompt::ensure_type();
     }
 
+    pub fn update_form(&self, values : HashMap<String, glib::Value>) {
+        self.imp().form_manager.update_values(values);
+    }
+
     pub fn submit(&self) -> Option<HashMap<String, glib::Value>> {
         self.imp().form_manager.submit()
     }

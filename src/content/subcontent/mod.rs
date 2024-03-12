@@ -13,9 +13,9 @@ pub mod content_folder;
 /// Depending on how [`Subcontent::write_to_mod`] is implemented, it could merge or replace existing chunks.
 pub trait Subcontent {
 	/// Called when the Subcontent should be written to the mod folder.
-	fn write_to_mod(&self);
+	fn write_to_mod(&self, id: String);
 	/// Called when the Subcontent should be written to the game folder.
-	fn write_to_game(&self);
+	fn write_to_game(&self, id: String);
 	/// Called when reading the mod folder.
 	fn load_from_dir(&self);
 }

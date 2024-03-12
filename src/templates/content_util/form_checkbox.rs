@@ -35,6 +35,10 @@ impl FormObjectImpl for imp::FormCheckbox {
 	fn value(&self) -> glib::Value {
 		self.obj().is_active().to_value()
 	}
+
+	fn set_value(&self, value: glib::Value) {
+		self.obj().set_active(value.get().expect("Could not get bool for set_value."));
+	}
 }
 
 impl FormCheckbox {

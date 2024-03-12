@@ -1,10 +1,11 @@
-use std::sync::OnceLock;
+use std::collections::HashMap;
 
-use crate::{content::{subcontent::{manifest::Manifest, Subcontent}, Content, ContentWindow, ContentWindowExt, ContentWindowImpl}, quick_template};
+use crate::{content::{subcontent::{manifest::ManifestItem, Subcontent}, Content, ContentWindow, ContentWindowExt, ContentWindowImpl}, quick_template};
 
 mod prompt_util;
 use gtk::Notebook;
 use prompt_util::QuiplashGenericRoundPrompt;
+use serde::{Deserialize, Serialize};
 
 // TODO: Transfer prompt data across notebooks?
 quick_template!(QuiplashRoundPrompt, "/content/quiplash3/prompts/round_prompt.ui", ContentWindow, (gtk::Window, gtk::Widget, Content), (gtk::Native, gtk::Root, gtk::ShortcutManager),
@@ -18,6 +19,17 @@ quick_template!(QuiplashRoundPrompt, "/content/quiplash3/prompts/round_prompt.ui
 impl ObjectImpl for imp::QuiplashRoundPrompt {}
 impl WidgetImpl for imp::QuiplashRoundPrompt {}
 impl WindowImpl for imp::QuiplashRoundPrompt {}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
+struct Quiplash3RoundManifestItem {
+    includes_player_name: bool,
+    prompt: String,
+    safety_quips: Vec<String>,
+    us: bool,
+    x: bool
+}
+
 impl ContentWindowImpl for imp::QuiplashRoundPrompt {
     fn finalize_content(&self, callback : Option<crate::content::ContentCallback>) {
         let obj = self.obj();
@@ -31,20 +43,57 @@ impl ContentWindowImpl for imp::QuiplashRoundPrompt {
             text.get::<String>().ok()
         }).unwrap();
 
-        let quip_manifest = Manifest::new(
-            match obj.get_selected_idx() {
-                Some(0) => Some("Quiplash3Round1Question.jet".to_string()),
-                Some(1) => Some("Quiplash3Round2Question.jet".to_string()),
-                Some(2) => Some("Quiplash3FinalQuestion.jet".to_string()),
-                _ => None
-            }
-        );
+        let player_name = map.get("Includes Player Name").and_then(|bool_val| {
+            bool_val.get::<bool>().ok()
+        }).unwrap();
+
+        let quips = map.get("Safety Quips").and_then(|quips| {
+            quips.get::<Vec<String>>().ok()
+        }).unwrap();
+
+        let us = map.get("Content is US-Specific").and_then(|us| {
+            us.get::<bool>().ok()
+        }).unwrap();
+
+        let x = map.get("Contains Adult Content").and_then(|x| {
+            x.get::<bool>().ok()
+        }).unwrap();
+
+
+        let manifest_data = Quiplash3RoundManifestItem {
+            includes_player_name: player_name,
+            prompt: prompt_text,
+            safety_quips: quips,
+            us,
+            x
+        };
+
+        // TODO: Migrate this to some sort of subcontent manager, and just have this switch between subcontent types instead, then feed it the data it wants.
+        let quip_manifest = ManifestItem::new(serde_json::to_value(manifest_data).unwrap());
         let quip_box : Box<dyn Subcontent> = Box::new(quip_manifest);
         subcontent_vec.push(quip_box);
         
         if callback.is_some() {
-            callback.unwrap()(subcontent_vec);
+            let round_str = match obj.get_selected_idx() {
+                Some(0) => "Round 1",
+                Some(1) => "Round 2",
+                Some(2) => "FinalRound",
+                _ => unreachable!("Invalid round selection found"),
+            };
+            callback.unwrap()(round_str.to_string(), subcontent_vec);
         }
+    }
+
+    fn load_content(&self, subcontent_type : String, subcontent : Vec<crate::content::SubcontentBox>) {
+        let obj = self.obj();
+        
+        let selected = obj.get_selected();
+
+        let values : HashMap<String, glib::Value> = HashMap::new();
+        
+        let manifest_item : ManifestItem = subcontent[0].try_into().expect("Could not get manifest item.");
+
+        selected.update_form(values);
     }
 }
 

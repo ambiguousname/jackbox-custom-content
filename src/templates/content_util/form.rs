@@ -24,6 +24,7 @@ mod imp {
 		// Create the list of functions to be stored by our Interface definition in GTK GObject stuff:
 		pub is_valid : fn(&super::FormObject) -> bool,
 		pub value : fn(&super::FormObject) -> Value,
+		pub set_value : fn(&super::FormObject, Value),
 		pub display_error : fn(&super::FormObject, Option<FormError>),
 	}
 	
@@ -34,6 +35,9 @@ mod imp {
 		}
 		fn value(_this : &super::FormObject) -> Value {
 			None::<String>.to_value()
+		}
+		fn set_value(_this : &super::FormObject, value: Value) {
+			
 		}
 		fn display_error(_this : &super::FormObject, _error : Option<FormError>) {
 
@@ -55,6 +59,7 @@ mod imp {
 		fn interface_init(&mut self) {
 			self.is_valid = FormObject::is_valid;
 			self.value = FormObject::value;
+			self.set_value = FormObject::set_value;
 			self.display_error = FormObject::display_error;
 		}
 	}
@@ -69,6 +74,7 @@ pub trait FormObjectImpl: ObjectImpl + ObjectSubclass {
 	/// Only called if the property required is true.
 	fn is_valid(&self) -> bool;
 	fn value(&self) -> Value;
+	fn set_value(&self, value: Value);
 	fn display_error(&self, error : Option<FormError>);
 }
 
@@ -88,6 +94,12 @@ unsafe impl<T: FormObjectImpl> IsImplementable<T> for FormObject {
 			FormObjectImpl::value(this)
 		}
 		iface.value = value_trampoline::<T>;
+
+		fn set_value_trampoline<T: ObjectSubclass + FormObjectImpl>(obj : &FormObject, value: Value) {
+			let this = obj.dynamic_cast_ref::<<T as ObjectSubclass>::Type>().unwrap().imp();
+			T::set_value(this, value);
+		}
+		iface.set_value = set_value_trampoline::<T>;
 
 		fn display_error_trampoline<T: ObjectSubclass + FormObjectImpl>(obj : &FormObject, error : Option<FormError>) {
 			let this = obj.dynamic_cast_ref::<<T as ObjectSubclass>::Type>().unwrap().imp();
@@ -120,8 +132,8 @@ pub trait FormObjectExt : IsA<FormObject> + IsA<gtk::Widget> + 'static {
 
 	fn is_valid(&self) -> bool {
 		let vtable = self.interface::<FormObject>().unwrap();
-		let vtable = vtable.as_ref();
-		(vtable.is_valid)(self.upcast_ref::<FormObject>())
+		let form = vtable.as_ref();
+		(form.is_valid)(self.upcast_ref::<FormObject>())
 	}
 
 	fn label(&self) -> String {
@@ -130,14 +142,20 @@ pub trait FormObjectExt : IsA<FormObject> + IsA<gtk::Widget> + 'static {
 
 	fn value(&self) -> Value {
 		let vtable = self.interface::<FormObject>().unwrap();
-		let vtable = vtable.as_ref();
-		(vtable.value)(self.upcast_ref::<FormObject>())
+		let form = vtable.as_ref();
+		(form.value)(self.upcast_ref::<FormObject>())
+	}
+
+	fn set_value(&self, value : Value) {
+		let vtable = self.interface::<FormObject>().unwrap();
+		let form = vtable.as_ref();
+		(form.set_value)(self.upcast_ref::<FormObject>(), value)
 	}
 
 	fn display_error(&self, error: Option<FormError>) {
 		let vtable = self.interface::<FormObject>().unwrap();
-		let vtable = vtable.as_ref();
-		(vtable.display_error)(self.upcast_ref::<FormObject>(), error);
+		let form = vtable.as_ref();
+		(form.display_error)(self.upcast_ref::<FormObject>(), error);
 	}
 }
 

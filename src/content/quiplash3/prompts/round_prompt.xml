@@ -16,7 +16,7 @@
 				<subcontent type="Subfolder">Quiplash3Round2Question</subcontent>
 			</subcontent-list>
 		</content>
-		<content name="Round3">
+		<content name="FinalRound">
 			<subcontent-list>
 				<subcontent type="Manifest">Quiplash3FinalQuestion.jet</subcontent>
 				<subcontent type="Subfolder">Quiplash3FinalQuestion</subcontent>

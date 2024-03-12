@@ -98,7 +98,7 @@ impl ContentCreationDialog {
         }
 
         let current_selection : Content = current_option.and_downcast().expect("Could not get selected.");
-        current_selection.create_content(Some(|value| {
+        current_selection.create_content(Some(|subcontent_type, subcontent| {
             todo!()
         }));
     }

@@ -38,6 +38,16 @@ impl FormManager {
 		}
 		Some(map)
 	}
+
+	pub fn update_values(&self, values : HashMap<String, Value>)  {
+		let objects = self.imp().form_objects.borrow();
+		for obj in objects.iter() {
+			let label = obj.label();
+			if values.contains_key(&label) {
+				obj.set_value(values.get(&label).expect("Could not get value associated with label.").clone());
+			}
+		}
+	}
 	
 	pub fn is_valid(&self) -> bool {
 		let objects = self.imp().form_objects.borrow();

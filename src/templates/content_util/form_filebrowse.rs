@@ -42,6 +42,12 @@ impl FormObjectImpl for imp::FormFilebrowse {
 		self_box.value()
 	}
 
+	fn set_value(&self, value: glib::Value) {
+		let obj = self.obj();
+		let self_box = obj.upcast_ref::<LabelledBox>();
+		self_box.set_value(value);
+	}
+
 	fn is_valid(&self) -> bool {
 		let obj = self.obj();
 		let self_box = obj.upcast_ref::<LabelledBox>();

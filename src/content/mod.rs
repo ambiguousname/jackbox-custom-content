@@ -52,7 +52,7 @@ glib::wrapper! {
 
 type SubcontentBox = Box<dyn Subcontent>;
 /// Direct function that the mod manager uses to organize files after creation.
-type ContentCallback = fn(Vec<SubcontentBox>);
+type ContentCallback = fn(subcontent_type: String, subcontent: Vec<SubcontentBox>);
 
 impl Content {
     pub fn ensure_all_types() {
@@ -90,6 +90,7 @@ mod content_window_imp {
         /// This is sort of an intermediary between [`ContentWindowImpl::finalize_content`] and [`ContentWindow`]'s call of it. This will pass along the callback to [`ContentWindowImpl`] and call it.
         /// Set in [`IsSubclassable<T: ContentWindowImpl>::class_init`]
         pub finalize_content : fn(&super::ContentWindow),
+        pub load_content : fn(&super::ContentWindow, String, Vec<SubcontentBox>),
     }
 
     /// Custom class structure to be able to use [`ContentWindowClass`]
@@ -101,6 +102,7 @@ mod content_window_imp {
     /// Default implementations. Nothing special here.
     impl ContentWindow {
         fn finalize_content(_this : &super::ContentWindow) {}
+        fn load_content(_this : &super::ContentWindow, subcontent_type : String, subcontent : Vec<SubcontentBox>) {}
     }
 
     #[glib::object_subclass]
@@ -111,6 +113,7 @@ mod content_window_imp {
         type Class = ContentWindowClass<Self>;
         fn class_init(klass: &mut Self::Class) {
             klass.finalize_content = ContentWindow::finalize_content;
+            klass.load_content = ContentWindow::load_content;
         }
     }
 
@@ -131,6 +134,9 @@ pub trait ContentWindowImpl : WindowImpl {
     /// Whenever [`ContentWindow`] has finished creating content and is ready to pass along the relevant data for the mod manager, call [`ContentWindowExt::finalize_content`] and this will be called with the appropriate callback.
     /// Automatically closes the window.
     fn finalize_content(&self, callback : Option<ContentCallback>);
+
+    /// Called when [`ContentWindow`] needs to load a specific subcontent type.
+    fn load_content(&self, subcontent_type : String, subcontent : Vec<SubcontentBox>);
 }
 
 /// Assigns the actual functions to be called (this is mostly based on templates/content_util/form.rs, as well as https://github.com/sdroege/gst-plugin-rs/blob/95c007953c0874bc46152078775d673cf44cc255/net/webrtc/src/signaller/iface.rs).
@@ -151,6 +157,13 @@ unsafe impl<T: ContentWindowImpl> IsSubclassable<T> for ContentWindow {
             obj.close();
         }
         klass.finalize_content = finalize_content_trampoline::<T>;
+
+        fn load_content_trampoline<T: ObjectSubclass + ContentWindowImpl>(obj : &ContentWindow, subcontent_type : String, subcontent : Vec<SubcontentBox>) {
+            let this = obj.dynamic_cast_ref::<<T as ObjectSubclass>::Type>().unwrap().imp();
+
+            T::load_content(this, subcontent_type, subcontent);
+        }
+        klass.load_content = load_content_trampoline::<T>;
     }
 }
 
@@ -170,6 +183,13 @@ pub trait ContentWindowExt : IsA<ContentWindow> + 'static {
         let klass = window.class().as_ref();
 
         (klass.finalize_content)(window)
+    }
+
+    fn load_content(&self, subcontent_type: String, subcontent : Vec<SubcontentBox>) {
+        let window = self.upcast_ref::<ContentWindow>();
+        let klass = window.class().as_ref();
+
+        (klass.load_content)(window, subcontent_type, subcontent);
     }
 }
 
