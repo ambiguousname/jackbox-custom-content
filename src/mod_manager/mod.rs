@@ -210,15 +210,15 @@ impl ModManager {
 
 	// region: Editing Mods
 	pub fn add_content_to_mod(&self, mod_name : String, content : crate::content::Content) {
-		content.create_content(clone!(@weak self as m => move |subcontent_type, subcontent| {
+		content.create_content(clone!(@weak self as m => move |content_type, subcontent| {
 			let curr_mod = m.get_mod(mod_name).expect("Could not get mod of given name.");
 			// TODO: Write this.
 
-			let id : String = curr_mod.id();
-			let mod_id : String = content_data.len().to_string();
+			let mod_id : String = curr_mod.id();
+			let id : i32 = content_data.len();
 
-			let content_id = format!("{}_{}", id, mod_id);
-			let new_content_data = ContentData::new(content_id.clone());
+			let content_id = format!("{}_{}", id, mod_id.to_string());
+			let new_content_data = ContentData::new(id, content_id.clone());
 			for s in subcontent {
 				s.write_to_mod(content_id.clone());
 			}

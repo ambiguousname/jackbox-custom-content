@@ -102,7 +102,7 @@ mod content_window_imp {
     /// Default implementations. Nothing special here.
     impl ContentWindow {
         fn finalize_content(_this : &super::ContentWindow) {}
-        fn load_content(_this : &super::ContentWindow, subcontent_type : String, subcontent : Vec<SubcontentBox>) -> Result<(), String> { Ok(()) }
+        fn load_content(_this : &super::ContentWindow, content_type : String, subcontent : Vec<SubcontentBox>) -> Result<(), String> { Ok(()) }
     }
 
     #[glib::object_subclass]
@@ -136,7 +136,7 @@ pub trait ContentWindowImpl : WindowImpl {
     fn finalize_content(&self, callback : &ContentCallback);
 
     /// Called when [`ContentWindow`] needs to load a specific subcontent type.
-    fn load_content(&self, subcontent_type : String, subcontent : Vec<SubcontentBox>) -> Result<(), String>;
+    fn load_content(&self, content_type : String, subcontent : Vec<SubcontentBox>) -> Result<(), String>;
 }
 
 /// Assigns the actual functions to be called (this is mostly based on templates/content_util/form.rs, as well as https://github.com/sdroege/gst-plugin-rs/blob/95c007953c0874bc46152078775d673cf44cc255/net/webrtc/src/signaller/iface.rs).
@@ -160,10 +160,10 @@ unsafe impl<T: ContentWindowImpl> IsSubclassable<T> for ContentWindow {
         }
         klass.finalize_content = finalize_content_trampoline::<T>;
 
-        fn load_content_trampoline<T: ObjectSubclass + ContentWindowImpl>(obj : &ContentWindow, subcontent_type : String, subcontent : Vec<SubcontentBox>) -> Result<(), String> {
+        fn load_content_trampoline<T: ObjectSubclass + ContentWindowImpl>(obj : &ContentWindow, content_type : String, subcontent : Vec<SubcontentBox>) -> Result<(), String> {
             let this = obj.dynamic_cast_ref::<<T as ObjectSubclass>::Type>().unwrap().imp();
 
-            T::load_content(this, subcontent_type, subcontent)
+            T::load_content(this, content_type, subcontent)
         }
         klass.load_content = load_content_trampoline::<T>;
     }
@@ -188,11 +188,11 @@ pub trait ContentWindowExt : IsA<ContentWindow> + 'static {
         (klass.finalize_content)(window)
     }
 
-    fn load_content(&self, subcontent_type: String, subcontent : Vec<SubcontentBox>) {
+    fn load_content(&self, content_type: String, subcontent : Vec<SubcontentBox>) {
         let window = self.upcast_ref::<ContentWindow>();
         let klass = window.class().as_ref();
 
-        (klass.load_content)(window, subcontent_type, subcontent);
+        (klass.load_content)(window, content_type, subcontent);
     }
 }
 

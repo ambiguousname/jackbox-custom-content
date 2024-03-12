@@ -17,7 +17,15 @@ mod imp {
 
 		/// The ID for this particular piece of content.
 		#[property(get, set)]
-		pub id : RefCell<String>,
+		pub full_id : RefCell<String>,
+
+		/// The number for this piece of content.
+		#[property(get, set)]
+		pub id : RefCell<i32>,
+
+		/// The particular type of this content, set in the xml definition.
+		#[property(get, set)]
+		pub content_type : RefCell<String>,
 	}
 
 	#[glib::object_subclass]
@@ -34,7 +42,7 @@ glib::wrapper!{
 }
 
 impl ContentData {
-	pub fn new(id : String) -> Self{
+	pub fn new(id : i32, full_id : String) -> Self{
 		Object::builder()
 		.property("enabled", true)
 		.property("id", id)

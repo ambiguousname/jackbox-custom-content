@@ -24,6 +24,8 @@ struct ContentList {
 #[serde(rename_all="kebab-case")]
 struct ContentItem {
 	name: String,
+	#[serde(rename="type")]
+	content_type: String,
 	subcontent_list: SubcontentList,
 }
 

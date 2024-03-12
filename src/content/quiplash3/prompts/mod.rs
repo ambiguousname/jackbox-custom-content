@@ -81,7 +81,7 @@ impl ContentWindowImpl for imp::QuiplashRoundPrompt {
         (callback)(round_str.to_string(), subcontent_vec);
     }
 
-    fn load_content(&self, subcontent_type : String, subcontent : Vec<crate::content::SubcontentBox>) -> Result<(), String> {
+    fn load_content(&self, content_type : String, subcontent : Vec<crate::content::SubcontentBox>) -> Result<(), String> {
         let obj = self.obj();
         
         let selected = obj.get_selected();
@@ -106,7 +106,7 @@ impl ContentWindowImpl for imp::QuiplashRoundPrompt {
 
         selected.update_form(values);
 
-        obj.set_selected_idx(match subcontent_type.as_str() {
+        obj.set_selected_idx(match content_type.as_str() {
             "Round1" => Some(0),
             "Round2" => Some(1),
             "FinalRound" => Some(2),
