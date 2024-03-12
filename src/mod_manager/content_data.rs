@@ -12,9 +12,12 @@ mod imp {
 	#[derive(Default, Properties)]
 	#[properties(wrapper_type=super::ContentData)]
 	pub struct ContentData {
-		// Allow this to be written to JSON?
 		#[property(get, set)]
 		pub enabled : RefCell<bool>,
+
+		/// The ID for this particular piece of content.
+		#[property(get, set)]
+		pub id : RefCell<String>,
 	}
 
 	#[glib::object_subclass]
@@ -31,9 +34,10 @@ glib::wrapper!{
 }
 
 impl ContentData {
-	pub fn new(enabled: bool) -> Self{
+	pub fn new(id : String) -> Self{
 		Object::builder()
-		.property("enabled", enabled)
+		.property("enabled", true)
+		.property("id", id)
 		.build()
 	}
 }
