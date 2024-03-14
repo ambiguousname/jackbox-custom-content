@@ -216,6 +216,7 @@ impl ModManager {
 
 			let mod_id : String = curr_mod.id();
 			let id : i32 = content_data.len();
+			let args = crate::content::get_subcontent_args(content.xml_definition(), content_type, subcontent);
 
 			let content_id = format!("{}_{}", id, mod_id.to_string());
 			let new_content_data = ContentData::new(id, content_id.clone());

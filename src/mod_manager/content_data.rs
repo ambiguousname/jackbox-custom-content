@@ -23,7 +23,7 @@ mod imp {
 		#[property(get, set)]
 		pub id : RefCell<i32>,
 
-		/// The particular type of this content, set in the xml definition.
+		/// The particular type of this content, set in the xml definition for a ContentWindow.
 		#[property(get, set)]
 		pub content_type : RefCell<String>,
 	}
