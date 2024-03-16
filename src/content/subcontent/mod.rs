@@ -1,8 +1,6 @@
-use std::any::Any;
+use std::{any::Any, fmt::Debug};
 
 pub mod manifest;
-pub mod subfolder;
-pub mod content_folder;
 
 // TODO: How does this work for:
 // Making new content
@@ -13,9 +11,9 @@ pub mod content_folder;
 /// [`Subcontent`] is a way to organize each chunk. They indicate how to load and write the chunk.
 /// Each [`Subcontent`] represents one file or folder, but it doesn't have to represent everything that it contains.
 /// Depending on how [`Subcontent::write_to_mod`] is implemented, it could merge or replace existing chunks.
-pub trait Subcontent {
+pub trait Subcontent : Debug {
 	/// Called when the Subcontent should be written to the mod folder.
-	fn write_to_mod(&self, id: String);
+	fn write_to_mod(&self, id: String, args : Vec<&'static str>);
 	/// Called when the Subcontent should be written to the game folder.
 	fn write_to_game(&self);
 	/// Called when reading the mod folder.

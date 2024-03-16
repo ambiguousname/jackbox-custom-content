@@ -1,4 +1,4 @@
-use gtk::{glib::{clone, derived_properties, Object, Properties}, ColumnView};
+use gtk::{glib::{clone, derived_properties, Object, Properties}, AlertDialog, ColumnView};
 
 use std::{cell::{OnceCell, RefCell}, collections::HashMap, fs::{self, DirEntry}, path::PathBuf, io::Error};
 
@@ -42,8 +42,32 @@ impl ModStore {
 		Ok(this)
     }
 
-	pub fn add_content(&self, content_data : ContentData) {
-		
+	pub fn add_content(&self, content : crate::content::Content) {
+		let opt = content.xml_definition();
+		let xml_def = std::rc::Rc::new(opt);
+		content.create_content(clone!(@weak self as m => move |content_type, subcontent| {
+			let subcontent_args : Vec<Vec<&'static str>> = crate::content::get_subcontent_args(xml_def.to_string(), content_type.clone());
+
+			let mut content_data = m.imp().content_data.borrow_mut();
+
+			let mod_id = m.id();
+			let id_try = content_data.len().try_into();
+
+			if id_try.is_err() {
+				let dlg = AlertDialog::builder().message(format!("Could not create content. ID of {}_{} could not be created.", mod_id, content_data.len())).build();
+				dlg.show(None::<&gtk::Window>);
+				return;
+			}
+			let id = id_try.unwrap();
+
+			let content_id = format!("{}_{}", id, mod_id.to_string());
+			let new_content_data = ContentData::new(id, content_id.clone());
+
+			new_content_data.set_subcontent(subcontent, subcontent_args);
+			new_content_data.write_to_mod();
+			
+			content_data.push(new_content_data);
+		}));
 	}
 
 	pub fn create_content() {

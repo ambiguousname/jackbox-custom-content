@@ -7,19 +7,16 @@
 		<content type="Round1">
 			<subcontent-list>
 				<subcontent type="Manifest">Quiplash3Round1Question.jet</subcontent>
-				<subcontent type="Subfolder">Quiplash3Round1Question</subcontent>
 			</subcontent-list>
 		</content>
 		<content type="Round2">
 			<subcontent-list>
 				<subcontent type="Manifest">Quiplash3Round2Question.jet</subcontent>
-				<subcontent type="Subfolder">Quiplash3Round2Question</subcontent>
 			</subcontent-list>
 		</content>
 		<content type="FinalRound">
 			<subcontent-list>
 				<subcontent type="Manifest">Quiplash3FinalQuestion.jet</subcontent>
-				<subcontent type="Subfolder">Quiplash3FinalQuestion</subcontent>
 			</subcontent-list>
 		</content>
 	</content-list>

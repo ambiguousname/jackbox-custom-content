@@ -51,7 +51,7 @@ pub fn compile_content_list() {
 	}
 	content_list_out.write(b"\t_=>panic!(\"Window type {{window_type}} not found.\")};\n}\n").expect("Could not write bytes.");
 
-	content_list_out.write(b"pub fn get_subcontent_args(window_type : String, content_type : String, subcontent : Vec<SubcontentBox>) -> Vec<Vec<&'static str>> {\n\tmatch window_type {\n").expect("Could not write bytes.");
+	content_list_out.write(b"pub fn get_subcontent_args(window_type : String, content_type : String) -> Vec<Vec<&'static str>> {\n\tmatch window_type {\n").expect("Could not write bytes.");
 	for c in &content {
 		let info = &c.content_info;
 		let window_match = format!("\t\t{} => match content_type {{\n", c.window_name);

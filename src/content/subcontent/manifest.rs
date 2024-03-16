@@ -2,6 +2,7 @@ use super::Subcontent;
 
 /// A manifest.jet file that lists our content.
 /// TODO: Requires id for each item.
+#[derive(Debug)]
 pub struct ManifestItem {
 	/// A serde_json value of content to write.
 	item_content: serde_json::Value,
@@ -26,7 +27,7 @@ impl Subcontent for ManifestItem {
 		todo!()
 	}
 
-	fn write_to_mod(&self, id: String) {
+	fn write_to_mod(&self, id: String, args : Vec<&'static str>) {
 		todo!()
 	}
 	

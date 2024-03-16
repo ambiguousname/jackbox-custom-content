@@ -210,22 +210,9 @@ impl ModManager {
 
 	// region: Editing Mods
 	pub fn add_content_to_mod(&self, mod_name : String, content : crate::content::Content) {
-		content.create_content(clone!(@weak self as m => move |content_type, subcontent| {
-			let curr_mod = m.get_mod(mod_name).expect("Could not get mod of given name.");
-			// TODO: Write this.
-
-			let mod_id : String = curr_mod.id();
-			let id : i32 = content_data.len();
-			let args = crate::content::get_subcontent_args(content.xml_definition(), content_type, subcontent);
-
-			let content_id = format!("{}_{}", id, mod_id.to_string());
-			let new_content_data = ContentData::new(id, content_id.clone());
-			for s in subcontent {
-				s.write_to_mod(content_id.clone());
-			}
-			
-			curr_mod.add_content(new_content_data);
-		}));
+		let store = self.imp().mods.borrow();
+		let mod_item = store.get(&mod_name).expect("Could not get mod of name.");
+		mod_item.add_content(content);
 	}
 	// endregion
 }
