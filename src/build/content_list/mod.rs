@@ -51,22 +51,24 @@ pub fn compile_content_list() {
 	}
 	content_list_out.write(b"\t_=>panic!(\"Window type {{window_type}} not found.\")};\n}\n").expect("Could not write bytes.");
 
-	content_list_out.write(b"pub fn get_subcontent_args(window_type : String, content_type : String, subcontent : Vec<SubcontentBox>) -> Vec<Vec<String>> {\n\tmatch window_type {\n").expect("Could not write bytes.");
+	content_list_out.write(b"pub fn get_subcontent_args(window_type : String, content_type : String, subcontent : Vec<SubcontentBox>) -> Vec<Vec<&'static str>> {\n\tmatch window_type {\n").expect("Could not write bytes.");
 	for c in &content {
 		let info = &c.content_info;
-		content_list_out.write(b"\tmatch content_type {\n").expect("Could not write bytes.");
+		let window_match = format!("\t\t{} => match content_type {{\n", c.window_name);
+		content_list_out.write(window_match.as_bytes()).expect("Could not write bytes.");
 		for i in info {
-			let i_out = format!("\t\t{} => vec![", i.content_type);
+			let i_out = format!("\t\t\t{} => vec![", i.content_type);
 			content_list_out.write(i_out.as_bytes()).expect("Could not write bytes.");
-			for s in &i.subcontent_info {
-				let s_out = format!("vec![{}]", s.args.join(","));
+			let mut subcontent_iter = i.subcontent_info.iter().peekable();
+			while let Some(s) = subcontent_iter.next() {
+				let s_out = format!("vec![\"{}\"]{}", s.args.join("\",\""), if subcontent_iter.peek().is_none() {""} else {","});
 				content_list_out.write(s_out.as_bytes()).expect("Could not write subcontent info.");
 			}
-			content_list_out.write(b"]\n").expect("Could not write bytes.");
+			content_list_out.write(b"],\n").expect("Could not write bytes.");
 		}
-		content_list_out.write(b"\t},\n").expect("Could not write bytes.");
+		content_list_out.write(b"\t\t},\n").expect("Could not write bytes.");
 	}
-	content_list_out.write(b"\t_=>panic!(\"Window type {{window_type}} not found.\"),\n}").expect("Could not write bytes.");
+	content_list_out.write(b"\t\t_=>panic!(\"Window type {{window_type}} not found.\"),\n\t}\n}").expect("Could not write bytes.");
 	
 	println!("cargo:rerun-if-changed=src/build/content_list/mod.rs");
 	println!("cargo:rerun-if-changed=src/build/content_list/content_reader.rs");
