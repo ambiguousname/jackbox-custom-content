@@ -54,7 +54,7 @@ impl ModStore {
 			let id_try = content_data.len().try_into();
 
 			if id_try.is_err() {
-				let dlg = AlertDialog::builder().message(format!("Could not create content. ID of {}_{} could not be created.", mod_id, content_data.len())).build();
+				let dlg = AlertDialog::builder().message("Could not create content.").detail(format!("ID of {}_{} could not be created.", mod_id, content_data.len())).build();
 				dlg.show(None::<&gtk::Window>);
 				return;
 			}
@@ -64,7 +64,13 @@ impl ModStore {
 			let new_content_data = ContentData::new(id, content_id.clone());
 
 			new_content_data.set_subcontent(subcontent, subcontent_args);
-			new_content_data.write_to_mod();
+			let res = new_content_data.write_to_mod();
+
+			if res.is_err() {
+				let dlg = AlertDialog::builder().message("Could not create content.").detail(format!("Write operations failed: {}", res.unwrap_err())).build();
+				dlg.show(None::<&gtk::Window>);
+				return;
+			}
 			
 			content_data.push(new_content_data);
 		}));

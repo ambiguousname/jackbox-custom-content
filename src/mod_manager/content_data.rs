@@ -65,12 +65,14 @@ impl ContentData {
 		self.imp().subcontent_args.replace(args);
 	}
 
-	pub fn write_to_mod(&self) {
+	pub fn write_to_mod(&self) -> std::io::Result<()> {
+		// TODO: Undo previous write operations if there was an error with the current one?
 		let subcontent = self.imp().subcontent.borrow();
 		let args = self.imp().subcontent_args.borrow();
 		for i in 0..subcontent.len() {
-			subcontent[i].write_to_mod(self.full_id(), args[i].clone());
+			subcontent[i].write_to_mod(self.full_id(), args[i].clone())?;
 		}
+		Ok(())
 	}
 
 	pub fn write_to_game(&self) {
