@@ -76,10 +76,6 @@ impl ModStore {
 		}));
 	}
 
-	pub fn create_content() {
-		
-	}
-
 	pub fn new_folder(name : String) -> Result<Self, Error> {
 		// Create mod folder:
 		let mod_dir = PathBuf::from("./mods/").join(name.clone());
