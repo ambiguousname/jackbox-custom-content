@@ -9,6 +9,9 @@ struct ContentWindowItem {
 	xml_def_path : String,
 	mod_location : String,
 	window_name : String,
+
+	party_pack : String,
+	game_folder : String,
 	
 	content_info : Vec<ContentInfo>,
 }
@@ -44,20 +47,20 @@ pub fn compile_content_list() {
     let content_list_pth = Path::new(&out_dir).join("content_list.rs");
 	let mut content_list_out = File::create(content_list_pth).expect("Could not create file.");
 
-	content_list_out.write(b"pub fn create_window(window_type : String) -> ContentWindow {\nreturn match window_type.as_str() {\n").expect("Could not write bytes.");
+	content_list_out.write(b"pub fn create_window(window_type : &str) -> ContentWindow {\n\tmatch window_type {\n").expect("Could not write bytes.");
 	for c in &content {
-		let out = format!("\t\"{}\" => {{crate::content::{}::ensure_all_types(); gtk::glib::Object::new::<crate::content::{}>().upcast()}},\n", c.xml_def_path, c.mod_location, c.mod_location);
+		let out = format!("\t\t\"{}\" => {{crate::content::{}::ensure_all_types(); gtk::glib::Object::new::<crate::content::{}>().upcast()}},\n", c.xml_def_path, c.mod_location, c.mod_location);
 		content_list_out.write(out.as_bytes()).expect("Could not write bytes.");
 	}
-	content_list_out.write(b"\t_=>panic!(\"Window type {{window_type}} not found.\")};\n}\n").expect("Could not write bytes.");
+	content_list_out.write(b"\t\t_=>panic!(\"Window type {window_type} not found.\")\n\t}\n}\n").expect("Could not write bytes.");
 
-	content_list_out.write(b"pub fn get_subcontent_args(window_type : String, content_type : String) -> Vec<Vec<&'static str>> {\n\tmatch window_type {\n").expect("Could not write bytes.");
+	content_list_out.write(b"pub fn get_subcontent_args(window_type : &str, content_type : &str) -> Vec<Vec<&'static str>> {\n\tmatch window_type {\n").expect("Could not write bytes.");
 	for c in &content {
 		let info = &c.content_info;
-		let window_match = format!("\t\t{} => match content_type {{\n", c.window_name);
+		let window_match = format!("\t\t\"{}\" => match content_type {{\n", c.window_name);
 		content_list_out.write(window_match.as_bytes()).expect("Could not write bytes.");
 		for i in info {
-			let i_out = format!("\t\t\t{} => vec![", i.content_type);
+			let i_out = format!("\t\t\t\"{}\" => vec![", i.content_type);
 			content_list_out.write(i_out.as_bytes()).expect("Could not write bytes.");
 			let mut subcontent_iter = i.subcontent_info.iter().peekable();
 			while let Some(s) = subcontent_iter.next() {
@@ -66,9 +69,16 @@ pub fn compile_content_list() {
 			}
 			content_list_out.write(b"],\n").expect("Could not write bytes.");
 		}
-		content_list_out.write(b"\t\t},\n").expect("Could not write bytes.");
+		content_list_out.write(b"\t\t\t_=>panic!(\"content_type {content_type} not found.\"),\n\t\t},\n").expect("Could not write bytes.");
 	}
-	content_list_out.write(b"\t\t_=>panic!(\"Window type {{window_type}} not found.\"),\n\t}\n}").expect("Could not write bytes.");
+	content_list_out.write(b"\t\t_=>panic!(\"Window type {window_type} not found.\"),\n\t}\n}\n").expect("Could not write bytes.");
+
+	content_list_out.write(b"\npub fn get_relative_folder(window_type : &str) -> &'static std::path::Path {\n\tmatch window_type {\n").expect("Could not write bytes.");
+	for c in &content {
+		let out = format!("\t\t\"{}\" => std::path::Path::new(\"{}/{}\"),\n", c.xml_def_path, c.party_pack, c.game_folder);
+		content_list_out.write(out.as_bytes()).expect("Could not write bytes.");
+	}
+	content_list_out.write(b"\t\t_ => panic!(\"Window type {window_type} not found.\"),\n\t}\n}\n").expect("Could not write bytes.");
 	
 	println!("cargo:rerun-if-changed=src/build/content_list/mod.rs");
 	println!("cargo:rerun-if-changed=src/build/content_list/content_reader.rs");

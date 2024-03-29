@@ -13,6 +13,7 @@ use super::ContentWindowItem;
 struct ContentWindow {
 	name: String,
 	game_folder : String,
+	party_pack : String,
 	content_list : ContentList,
 }
 
@@ -94,8 +95,11 @@ impl ContentWindowItem {
 			mod_location : format!("{relative_mod_path}::{}", content_window.name),
 			
 			window_name: content_window.name,
+			
+			party_pack: content_window.party_pack,
+			game_folder: content_window.game_folder,
 
-			content_info
+			content_info,
 		})
 	}
 }

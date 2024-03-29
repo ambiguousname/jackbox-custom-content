@@ -64,7 +64,7 @@ impl Content {
     pub fn create_content(&self, callback : impl Fn(String, Vec<SubcontentBox>) + 'static) {
         let xml_def = self.xml_definition();
         let window = self.imp().window.get_or_init(|| {
-            create_window(xml_def)
+            create_window(&xml_def)
         });
         window.set_hide_on_close(true);
         window.create_content_window(Box::new(callback));

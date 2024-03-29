@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::path::PathBuf;
 
 use gtk::glib::{self, Properties};
 use gtk::prelude::*;
@@ -26,12 +27,18 @@ mod imp {
 		#[property(get, set)]
 		pub id : RefCell<u32>,
 
+		#[property(get, set)]
+		/// The relative path where this content is stored.
+		pub relative_path : RefCell<PathBuf>,
+
 		/// The particular type of this content, set in the xml definition for a ContentWindow.
 		#[property(get, set)]
 		pub content_type : RefCell<String>,
 
+		/// Store for [`crate::content::Subcontent`], used to invoke various Subcontent functions for writing to and loading from disk.
 		pub subcontent : RefCell<Vec<SubcontentBox>>,
 
+		/// The arguments used when calling `subcontent` functions.
 		pub subcontent_args : RefCell<Vec<Vec<&'static str>>>,
 	}
 
@@ -49,11 +56,12 @@ glib::wrapper!{
 }
 
 impl ContentData {
-	pub fn new(id : u32, full_id : String) -> Self{
+	pub fn new(id : u32, full_id : String, relative_path : PathBuf) -> Self{
 		Object::builder()
 		.property("enabled", true)
 		.property("id", id)
 		.property("full-id", full_id)
+		.property("relative-path", relative_path)
 		.build()
 	}
 
@@ -69,8 +77,9 @@ impl ContentData {
 		// TODO: Undo previous write operations if there was an error with the current one?
 		let subcontent = self.imp().subcontent.borrow();
 		let args = self.imp().subcontent_args.borrow();
+		let pth = self.relative_path();
 		for i in 0..subcontent.len() {
-			subcontent[i].write_to_mod(self.full_id(), args[i].clone())?;
+			subcontent[i].write_to_mod(self.full_id(), pth.as_path(), args[i].clone())?;
 		}
 		Ok(())
 	}

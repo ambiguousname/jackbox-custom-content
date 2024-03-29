@@ -209,6 +209,8 @@ impl ModManager {
 	// endregion
 
 	// region: Editing Mods
+
+	/// Add content to a [`ModStore`] of a given name. Called by [`crate::templates::mainmenu::MainMenuWindow::add_content_to_mod`] (i.e., clicking the `+` button).
 	pub fn add_content_to_mod(&self, mod_name : String, content : crate::content::Content) {
 		let store = self.imp().mods.borrow();
 		let mod_item = store.get(&mod_name).expect("Could not get mod of name.");

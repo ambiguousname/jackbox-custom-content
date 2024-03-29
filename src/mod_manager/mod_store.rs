@@ -1,6 +1,6 @@
 use gtk::{glib::{clone, derived_properties, Object, Properties}, AlertDialog, ColumnView};
 
-use std::{cell::{OnceCell, RefCell}, collections::HashMap, fs::{self, DirEntry}, path::PathBuf, io::Error};
+use std::{cell::{OnceCell, RefCell}, collections::HashMap, fs::{self, DirEntry}, io::Error, path::{Path, PathBuf}};
 
 use crate::{content::Content, quick_template};
 use super::ContentData;
@@ -20,6 +20,9 @@ quick_template!(ModStore, "/mod_manager/mod_store.ui", gtk::Box, (gtk::Widget), 
 		pub id: OnceCell<String>,
 
 		pub content_data : RefCell<Vec<ContentData>>,
+
+		/// The folder where this specific mod store is located.
+		pub mod_folder : RefCell<PathBuf>,
 	}
 );
 
@@ -29,27 +32,43 @@ impl WidgetImpl for imp::ModStore {}
 impl BoxImpl for imp::ModStore {}
 
 impl ModStore {
-    fn new(name : String) -> Result<Self, Error> {
+	/// * `name` - Name of this mod.
+	/// * `mods_folder` - Folder where ALL mods are stored.
+    fn new(name : String, mods_folder : &Path) -> Result<Self, Error> {
 		let id = ModStore::string_to_id(name.clone());
 		let this = Object::new::<Self>();
+
+		// Create mod folder:
+		let mod_dir = mods_folder.join(name.clone());
+		if mod_dir.exists() {
+			let msg = format!("Folder {name} already exists.");
+			return Err(Error::new(std::io::ErrorKind::Other, msg));
+		}
+		fs::create_dir(mod_dir.clone())?;
+		this.imp().mod_folder.replace(mod_dir);
+
 		this.imp().name.set(name).or_else(|err| {
 			Err(Error::new(std::io::ErrorKind::Other, err))
 		})?;
 		this.imp().id.set(id).or_else(|err| {
 			Err(Error::new(std::io::ErrorKind::Other, err))
 		})?;
-
 		Ok(this)
     }
 
+	/// Launches a dialog with the content's attached window to attempt to make content.
+	/// If successful, add [`crate::content::Content`] to the ModStore. This will allow for things like merging the Content to the game folder.
+	/// This should be called from [`super::ModManager::add_content_to_mod`] (which is in turn, called from the main menu.)
 	pub fn add_content(&self, content : crate::content::Content) {
 		let opt = content.xml_definition();
+		// Reference the xml definition so we can pull up relevant information if the dialog is successful.
 		let xml_def = std::rc::Rc::new(opt);
 		content.create_content(clone!(@weak self as m => move |content_type, subcontent| {
-			let subcontent_args : Vec<Vec<&'static str>> = crate::content::get_subcontent_args(xml_def.to_string(), content_type.clone());
-
+			// Get arguments ready for Content construction.
+			let subcontent_args : Vec<Vec<&'static str>> = crate::content::get_subcontent_args(&xml_def, &content_type);
 			let mut content_data = m.imp().content_data.borrow_mut();
 
+			// region: ID construction
 			let mod_id = m.id();
 			let id_try = content_data.len().try_into();
 
@@ -61,7 +80,26 @@ impl ModStore {
 			let id = id_try.unwrap();
 
 			let content_id = format!("{}_{}", id, mod_id.to_string());
-			let new_content_data = ContentData::new(id, content_id.clone());
+			// endregion
+
+			// region: Folder creation
+			let game_folder = crate::content::get_relative_folder(&xml_def);
+			let mod_folder = m.imp().mod_folder.borrow();
+
+			let full_mod_path = mod_folder.join(game_folder);
+			if !full_mod_path.exists() {
+				let res = fs::create_dir_all(&full_mod_path);
+				if res.is_err() {
+					let dlg = AlertDialog::builder().message("Could not create content.").detail(format!("Folder {} could not be created.", full_mod_path.display())).build();
+					dlg.show(None::<&gtk::Window>);
+					return;
+				}
+			}
+
+			// endregion
+
+			// region: Make [`ContentData`]
+			let new_content_data = ContentData::new(id, content_id.clone(), full_mod_path);
 
 			new_content_data.set_subcontent(subcontent, subcontent_args);
 			let res = new_content_data.write_to_mod();
@@ -71,26 +109,22 @@ impl ModStore {
 				dlg.show(None::<&gtk::Window>);
 				return;
 			}
+			// endregion
 			
+			// Finally, push it to the ModStore:
 			content_data.push(new_content_data);
 		}));
 	}
 
-	pub fn new_folder(name : String) -> Result<Self, Error> {
-		// Create mod folder:
-		let mod_dir = PathBuf::from("./mods/").join(name.clone());
-		if mod_dir.exists() {
-			let msg = format!("Folder {name} already exists.");
-			return Err(Error::new(std::io::ErrorKind::Other, msg));
-		}
-		fs::create_dir(mod_dir.clone())?;
-		fs::create_dir(mod_dir.join("The Jackbox Party Pack 7"))?;
+	const MODS_FOLDER : &'static str = "./mods/";
 
-		ModStore::new(name)
+	pub fn new_folder(name : String) -> Result<Self, Error> {
+		ModStore::new(name, Path::new(ModStore::MODS_FOLDER))
 	}
 
 	pub fn from_folder(dir : DirEntry) -> Result<Self, Error> {
-		ModStore::new(dir.file_name().into_string().expect("Could not get directory string."))
+		// TODO: Load subcontent.
+		ModStore::new(dir.file_name().into_string().expect("Could not get directory string."), Path::new(ModStore::MODS_FOLDER))
 	}
 
 	fn string_to_id(string : String) -> String {

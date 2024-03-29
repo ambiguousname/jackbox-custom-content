@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--The name of the window. The window should have an ::ensure_all_types() function.-->
 <window name="QuiplashRoundPrompt">
+	<!--The party pack associated with this window.-->
+	<party-pack>The Jackbox Party Pack 7</party-pack>
 	<!--Where to store all of the content in the game folder as well as the mods folder:-->
 	<game-folder>Quiplash3</game-folder>
 	<content-list>
