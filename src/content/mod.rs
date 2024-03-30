@@ -188,11 +188,11 @@ pub trait ContentWindowExt : IsA<ContentWindow> + 'static {
         (klass.finalize_content)(window)
     }
 
-    fn load_content(&self, content_type: String, subcontent : Vec<SubcontentBox>) {
+    fn load_content(&self, content_type: String, subcontent : Vec<SubcontentBox>) -> Result<(), String> {
         let window = self.upcast_ref::<ContentWindow>();
         let klass = window.class().as_ref();
 
-        (klass.load_content)(window, content_type, subcontent);
+        (klass.load_content)(window, content_type, subcontent)
     }
 }
 
