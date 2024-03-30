@@ -117,6 +117,7 @@ impl MainMenuWindow {
         }
 
         if (!is_valid) {
+            println!("Could not locate folder.");
             self.toggle_creation_visibility(false);
             self.toggle_folder_visibility(true);
         }
