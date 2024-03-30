@@ -109,7 +109,7 @@ impl ModStore {
 		}));
 	}
 
-	const MODS_FOLDER : &'static str = "./mods/";
+	const MODS_FOLDER : &'static str = "./mods";
 
 	pub fn new_folder(name : String) -> Result<Self, Error> {
 		

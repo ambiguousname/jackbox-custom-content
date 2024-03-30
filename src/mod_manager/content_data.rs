@@ -48,6 +48,7 @@ mod imp {
 		type Type = super::ContentData;
 	}
 
+	#[glib::derived_properties]
 	impl ObjectImpl for ContentData {}
 }
 

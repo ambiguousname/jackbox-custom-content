@@ -126,7 +126,7 @@ impl Subcontent for ManifestItem {
 		let file_path_buf = relative_path.join(file_to_write);
 		let file_path = file_path_buf.as_path();
 		
-		let buf = file_path.join(".tmp");
+		let buf = file_path.with_extension(".tmp");
   		let tmp_path = buf.as_path();
 
 		if !file_path.exists() {
