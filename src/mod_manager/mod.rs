@@ -211,11 +211,19 @@ impl ModManager {
 
 	// region: Editing Mods
 
-	/// Add content to a [`ModStore`] of a given name. Called by [`crate::templates::mainmenu::MainMenuWindow::add_content_to_mod`] (i.e., clicking the `+` button).
+	/// Launches a dialog with the content's attached window to attempt to make content.
+	/// Try to add content to a [`ModStore`] of a given name. Called by [`crate::templates::mainmenu::MainMenuWindow::add_content_to_mod`] (i.e., clicking the `+` button).
 	pub fn add_content_to_mod(&self, mod_name : String, content : crate::content::Content) {
-		let store = self.imp().mods.borrow();
-		let mod_item = store.get(&mod_name).expect("Could not get mod of name.");
-		mod_item.add_content(content);
+		let xml_def_str = content.xml_definition();
+
+		content.create_content({ // I never knew {} is also a closure. This solves SO MANY problems.
+			let xml_def_str = xml_def_str.clone();
+			clone!(@weak self as m => move |content_type, subcontent| {
+					let store = m.imp().mods.borrow();
+					let mod_item = store.get(&mod_name).expect("Could not get mod of name.");
+					mod_item.add_content(xml_def_str.to_string(), content_type, subcontent);
+			})
+		});
 	}
 	// endregion
 }

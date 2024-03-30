@@ -4,15 +4,10 @@
         <property name="orientation">horizontal</property>
         <child>
             <object class="GtkColumnView" id="column_view">
-                <property name="row-factory">
-                    <object class="GtkBuilderListItemFactory">
-                        <property name="resource">/mod_manager/mod_store_item.ui</property>
-                    </object>
-                </property>
                 <property name="model">
                     <object class="GtkSingleSelection">
                         <property name="model">
-                            <object class="GListStore">
+                            <object class="GListStore" id="store">
                                 <property name="item-type">JCCContentData</property>
                             </object>
                         </property>
@@ -21,11 +16,56 @@
                 <child>
                     <object class="GtkColumnViewColumn">
                         <property name="title">Enabled</property>
+                        <property name="factory">
+                            <object class="GtkBuilderListItemFactory">
+                                <!-- TODO: Make sure button toggles the actual property. -->
+                                <property name="bytes">
+                                    <![CDATA[
+                                    <?xml version="1.0" encoding="UTF-8"?>
+                                    <interface>
+                                        <template class="GtkListItem">
+                                            <property name="child">
+                                                <object class="GtkCheckButton">
+                                                    <binding name="active">
+                                                        <lookup name="enabled" type="JCCContentData">
+                                                            <lookup name="item">GtkListItem</lookup>
+                                                        </lookup>
+                                                    </binding>
+                                                </object>
+                                            </property>
+                                        </template>
+                                    </interface>
+                                    ]]>
+                                </property>
+                            </object>
+                        </property>
                     </object>
                 </child>
                 <child>
                     <object class="GtkColumnViewColumn">
-                        <property name="title">Game</property>
+                        <property name="title">ID</property>
+                        <property name="factory">
+                            <object class="GtkBuilderListItemFactory">
+                                <property name="bytes">
+                                    <![CDATA[
+                                    <?xml version="1.0" encoding="UTF-8"?>
+                                    <interface>
+                                        <template class="GtkListItem">
+                                            <property name="child">
+                                                <object class="GtkLabel">
+                                                    <binding name="label">
+                                                        <lookup name="id" type="JCCContentData">
+                                                            <lookup name="item">GtkListItem</lookup>
+                                                        </lookup>
+                                                    </binding>
+                                                </object>
+                                            </property>
+                                        </template>
+                                    </interface>
+                                    ]]>
+                                </property>
+                            </object>
+                        </property>
                     </object>
                 </child>
                 <child>

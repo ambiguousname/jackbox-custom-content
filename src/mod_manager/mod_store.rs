@@ -1,8 +1,8 @@
-use gtk::{glib::{clone, derived_properties, Object, Properties}, AlertDialog, ColumnView};
+use gtk::{gio::{ListModel, ListStore}, glib::{clone, derived_properties, Object, Properties}, AlertDialog, ColumnView};
 
-use std::{cell::{OnceCell, RefCell}, collections::HashMap, fs::{self, DirEntry}, io::Error, path::{Path, PathBuf}};
+use std::{borrow::Borrow, cell::{OnceCell, RefCell}, collections::HashMap, fs::{self, DirEntry}, io::Error, path::{Path, PathBuf}};
 
-use crate::{content::Content, quick_template};
+use crate::{content::SubcontentBox, quick_template};
 use super::ContentData;
 
 quick_template!(ModStore, "/mod_manager/mod_store.ui", gtk::Box, (gtk::Widget), (gtk::Orientable),
@@ -12,14 +12,16 @@ quick_template!(ModStore, "/mod_manager/mod_store.ui", gtk::Box, (gtk::Widget), 
 		#[template_child(id="column_view")]
 		pub column_view : TemplateChild<ColumnView>,
 
+		/// Store of [`ContentData`]
+		#[template_child(id="store")]
+		pub store : TemplateChild<ListStore>,
+
 		// TODO: Need some way to write the list store to JSON.
 
 		#[property(get)]
 		pub name : OnceCell<String>,
 		#[property(get)]
 		pub id: OnceCell<String>,
-
-		pub content_data : RefCell<Vec<ContentData>>,
 
 		/// The folder where this specific mod store is located.
 		pub mod_folder : RefCell<PathBuf>,
@@ -49,64 +51,50 @@ impl ModStore {
 		Ok(this)
     }
 
-	/// Launches a dialog with the content's attached window to attempt to make content.
 	/// If successful, add [`crate::content::Content`] to the ModStore. This will allow for things like merging the Content to the game folder.
 	/// This should be called from [`super::ModManager::add_content_to_mod`] (which is in turn, called from the main menu.)
-	pub fn add_content(&self, content : crate::content::Content) {
-		let opt = content.xml_definition();
-		// Reference the xml definition so we can pull up relevant information if the dialog is successful.
-		let xml_def = std::rc::Rc::new(opt);
-		content.create_content(clone!(@weak self as m => move |content_type, subcontent| {
-			// Get arguments ready for Content construction.
-			let subcontent_args : Vec<Vec<&'static str>> = crate::content::get_subcontent_args(&xml_def, &content_type);
-			let mut content_data = m.imp().content_data.borrow_mut();
+	pub fn add_content(&self, xml_def_path : String, content_type: String, subcontent : Vec<SubcontentBox>)  {
+		// Get arguments ready for Content construction.
+		let subcontent_args : Vec<Vec<&'static str>> = crate::content::get_subcontent_args(&xml_def_path, &content_type);
+		let content_data = &self.imp().store;
 
-			// region: ID construction
-			let mod_id = m.id();
-			let id_try = content_data.len().try_into();
+		// region: ID construction
+		let mod_id = self.id();
+		let id = content_data.n_items();
+		let content_id = format!("{}_{}", mod_id.to_string(), id);
+		// endregion
 
-			if id_try.is_err() {
-				let dlg = AlertDialog::builder().message("Could not create content.").detail(format!("ID of {}_{} could not be created.", mod_id, content_data.len())).build();
-				dlg.show(None::<&gtk::Window>);
-				return;
-			}
-			let id = id_try.unwrap();
+		// region: Folder creation
+		let game_folder = crate::content::get_relative_folder(&xml_def_path);
+		let mod_folder = self.imp().mod_folder.borrow();
 
-			let content_id = format!("{}_{}", mod_id.to_string(), id);
-			// endregion
-
-			// region: Folder creation
-			let game_folder = crate::content::get_relative_folder(&xml_def);
-			let mod_folder = m.imp().mod_folder.borrow();
-
-			let full_mod_path = mod_folder.join(game_folder);
-			if !full_mod_path.exists() {
-				let res = fs::create_dir_all(&full_mod_path);
-				if res.is_err() {
-					let dlg = AlertDialog::builder().message("Could not create content.").detail(format!("Folder {} could not be created.", full_mod_path.display())).build();
-					dlg.show(None::<&gtk::Window>);
-					return;
-				}
-			}
-
-			// endregion
-
-			// region: Make [`ContentData`]
-			let new_content_data = ContentData::new(id, content_id.clone(), full_mod_path);
-
-			new_content_data.set_subcontent(subcontent, subcontent_args);
-			let res = new_content_data.write_to_mod();
-
+		let full_mod_path = mod_folder.join(game_folder);
+		if !full_mod_path.exists() {
+			let res = fs::create_dir_all(&full_mod_path);
 			if res.is_err() {
-				let dlg = AlertDialog::builder().message("Could not create content.").detail(format!("Write operations failed: {}", res.unwrap_err())).build();
+				let dlg = AlertDialog::builder().message("Could not create content.").detail(format!("Folder {} could not be created.", full_mod_path.display())).build();
 				dlg.show(None::<&gtk::Window>);
 				return;
 			}
-			// endregion
-			
-			// Finally, push it to the ModStore:
-			content_data.push(new_content_data);
-		}));
+		}
+
+		// endregion
+
+		// region: Make [`ContentData`]
+		let new_content_data = ContentData::new(id, content_id.clone(), full_mod_path);
+
+		new_content_data.set_subcontent(subcontent, subcontent_args);
+		let res = new_content_data.write_to_mod();
+
+		if res.is_err() {
+			let dlg = AlertDialog::builder().message("Could not create content.").detail(format!("Write operations failed: {}", res.unwrap_err())).build();
+			dlg.show(None::<&gtk::Window>);
+			return;
+		}
+		// endregion
+		
+		// Finally, push it to the ModStore:
+		content_data.append(&new_content_data);
 	}
 
 	const MODS_FOLDER : &'static str = "./mods";

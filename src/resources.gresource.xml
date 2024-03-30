@@ -12,7 +12,6 @@
   </gresource>
   <gresource prefix="/mod_manager/">
     <file compressed="true" preprocess="xml-stripblanks">mod_store.ui</file>
-    <file compressed="true" preprocess="xml-stripblanks">mod_store_item.ui</file>
   </gresource>
   <gresource prefix="/content/">
     <file compressed="true" preprocess="xml-stripblanks">quiplash3/prompts/generic_round_prompt.ui</file>
