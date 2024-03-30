@@ -34,35 +34,6 @@ impl ManifestItem {
 
 	// region: Manifest Modifying
 
-	/// Skips over a given "ID": {} of a manifest with a given modifiable iterator (`lines_iter`).
-	/// This is so the new data our manifest is writing doesn't overwrite.
-	/// If you see a negative `curly_braces_ident`, that means there's an extra closing curly brace on a line that there shouldn't be.
-	/// Assumes that the item has its own line to itself (to make reading for our program easier).
-	/// `Returns` - a [`String`] of whatever has been left unread to use.
-	fn skip_id_of_manifest(&self, lines_iter : &mut Lines<BufReader<File>>) -> std::io::Result<String> {
-		let mut curly_braces_ident : u32 = 1;
-		loop {
-			let l_opt: Option<Result<String, Error>> = lines_iter.next();
-			if let Some(l) = l_opt {
-				let line = l?;
-				
-				let mut chars = line.chars();
-				while let Some(c) = chars.next() {
-					match c {
-						'{' => curly_braces_ident += 1,
-						'}' => curly_braces_ident -= 1,
-						_ => {},
-					}
-					if curly_braces_ident == 0 {
-						return Ok(chars.collect());
-					}
-				}
-			} else {
-				return Err(Error::new(ErrorKind::Other, format!("Unexpected end of manifest. Expected indent level of {} to be resolved.", curly_braces_ident)));
-			}
-		}
-	}
-
 	fn write_values(&self, id : &str, writer : &mut BufWriter<File>) -> std::io::Result<()> {
 		let mut base_value = serde_json::to_string(&self.item_content)?;
 		// Get rid of the opening {
@@ -96,9 +67,8 @@ impl ManifestItem {
 				}
 			}
 
+			// Assumes that per `modify_manifest`, there is one and only one item per one line.
 			if id_regex.is_match(&line) {
-				let remaining_line = self.skip_id_of_manifest(&mut line_iter)?;
-				writer.write(remaining_line.as_bytes())?;
 				// Overwrite multiple IDs.
 				// Don't expect this to happen, but you never know.
 				if !written_new {
