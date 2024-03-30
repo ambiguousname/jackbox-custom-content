@@ -47,17 +47,17 @@ pub fn compile_content_list() {
     let content_list_pth = Path::new(&out_dir).join("content_list.rs");
 	let mut content_list_out = File::create(content_list_pth).expect("Could not create file.");
 
-	content_list_out.write(b"pub fn create_window(window_type : &str) -> ContentWindow {\n\tmatch window_type {\n").expect("Could not write bytes.");
+	content_list_out.write(b"pub fn create_window(xml_def_path : &str) -> ContentWindow {\n\tmatch xml_def_path {\n").expect("Could not write bytes.");
 	for c in &content {
 		let out = format!("\t\t\"{}\" => {{crate::content::{}::ensure_all_types(); gtk::glib::Object::new::<crate::content::{}>().upcast()}},\n", c.xml_def_path, c.mod_location, c.mod_location);
 		content_list_out.write(out.as_bytes()).expect("Could not write bytes.");
 	}
-	content_list_out.write(b"\t\t_=>panic!(\"Window type {window_type} not found.\")\n\t}\n}\n").expect("Could not write bytes.");
+	content_list_out.write(b"\t\t_=>panic!(\"XML definition of path {xml_def_path} not found.\")\n\t}\n}\n").expect("Could not write bytes.");
 
-	content_list_out.write(b"pub fn get_subcontent_args(window_type : &str, content_type : &str) -> Vec<Vec<&'static str>> {\n\tmatch window_type {\n").expect("Could not write bytes.");
+	content_list_out.write(b"pub fn get_subcontent_args(xml_def_path : &str, content_type : &str) -> Vec<Vec<&'static str>> {\n\tmatch xml_def_path {\n").expect("Could not write bytes.");
 	for c in &content {
 		let info = &c.content_info;
-		let window_match = format!("\t\t\"{}\" => match content_type {{\n", c.window_name);
+		let window_match = format!("\t\t\"{}\" => match content_type {{\n", c.xml_def_path);
 		content_list_out.write(window_match.as_bytes()).expect("Could not write bytes.");
 		for i in info {
 			let i_out = format!("\t\t\t\"{}\" => vec![", i.content_type);
@@ -71,14 +71,14 @@ pub fn compile_content_list() {
 		}
 		content_list_out.write(b"\t\t\t_=>panic!(\"content_type {content_type} not found.\"),\n\t\t},\n").expect("Could not write bytes.");
 	}
-	content_list_out.write(b"\t\t_=>panic!(\"Window type {window_type} not found.\"),\n\t}\n}\n").expect("Could not write bytes.");
+	content_list_out.write(b"\t\t_=>panic!(\"XML definition of path {xml_def_path} not found.\"),\n\t}\n}\n").expect("Could not write bytes.");
 
-	content_list_out.write(b"\npub fn get_relative_folder(window_type : &str) -> &'static std::path::Path {\n\tmatch window_type {\n").expect("Could not write bytes.");
+	content_list_out.write(b"\npub fn get_relative_folder(xml_def_path : &str) -> &'static std::path::Path {\n\tmatch xml_def_path {\n").expect("Could not write bytes.");
 	for c in &content {
 		let out = format!("\t\t\"{}\" => std::path::Path::new(\"{}/{}\"),\n", c.xml_def_path, c.party_pack, c.game_folder);
 		content_list_out.write(out.as_bytes()).expect("Could not write bytes.");
 	}
-	content_list_out.write(b"\t\t_ => panic!(\"Window type {window_type} not found.\"),\n\t}\n}\n").expect("Could not write bytes.");
+	content_list_out.write(b"\t\t_ => panic!(\"XML definition of path {xml_def_path} not found.\"),\n\t}\n}\n").expect("Could not write bytes.");
 	
 	println!("cargo:rerun-if-changed=src/build/content_list/mod.rs");
 	println!("cargo:rerun-if-changed=src/build/content_list/content_reader.rs");
