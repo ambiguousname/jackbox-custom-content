@@ -116,7 +116,9 @@ impl FormObject {
 }
 
 pub trait FormObjectExt : IsA<FormObject> + IsA<gtk::Widget> + 'static {
-	// FIXME: This would be nice to do automatically on constructed/realized/whatever.
+	/// Should be called by the [`FormObject`] that implements this.
+	/// 
+	/// FIXME: This would be nice to do automatically on constructed/realized/whatever.
 	fn construct_form_obj(&self) {
 		let ancestor : FormManager = self.ancestor(FormManager::static_type()).and_downcast().expect("Could not get FormManager.");
 		ancestor.add_form_object(self.clone().into());

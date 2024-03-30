@@ -18,6 +18,7 @@ impl WidgetImpl for imp::FormManager {}
 impl BoxImpl for imp::FormManager {}
 
 impl FormManager {
+	/// Add a given [`FormObject`] to this manager. Called by [`FormObjectExt::construct_form_obj`]
 	pub fn add_form_object(&self, form_object : FormObject) {
 		self.imp().form_objects.borrow_mut().push(form_object);
 	}

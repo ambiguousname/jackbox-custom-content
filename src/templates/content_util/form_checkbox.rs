@@ -1,7 +1,7 @@
 use gtk::glib::{Properties, derived_properties};
 
 use crate::quick_object;
-use super::form::{FormObject, FormObjectImpl};
+use super::form::{FormObject, FormObjectExt, FormObjectImpl};
 
 use std::cell::RefCell;
 
@@ -16,7 +16,13 @@ quick_object!(FormCheckbox, gtk::CheckButton, (gtk::Widget), (gtk::Accessible, g
 
 #[derived_properties]
 impl ObjectImpl for imp::FormCheckbox {}
-impl WidgetImpl for imp::FormCheckbox {}
+impl WidgetImpl for imp::FormCheckbox {
+	fn realize(&self) {
+		self.parent_realize();
+		
+		self.obj().construct_form_obj();
+	}
+}
 impl CheckButtonImpl for imp::FormCheckbox {}
 impl FormObjectImpl for imp::FormCheckbox {
 	fn display_error(&self, error : Option<super::form::FormError>) {
