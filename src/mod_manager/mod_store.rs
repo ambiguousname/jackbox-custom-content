@@ -72,7 +72,7 @@ impl ModStore {
 			}
 			let id = id_try.unwrap();
 
-			let content_id = format!("{}_{}", id, mod_id.to_string());
+			let content_id = format!("{}_{}", mod_id.to_string(), id);
 			// endregion
 
 			// region: Folder creation

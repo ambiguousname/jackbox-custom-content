@@ -28,7 +28,7 @@ impl ManifestItem {
 		// Compatibility with anything else that might want to read our manifest file.
 		// Really we just want a comma separated list of values to read, so we use an array.
 		// Then we can easily merge with other manifest.json files.
-		manifest.write(b"[\n\n]")?;
+		manifest.write(b"[\n]")?;
 		Ok(())
 	}
 
@@ -63,9 +63,13 @@ impl ManifestItem {
 		}
 	}
 
-	fn write_values(&self, writer : &mut BufWriter<File>) -> std::io::Result<()> {
-		writer.write(&serde_json::to_vec(&self.item_content)
-		.expect(format!("Could not convert {} to bytes.", self.item_content).as_str()))?;
+	fn write_values(&self, id : &str, writer : &mut BufWriter<File>) -> std::io::Result<()> {
+		let mut base_value = serde_json::to_string(&self.item_content)?;
+		// Get rid of the opening {
+		base_value.remove(0);
+		// Insert our ID:
+		let out = format!("{{\"id\": \"{}\", {}", id, base_value);
+		writer.write(out.as_bytes())?;
 		writer.write(b",\n")?;
 		Ok(())
 	}
@@ -85,9 +89,10 @@ impl ManifestItem {
 		while let Some(l) = line_iter.next() {
 			let line = l?;
 
-			if line.contains("]") {
+			if line.ends_with("]") {
 				if !written_new {
-					self.write_values(writer)?;
+					self.write_values(&id, writer)?;
+					written_new = true;
 				}
 			}
 
@@ -97,11 +102,12 @@ impl ManifestItem {
 				// Overwrite multiple IDs.
 				// Don't expect this to happen, but you never know.
 				if !written_new {
-					self.write_values(writer)?;
+					self.write_values(&id, writer)?;
 					written_new = true;
 				}
 			} else {
 				writer.write(line.as_bytes())?;
+				writer.write(b"\n")?;
 			}
 		}
 		
