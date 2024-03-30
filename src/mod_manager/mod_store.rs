@@ -33,18 +33,11 @@ impl BoxImpl for imp::ModStore {}
 
 impl ModStore {
 	/// * `name` - Name of this mod.
-	/// * `mods_folder` - Folder where ALL mods are stored.
-    fn new(name : String, mods_folder : &Path) -> Result<Self, Error> {
+	/// * `mod_dir` - Folder where this particular mod is stored. Should be relative to the location of the executable.
+    fn new(name : String, mod_dir : PathBuf) -> Result<Self, Error> {
 		let id = ModStore::string_to_id(name.clone());
 		let this = Object::new::<Self>();
 
-		// Create mod folder:
-		let mod_dir = mods_folder.join(name.clone());
-		if mod_dir.exists() {
-			let msg = format!("Folder {name} already exists.");
-			return Err(Error::new(std::io::ErrorKind::Other, msg));
-		}
-		fs::create_dir(mod_dir.clone())?;
 		this.imp().mod_folder.replace(mod_dir);
 
 		this.imp().name.set(name).or_else(|err| {
@@ -119,12 +112,23 @@ impl ModStore {
 	const MODS_FOLDER : &'static str = "./mods/";
 
 	pub fn new_folder(name : String) -> Result<Self, Error> {
-		ModStore::new(name, Path::new(ModStore::MODS_FOLDER))
+		
+		// Create mod folder:
+		let mod_dir = PathBuf::from_iter(vec![ModStore::MODS_FOLDER, &name]);
+		if mod_dir.exists() {
+			let msg = format!("Folder {name} already exists.");
+			return Err(Error::new(std::io::ErrorKind::Other, msg));
+		}
+		fs::create_dir(&mod_dir)?;
+
+		ModStore::new(name, mod_dir)
 	}
 
 	pub fn from_folder(dir : DirEntry) -> Result<Self, Error> {
 		// TODO: Load subcontent.
-		ModStore::new(dir.file_name().into_string().expect("Could not get directory string."), Path::new(ModStore::MODS_FOLDER))
+		let dirname = dir.file_name().into_string().expect("Could not get directory string.");
+		let mod_dir = PathBuf::from_iter(vec![ModStore::MODS_FOLDER, &dirname]);
+		ModStore::new(dirname, mod_dir)
 	}
 
 	fn string_to_id(string : String) -> String {

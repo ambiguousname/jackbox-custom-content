@@ -78,8 +78,9 @@ impl ModManager {
 			.build();
 			grid.attach(&submit, 0, 1, 1, 1);
 	
-			submit.connect_clicked(clone!(@weak self as m => move |_| {
+			submit.connect_clicked(clone!(@weak self as m => move |but| {
 				m.mod_creation_finish(entry.text().to_string());
+				but.ancestor(gtk::Window::static_type()).and_downcast::<gtk::Window>().unwrap().close();
 				entry.set_text("");
 			}));
 	
