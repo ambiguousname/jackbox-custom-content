@@ -5,16 +5,12 @@
 			"type": "cargo",
 			"command": "",
 			"args": [
-				"build"
+				"run"
 			],
 			"problemMatcher": [
 				"$rustc"
 			],
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
-			"label": "rust: cargo build"
+			"label": "rust: cargo run"
 		}
 	]
 }
