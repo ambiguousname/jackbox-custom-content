@@ -3,18 +3,18 @@
 	"tasks": [
 		{
 			"type": "cargo",
-			"command": "run",
+			"command": "",
+			"args": [
+				"build"
+			],
 			"problemMatcher": [
 				"$rustc"
 			],
-			"label": "rust: cargo run",
-			"options": {
-				"cwd": "${workspaceFolder}/target/debug"
-			},
 			"group": {
 				"kind": "build",
 				"isDefault": true
-			}
+			},
+			"label": "rust: cargo build"
 		}
 	]
 }
