@@ -1,6 +1,5 @@
 pub mod mod_store;
 mod content_data;
-mod data_serializer;
 
 use std::{collections::HashMap, fs::{self, DirEntry}, cell::RefCell, sync::OnceLock, path::Path};
 

@@ -1,5 +1,4 @@
 use std::cell::RefCell;
-use std::io::BufWriter;
 use std::path::PathBuf;
 
 use gtk::glib::{self, Properties};

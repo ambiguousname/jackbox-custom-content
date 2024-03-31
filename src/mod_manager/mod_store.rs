@@ -1,6 +1,6 @@
 use gtk::{gio::{ListModel, ListStore}, glib::{clone, derived_properties, Object, Properties}, AlertDialog, ColumnView};
 
-use std::{borrow::Borrow, cell::{OnceCell, RefCell}, collections::HashMap, fs::{self, DirEntry}, io::{Error, Write}, path::{Path, PathBuf}};
+use std::{borrow::Borrow, cell::{OnceCell, RefCell}, collections::HashMap, fs::{self, DirEntry}, io::Error, path::{Path, PathBuf}};
 
 use crate::{content::SubcontentBox, quick_template};
 use super::ContentData;
@@ -108,9 +108,6 @@ impl ModStore {
 			return Err(Error::new(std::io::ErrorKind::Other, msg));
 		}
 		fs::create_dir(&mod_dir)?;
-
-		let mut json = fs::File::create(mod_dir.join("manifest.json"))?;
-		json.write(b"{}")?;
 
 		ModStore::new(name, mod_dir)
 	}
