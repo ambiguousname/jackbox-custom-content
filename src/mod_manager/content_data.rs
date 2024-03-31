@@ -9,7 +9,7 @@ use glib::Object;
 
 use crate::content::SubcontentBox;
 
-// TODO: Use properties.
+// TODO: You'll need an actual serializer and de-serializer, so just do a serde implementation.
 mod imp {
 	use super::*;
 
