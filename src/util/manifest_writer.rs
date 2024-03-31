@@ -1,26 +1,28 @@
-use std::{fs::{File, OpenOptions}, io::{BufRead, BufReader, BufWriter, Error, Read}, path::Path, rc::Rc, vec::IntoIter};
+use std::{fs::{File, OpenOptions}, io::{BufRead, BufReader, BufWriter, Error, Read}, path::Path, str::Chars};
 
-struct CharFileIter {
-	// From https://stackoverflow.com/questions/47193584/is-there-an-owned-version-of-stringchars
-	line : Option<IntoIter<char>>,
+struct CharFileIter<'a> {
+	// FIXME: The chars iterator needs to last as long as the line does.
+	// I think they need to be grouped into their own struct for that purpose.
+	curr_char : Option<Chars<'a>>,
+	line : String,
 	reader : BufReader<File>,
 }
 
-impl CharFileIter {
-	fn get_line(&mut self) -> Option<<CharFileIter as Iterator>::Item> {
-		let mut line = String::new();
+impl<'a> CharFileIter<'a> {
+	fn get_line(&mut self) -> Option<<CharFileIter<'a> as Iterator>::Item> {
+		self.line = String::new();
 
-		let line_read = self.reader.read_line(&mut line);
+		let line_read = self.reader.read_line(&mut self.line);
 		if line_read.is_err() {
 			return Some(Err(line_read.err().unwrap()));
 		}
 		let bytes_read = line_read.unwrap();
 		
 		if bytes_read > 0 {
-			self.line = Some(line.chars().collect::<Vec<_>>().into_iter());
+			self.curr_char = Some(self.line.chars());
 
-			let chars = self.line.as_mut().unwrap();
-			let char = chars.next();
+			let chars = self.curr_char.as_mut();
+			let char = chars.unwrap().next();
 			return Some(Ok(char.unwrap()));
 		} else {
 			return None;
@@ -28,15 +30,22 @@ impl CharFileIter {
 	}
 }
 
-impl<'a> Iterator for CharFileIter {
+pub struct ManifestWriter<'a> {
+	read_iter : CharFileIter<'a>,
+	read_path : &'a Path,
+
+	writer : BufWriter<File>,
+}
+
+impl<'a> Iterator for CharFileIter<'a> {
 	type Item = std::io::Result<char>;
 
 	fn next(&mut self) -> Option<Self::Item> {
-		if self.line.is_none() {
+		if self.curr_char.is_none() {
 			return self.get_line();
 		}
 
-		let chars = self.line.as_mut().unwrap();
+		let chars = self.curr_char.as_mut().unwrap();
 
 		let next_char = chars.next();
 		if next_char.is_none() {
@@ -45,14 +54,6 @@ impl<'a> Iterator for CharFileIter {
 			Some(Ok(next_char.unwrap()))
 		}
 	}
-}
-
-
-pub struct ManifestWriter<'a> {
-	read_iter : CharFileIter,
-	read_path : &'a Path,
-
-	writer : BufWriter<File>,
 }
 
 impl<'a> ManifestWriter<'a> {
@@ -64,7 +65,8 @@ impl<'a> ManifestWriter<'a> {
 		Ok(ManifestWriter {
 			read_path: path,
 			read_iter: CharFileIter {
-				line: None,
+				curr_char: None,
+				line: String::new(),
 				reader: BufReader::new(read),
 			},
 			writer: BufWriter::new(write),
