@@ -2,6 +2,8 @@ use std::{fs::{self, File, OpenOptions}, io::{BufRead, BufReader, BufWriter, Err
 
 use regex::Regex;
 
+use crate::util::manifest_writer::ManifestWriter;
+
 use super::Subcontent;
 
 /// A manifest.jet file that lists our content.
@@ -101,33 +103,19 @@ impl Subcontent for ManifestItem {
 		let file_to_write = args[0];
 		let file_path_buf = relative_path.join(file_to_write);
 		let file_path = file_path_buf.as_path();
-		
-		let buf = file_path.with_extension(".tmp");
-  		let tmp_path = buf.as_path();
 
 		if !file_path.exists() {
 			self.create_manifest(file_path)?;
 		}
 
-		{
-			// Read the manifest to modify.
-			let manifest_read = File::open(file_path)?;
-			let reader = BufReader::new(manifest_read);
-
-			if tmp_path.exists() {
-				std::fs::remove_file(tmp_path)?;
-			}
-			// To avoid having to store extensive manifests to program memory, we open a temporary file to write to:
-			let manifest_tmp = File::create(tmp_path)?;
-			let mut writer = BufWriter::new(manifest_tmp);
-
-			self.modify_manifest(id, reader, &mut writer)?;
-		}
-
-		// Remove the old file:
-		std::fs::remove_file(file_path)?;
-		// Replace it with our temp file:
-		std::fs::rename(tmp_path, file_path)?;
+		let mut manifest = ManifestWriter::open(file_path)?;
+		// Clone our manifest to insert new values:
+		let mut to_insert = self.item_content.as_object().unwrap().clone();
+		// Add our given ID to the manifest:
+		to_insert.insert(String::from("id"), serde_json::Value::String(id.clone()));
+		// Now update our manifest value:
+		manifest.insert(id, serde_json::Value::Object(to_insert));
+		manifest.close()?;
 
 		Ok(())
 	}
