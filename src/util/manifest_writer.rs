@@ -1,4 +1,4 @@
-use std::{fs::{File, OpenOptions}, io::{BufRead, BufReader, BufWriter, Error, Read}, path::Path, rc::Rc, vec::IntoIter};
+use std::{fs::{File, OpenOptions}, io::{BufRead, BufReader, BufWriter, Empty, Error, ErrorKind, Read, Write}, path::Path, rc::Rc, vec::IntoIter};
 
 struct CharFileIter {
 	// From https://stackoverflow.com/questions/47193584/is-there-an-owned-version-of-stringchars
@@ -71,41 +71,67 @@ impl<'a> ManifestWriter<'a> {
 		})
 	}
 
-	pub fn read_until_key(&mut self, key_to_match : String) -> std::io::Result<String> {
-		let mut out_str = String::new();
+	/// Read [`ManifestWriter::read_iter`] until we find `key_to_match`.
+	pub fn read_until_key(&mut self, key_to_match : String) -> std::io::Result<()> {
 		let mut key_str = String::new();
 
+		let formatted_key = format!(r#""{}":{{"#, key_to_match);
+
 		while let Some(c) = self.read_iter.next() {
 			let char = c?;
-
-			out_str.push(char);
 			
-			if char == '_' && char.is_alphanumeric() {
+			// We're looking for a key string like "key":{
+			if char == '"' || char == ':' || char == '{' || char == '_' || char.is_alphanumeric() {
 				key_str.push(char);
 			} else {
-				key_str.clear();
+				if key_str.len() > 0 {
+					self.writer.write(key_str.as_bytes())?;
+					key_str.clear();
+				}
+				let mut char_out : Vec<u8> = Vec::new();
+				char.encode_utf8(&mut char_out);
+				self.writer.write(&char_out)?;
 			}
 
-			if key_str == key_to_match {
-				out_str.shrink_to(out_str.len() - key_str.len());
-				return Ok(out_str);
+			if key_str == formatted_key {
+				return Ok(());
 			}
 		}
-		Err(Error::new(std::io::ErrorKind::NotFound, format!("Could not find key {}", key_to_match)))
+		Err(Error::new(ErrorKind::NotFound, format!("Could not find key {}", key_to_match)))
 	}
 
-	pub fn read_next_object(&mut self) -> std::io::Result<String> {
-		let mut enclosing_braces: usize = 0;
-		let mut object = String::new();
+	pub fn read_next_object(&mut self, writer : Option<&mut dyn Write>) -> std::io::Result<()> {
+		let mut enclosing_braces: usize = 1;
+
+		let writer_exists = writer.is_some();
+		let mut empty = Empty::default();
+		// ONLY use if writer_exists:
+		let unwrapped_writer = writer.unwrap_or(&mut empty);
 		while let Some(c) = self.read_iter.next() {
 			let char = c?;
-			object.push(char);
+			if char == '{' {
+				enclosing_braces += 1;
+			} else if char == '}' {
+				enclosing_braces -= 1;
+			}
+
+			if writer_exists {
+				let mut to_write = Vec::new();
+				char.encode_utf8(&mut to_write);
+				unwrapped_writer.write(&to_write)?;
+			}
+
+			if enclosing_braces == 0 {
+				return Ok(());
+			}
 		}
-		Ok(object)
+		Err(Error::new(ErrorKind::InvalidData, format!("Missing {} }}", enclosing_braces)))
 	}
 
 	pub fn insert(&mut self, key : String, value : serde_json::Value) -> std::io::Result<()> {
-		self.read_until_key(key);
+		// TODO: Allow for multiple key values.
+		self.read_until_key(key)?;
+		self.read_next_object(None::<&mut dyn std::io::Write>)?;
 
 		Ok(())
 	}
