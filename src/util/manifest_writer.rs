@@ -59,6 +59,13 @@ impl<'a> Iterator for CharFileIter {
 	}
 }
 
+/// During a read of the whole file, where are we?
+enum ManifestParseState {
+	/// Read as normal.
+	Regular,
+	/// Our previous node was a key.
+	Key
+}
 
 pub struct ManifestWriter<'a> {
 	read_iter : CharFileIter,
@@ -67,6 +74,29 @@ pub struct ManifestWriter<'a> {
 	writer : BufWriter<File>,
 	/// Where we currently are in the JSON (relative to objects).
 	curr_path : Vec<String>,
+	parse_state: ManifestParseState,
+}
+
+enum NodeType {
+	Key,
+	Value
+}
+
+struct ManifestNode {
+	node_type : NodeType,
+	value: String,
+}
+
+/// During a read of a node, how are we doing?
+enum ManifestNodeReadState {
+	/// Read as normal.
+	Regular,
+	/// We're reading a string.
+	String,
+	/// We've just read a :, and now we expect to enter into a new node.
+	ExpectingNewNode,
+	/// We've encountered an escape character in a string.
+	StringEscape
 }
 
 impl<'a> ManifestWriter<'a> {
@@ -83,7 +113,68 @@ impl<'a> ManifestWriter<'a> {
 			},
 			writer: BufWriter::new(write),
 			curr_path: vec![],
+			parse_state: ManifestParseState::Regular,
 		})
+	}
+
+	/// Based on https://www.json.org/json-en.html
+	/// Not an actual AST parser, but this does enough to look through JSON and find either:
+	/// 1. Whitespace values. Does not return whitespace values.
+	/// 2. Brackets (curly and square), updates the path value. Does not return brackets.
+	/// 3. Keys. Returns on a key found.
+	/// 4. Values. Returns on a value found.
+	pub fn parse_node(&mut self) -> Result<ManifestNode, ManifestError> {
+		let mut value = String::new();
+
+		let mut state = ManifestNodeReadState::Regular;
+		while let Some(c) = self.read_iter.next() {
+			let ch = c.map_err(|e| {
+				ManifestError::StdErr(e)
+			})?;
+
+			match state {
+				ManifestNodeReadState::ExpectingNewNode => {
+					'{' => {
+						self.curr_path.push(value);
+						return Ok(ManifestNode {
+							node_type: NodeType::Key,
+							value
+						});
+					},
+					_ => ,
+				},
+				ManifestNodeReadState::Regular => {
+					match ch {
+						'"' => state = ManifestNodeReadState::String,
+						'{' => {
+							// FIXME
+							if self.curr_path.len() == 0 {
+								self.curr_path.push(String::new("/"));
+							} else {
+								return Err("Unexpected starting {");
+							}
+						},
+						// TODO: This needs to work with values.
+						':' => state = ManifestNodeReadState::ExpectingNewNode,
+						'}' => {
+							self.curr_path.pop();
+						},
+						_ => value.push(ch),
+					}
+				},
+				ManifestNodeState::String => {
+					match ch {
+						'"' => {state = ManifestNodeReadState::Regular;},
+						'\\' => {value.push(ch); state = ManifestNodeReadState::StringEscape;},
+						_ => value.push(ch);
+					}
+				},
+				ManifestNodeState::StringEscape => {
+					value.push(ch);
+					state = ManifestReadState::Regular;
+				},
+			};
+		}
 	}
 
 	pub fn read_until_key(&mut self) -> Result<String, ManifestError> {
