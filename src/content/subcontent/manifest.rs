@@ -114,7 +114,8 @@ impl Subcontent for ManifestItem {
 		// Add our given ID to the manifest:
 		to_insert.insert(String::from("id"), serde_json::Value::String(id.clone()));
 		// Now update our manifest value:
-		manifest.insert(id, serde_json::Value::Object(to_insert));
+		// TODO: Make this a list of objects instead of an array, to make our utility functions easier.
+		manifest.insert(id, serde_json::Value::Object(to_insert))?;
 		manifest.close()?;
 
 		Ok(())
