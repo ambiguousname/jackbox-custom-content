@@ -1,7 +1,5 @@
 use std::{borrow::BorrowMut, fs::{File, OpenOptions}, io::{BufRead, BufReader, BufWriter, Empty, Error, ErrorKind, Read, Write}, path::{Path, PathBuf}, rc::Rc, vec::IntoIter};
 
-use regex::Regex;
-
 struct CharFileIter {
 	// From https://stackoverflow.com/questions/47193584/is-there-an-owned-version-of-stringchars
 	line : Option<IntoIter<char>>,
@@ -166,6 +164,73 @@ impl<'a> ManifestWriter<'a> {
 		ManifestNode::ArrayClose
 	}
 
+	fn expect_value(&mut self, first_char : char, rest_of_value : &str) -> Result<ManifestNode, ManifestError> {
+		let mut chars = rest_of_value.chars();
+
+
+		while let Some(c) = self.read_iter.next() {
+			let ch = c.map_err(|e| {
+				ManifestError::StdErr(e)
+			})?;
+
+			let next = chars.next();
+
+			if ch == ',' && next.is_none() {
+				let full_str = vec![first_char.to_string(), rest_of_value.to_string()].join("");
+				return Ok(ManifestNode::Value(full_str));	
+			} else if next.is_none() {
+				return Err(ManifestError::UnexpectedValue(format!("Expected `,`, got {ch}")));
+			}
+
+			let next_ch = next.unwrap();
+			if next_ch != ch {
+				return Err(ManifestError::UnexpectedValue(format!("Expected `{next_ch}`, got `{ch}`")))
+			}
+		}
+		
+		Err(ManifestError::UnexpectedEOF())
+	}
+
+	fn get_numeric(&mut self) -> Result<ManifestNode, ManifestError> {
+		let mut number_val = String::new();
+		while let Some(c) = self.read_iter.next() {
+			let ch = c.map_err(|e| {
+				ManifestError::StdErr(e)
+			})?;
+
+			if ch.is_numeric() {
+				number_val.push(ch);
+			} else if ch == ',' {
+				return Ok(ManifestNode::Value(number_val));
+			} else {
+				return Err(ManifestError::UnexpectedValue(format!("Expected a digit or `,`, got `{ch}`")));
+			}
+		}
+
+		Err(ManifestError::UnexpectedEOF())
+	}
+
+	fn get_string(&mut self) -> Result<ManifestNode, ManifestError> {
+		let mut string = String::new();
+		let mut backslash = false;
+		while let Some(c) = self.read_iter.next() {
+			let ch = c.map_err(|e| {
+				ManifestError::StdErr(e)
+			})?;
+
+			if backslash {
+				string.push(ch);
+			} else {
+				match ch {
+					'\\' => {string.push(ch); backslash = true;},
+					'"' => return Ok(ManifestNode::Value(string)),
+					_ => string.push(ch),
+				}
+			}
+		}
+		Err(ManifestError::UnexpectedEOF())
+	}
+
 	/// When we have a :, we need to find the next value after that.
 	fn verify_value(&mut self) -> Result<ManifestNode, ManifestError> {
 		let mut value_out = String::new();
@@ -179,45 +244,57 @@ impl<'a> ManifestWriter<'a> {
 				continue;
 			}
 
-			// TODO: Check for commas.
-			// TODO:
 			if ch.is_numeric() {
-
+				let number = self.get_numeric()?;
+				if let ManifestNode::Value(n) = number {
+					return Ok(ManifestNode::Value(vec![ch.to_string(), n].join("")));
+				} else {
+					unreachable!("ManifestWriter::get_numeric returned a non-ManifestNode success.");
+				}
 			}
 
-			match ch {
-				'"' => todo!(),
-				'{' => return Ok(self.start_object()),
-				'[' => return Ok(self.start_array()),
-				// TODO: Booleans, null values
-				_ => return Err(ManifestError::UnexpectedValue(format!("Unexpected value character start: {ch}"))),
+			return match ch {
+				'"' => self.get_string(),
+				'{' => Ok(self.start_object()),
+				'[' => Ok(self.start_array()),
+				't' => self.expect_value('t', "rue"),
+				'f' => self.expect_value('f', "alse"),
+				'n' => self.expect_value('n', "ull"),
+				_ => Err(ManifestError::UnexpectedValue(format!("Unexpected value character start: {ch}"))),
 			}
 		}
 		
 		Err(ManifestError::UnexpectedEOF())
 	}
 
+	/// Assuming we're inside an object and we've discovered a `"` character,
+	/// continue going until we find the full key.
 	fn verify_key(&mut self) -> Result<ManifestNode, ManifestError> {
 		let mut key_value = String::new();
 
-		let mut backslash = false;
-		while let Some(c) = self.read_iter.next() {
-			let ch = c.map_err(|e| {
-				ManifestError::StdErr(e)
-			})?;
+		let mut end_quote = false;
 
-			// TODO: Need to check for :
-			if ch == '"' && !backslash {
-				self.key_buf = key_value.clone();
-				return Ok(ManifestNode::Key(key_value));
+		let key = self.get_string()?;
+		if let ManifestNode::Value(key_name) = key {
+			while let Some(c) = self.read_iter.next() {
+				let ch = c.map_err(|e| {
+					ManifestError::StdErr(e)
+				})?;
+	
+				if ch.is_whitespace() {
+					continue;
+				}
+
+				return match ch {
+					':' => Ok(ManifestNode::Key(key_value)),
+					_ => Err(ManifestError::UnexpectedValue(format!("Expected : not {ch}"))),
+				}
 			}
-			key_value.push(ch);
-			if backslash {
-				backslash = false;
-			}
+			
+			return Err(ManifestError::UnexpectedEOF());
+		} else {
+			unreachable!("ManifestWriter::get_string returned a non-value on success. This should not be possible.");
 		}
-		
-		Err(ManifestError::UnexpectedEOF())
 	}
 
 	fn read_array(&mut self) -> Result<ManifestNode, ManifestError> {
@@ -282,6 +359,7 @@ impl<'a> ManifestWriter<'a> {
 		}
 		Err(ManifestError::UnexpectedEOF())
 	}
+	// TODO: Output read values from parse_node to the writer.
 
 	/// Based on https://www.json.org/json-en.html
 	/// Not an actual AST parser, but this does enough to look through JSON.
