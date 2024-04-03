@@ -12,10 +12,10 @@ enum ManifestError {
 	/// An error thrown by the writer or reader.
 	StdErr(Error),
 	SerdeJsonErr(serde_json::Error),
-	/// If we've exited out of the object we're searching (i.e., a closing `}`):
-	ExitedObject(),
-	/// If we've exited out of the array we're searching (i.e., a closing `]`):
-	ExitedArray(),
+	/// If we've found a value that shouldn't be there, like an unexpected }
+	UnexpectedValue(String),
+	/// If we've left the file unexpectedly.
+	UnexpectedEOF(),
 }
 
 impl CharFileIter {
@@ -117,6 +117,10 @@ impl<'a> ManifestWriter<'a> {
 		})
 	}
 
+	fn verify_value(&mut self) -> bool {
+
+	}
+
 	/// Based on https://www.json.org/json-en.html
 	/// Not an actual AST parser, but this does enough to look through JSON and find either:
 	/// 1. Whitespace values. Does not return whitespace values.
@@ -133,7 +137,8 @@ impl<'a> ManifestWriter<'a> {
 			})?;
 
 			match state {
-				ManifestNodeReadState::ExpectingNewNode => {
+				ManifestNodeReadState::ExpectingNewNode =>
+				match ch {
 					'{' => {
 						self.curr_path.push(value);
 						return Ok(ManifestNode {
@@ -141,40 +146,39 @@ impl<'a> ManifestWriter<'a> {
 							value
 						});
 					},
-					_ => ,
+					_ => {self.verify_value();},
 				},
-				ManifestNodeReadState::Regular => {
-					match ch {
-						'"' => state = ManifestNodeReadState::String,
-						'{' => {
-							// FIXME
-							if self.curr_path.len() == 0 {
-								self.curr_path.push(String::new("/"));
-							} else {
-								return Err("Unexpected starting {");
-							}
-						},
-						// TODO: This needs to work with values.
-						':' => state = ManifestNodeReadState::ExpectingNewNode,
-						'}' => {
-							self.curr_path.pop();
-						},
-						_ => value.push(ch),
-					}
+				ManifestNodeReadState::Regular => 
+				match ch {
+					'"' => state = ManifestNodeReadState::String,
+					'{' => {
+						// FIXME
+						if self.curr_path.len() == 0 {
+							self.curr_path.push(String::from("/"));
+						} else {
+							return Err(ManifestError::UnexpectedValue(String::from("Unexpected starting {")));
+						}
+					},
+					// TODO: This needs to work with values.
+					':' => state = ManifestNodeReadState::ExpectingNewNode,
+					'}' => {
+						self.curr_path.pop();
+					},
+					_ => value.push(ch),
 				},
-				ManifestNodeState::String => {
-					match ch {
-						'"' => {state = ManifestNodeReadState::Regular;},
-						'\\' => {value.push(ch); state = ManifestNodeReadState::StringEscape;},
-						_ => value.push(ch);
-					}
+				ManifestNodeReadState::String =>
+				match ch {
+					'"' => {state = ManifestNodeReadState::Regular;},
+					'\\' => {value.push(ch); state = ManifestNodeReadState::StringEscape;},
+					_ => value.push(ch),
 				},
-				ManifestNodeState::StringEscape => {
+				ManifestNodeReadState::StringEscape => {
 					value.push(ch);
-					state = ManifestReadState::Regular;
+					state = ManifestNodeReadState::Regular;
 				},
 			};
 		}
+		Err(ManifestError::UnexpectedEOF())
 	}
 
 	pub fn read_until_key(&mut self) -> Result<String, ManifestError> {
