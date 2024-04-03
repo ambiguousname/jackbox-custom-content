@@ -60,13 +60,27 @@ impl<'a> Iterator for CharFileIter {
 }
 
 /// During a read of the whole file, where are we?
+#[derive(PartialEq)]
 enum ManifestParseState {
-	/// Read as normal.
-	Regular,
-	/// Our previous node was a key.
-	Key
+	/// JSON accepts many possible characters to start with: https://www.json.org/json-en.html
+	/// But for our utility purposes, there's no way anyone would want to just edit a file with a number or a string.
+	/// Instead, we're expecting it to start with an object or an array.
+	/// In this state, we have yet to read anything to determine whether or not we're in an array or object.
+	Uninitialized,
+	/// [`ManifestWriter::initialize`] will pop off [`Uninitialized`] and set this instead.
+	/// Used by the reader to determine that there's nothing else to read, and we're at EOF.
+	Empty,
+	/// We've determined ourselves to be inside an object `{}`.
+	ObjectParse,
+	/// We've determined ourselves to be inside an array `[]`.
+	ArrayParse,
+	/// We found a key previously, and now we want to read the value associated with that key:
+	KeyParsed,
 }
 
+/// A utility structure for going through manifest (i.e., JSON files), and reading/writing data to/from them.
+/// Meant for fast and dirty writing rather than parsing the whole thing.
+/// It has some limitations for this reason. For example, it is not a fully-fledged linter. It assumes that the JSON is mostly accurate, but it won't look for things like only one object in a JSON. It's on you to provide correctly written JSON.
 pub struct ManifestWriter<'a> {
 	read_iter : CharFileIter,
 	read_path : &'a Path,
@@ -74,29 +88,28 @@ pub struct ManifestWriter<'a> {
 	writer : BufWriter<File>,
 	/// Where we currently are in the JSON (relative to objects).
 	curr_path : Vec<String>,
-	parse_state: ManifestParseState,
-}
-
-enum ManifestValue {
-	ObjectStart(()),
-
+	/// A stack FSM for reading through JSON:
+	parse_state: Vec<ManifestParseState>,
+	/// The key associated with the value we'll next read.
+	key_buf : String,
 }
 
 /// The types of nodes we support reading.
+/// Could be expanded in the future, but [`ManifestWriter`] is mostly meant to look for key values
 enum ManifestNode {
 	/// A key, formatted as "key":
 	Key(String),
-	Value(ManifestValue),
-}
-
-/// During a read of a node, how are we doing?
-enum ManifestNodeReadState {
-	/// Read as normal.
-	Regular,
-	/// We're reading a string.
-	String,
-	/// We've encountered an escape character in a string.
-	StringEscape,
+	/// A value. This doesn't match ALL of the JSON value types, just anything that isn't an array or object start. (i.e., true, false, "string", etc.)
+	Value(String),
+	/// Start of an object `{`
+	ObjectStart,
+	/// Close of an object `}`
+	ObjectClose,
+	/// Start of an array `[`
+	ArrayStart,
+	/// End of an array `]`
+	ArrayClose,
+	EOF
 }
 
 impl<'a> ManifestWriter<'a> {
@@ -113,165 +126,196 @@ impl<'a> ManifestWriter<'a> {
 			},
 			writer: BufWriter::new(write),
 			curr_path: vec![],
-			parse_state: ManifestParseState::Regular,
+			parse_state: vec![ManifestParseState::Uninitialized],
+			key_buf: String::new(),
 		})
+	}
+
+	fn start_object(&mut self) -> ManifestNode {
+		if self.curr_path.len() <= 0 {
+			self.curr_path.push(String::from("/"));
+		} else {
+			self.curr_path.push(self.key_buf.clone());
+			self.key_buf.clear();
+		}
+		self.parse_state.push(ManifestParseState::ObjectParse);
+		ManifestNode::ObjectStart
+	}
+
+	fn end_object(&mut self) -> ManifestNode {
+		self.curr_path.pop();
+		self.parse_state.pop();
+		ManifestNode::ObjectClose
+	}
+
+	fn start_array(&mut self) -> ManifestNode {
+		if self.key_buf.len() > 0 {
+			self.curr_path.push(self.key_buf.clone());
+			self.key_buf.clear();
+		}
+		self.parse_state.push(ManifestParseState::ArrayParse);
+		ManifestNode::ArrayStart
+	}
+
+	fn end_array(&mut self) -> ManifestNode {
+		self.parse_state.pop();
+		let last_state = self.parse_state.last();
+		if last_state.is_some() && ManifestParseState::ObjectParse == *last_state.unwrap() {
+			self.curr_path.pop();
+		}
+		ManifestNode::ArrayClose
 	}
 
 	/// When we have a :, we need to find the next value after that.
 	fn verify_value(&mut self) -> Result<ManifestNode, ManifestError> {
+		let mut value_out = String::new();
+
 		while let Some(c) = self.read_iter.next() {
 			let ch = c.map_err(|e| {
 				ManifestError::StdErr(e)
 			})?;
+
+			if ch.is_whitespace() {
+				continue;
+			}
+
+			// TODO: Check for commas.
+			// TODO:
+			if ch.is_numeric() {
+
+			}
+
+			match ch {
+				'"' => todo!(),
+				'{' => return Ok(self.start_object()),
+				'[' => return Ok(self.start_array()),
+				// TODO: Booleans, null values
+				_ => return Err(ManifestError::UnexpectedValue(format!("Unexpected value character start: {ch}"))),
+			}
 		}
-		Ok(ManifestNode::Value(ManifestValue::ObjectStart(())))
+		
+		Err(ManifestError::UnexpectedEOF())
 	}
 
-	fn parse_char(&mut self, read_state : &mut ManifestNodeReadState, ch : char) -> Option<Result<ManifestNode, ManifestError>> {
-		match read_state {
-			ManifestNodeReadState::Regular => 
-			match ch {
-				'"' => *read_state = ManifestNodeReadState::String,
-				'{' => {
-					if self.curr_path.len() == 0 {
-						self.curr_path.push(String::from("/"));
-					} else {
-						return Some(Err(ManifestError::UnexpectedValue(String::from("Unexpected starting {"))));
-					}
-				},
-				':' => {
-					self.parse_state = ManifestParseState::Key;
-					return Some(Ok(ManifestNode::Key(node_value)));
-				},
-				'}' => {
-					self.curr_path.pop();
-				},
-				_ => node_value.push(ch),
-			},
-			ManifestNodeReadState::String =>
-			match ch {
-				'"' => {*read_state = ManifestNodeReadState::Regular;},
-				'\\' => {node_value.push(ch); *read_state = ManifestNodeReadState::StringEscape;},
-				_ => node_value.push(ch),
-			},
-			ManifestNodeReadState::StringEscape => {
-				node_value.push(ch);
-				*read_state = ManifestNodeReadState::Regular;
-			},
-		};
-		None
-	}
+	fn verify_key(&mut self) -> Result<ManifestNode, ManifestError> {
+		let mut key_value = String::new();
 
-	/// Based on https://www.json.org/json-en.html
-	/// Not an actual AST parser, but this does enough to look through JSON and find either:
-	/// 1. Whitespace values. Does not return whitespace values.
-	/// 2. Brackets (curly and square), updates the path value. Does not return brackets.
-	/// 3. Keys. Returns on a key found.
-	/// 4. Values. Returns on a value found.
-	pub fn parse_node(&mut self) -> Result<ManifestNode, ManifestError> {
-		let mut state = ManifestNodeReadState::Regular;
+		let mut backslash = false;
 		while let Some(c) = self.read_iter.next() {
 			let ch = c.map_err(|e| {
 				ManifestError::StdErr(e)
 			})?;
 
-			self.parse_char(&mut state, ch);
+			// TODO: Need to check for :
+			if ch == '"' && !backslash {
+				self.key_buf = key_value.clone();
+				return Ok(ManifestNode::Key(key_value));
+			}
+			key_value.push(ch);
+			if backslash {
+				backslash = false;
+			}
+		}
+		
+		Err(ManifestError::UnexpectedEOF())
+	}
+
+	fn read_array(&mut self) -> Result<ManifestNode, ManifestError> {
+		while let Some(c) = self.read_iter.next() {
+			let ch = c.map_err(|e| {
+				ManifestError::StdErr(e)
+			})?;
+
+			if ch.is_whitespace() {
+				continue;
+			}
+			match ch {
+				']' => {
+					return Ok(self.end_array());
+				},
+				_ => { return self.verify_value(); }
+			}
+		}
+		
+		Err(ManifestError::UnexpectedEOF())
+	}
+
+	fn read_object(&mut self) -> Result<ManifestNode, ManifestError> {
+		while let Some(c) = self.read_iter.next() {
+			let ch = c.map_err(|e| {
+				ManifestError::StdErr(e)
+			})?;
+
+			if ch.is_whitespace() {
+				continue;
+			}
+
+			match ch {
+				'"' => {return self.verify_key(); },
+				// A linter might want to check the veracity of commas, but I think we're fine.
+				',' => continue,
+				'}' => {
+					return Ok(self.end_object());
+				},
+				_ => { return Err(ManifestError::UnexpectedValue(format!("Unexpected value reading object: {ch}"))); }
+			}
+		}
+		
+		Err(ManifestError::UnexpectedEOF())
+	}
+
+	fn initialize(&mut self) -> Result<ManifestNode, ManifestError> {
+		self.parse_state = vec![ManifestParseState::Empty];
+		while let Some(c) = self.read_iter.next() {
+			let ch = c.map_err(|e| {
+				ManifestError::StdErr(e)
+			})?;
+
+			if ch.is_whitespace() {
+				continue;
+			}
+			match ch {
+				'{' => {Ok(self.start_object())},
+				'[' => {Ok(self.start_array())},
+				_ => Err(ManifestError::UnexpectedValue(format!("Expected [ or {{, found {ch}"))),
+			};
 		}
 		Err(ManifestError::UnexpectedEOF())
 	}
 
-	pub fn read_until_key(&mut self) -> Result<String, ManifestError> {
-		let mut key_str = String::new();
-		
-		// Simple way to track if our key_str matches "key":{ without using Regex.
-		let mut key_fsm = 0;
-
-		while let Some(c) = self.read_iter.next() {
-			if c.is_err() {
-				return Err(ManifestError::StdErr(c.unwrap_err()));
-			}
-			let char = c.unwrap();
-
-			if char == '"' || char == ':' || char == '{' || char == '_' || char.is_alphanumeric() {
-				key_str.push(char);
-				match key_fsm {
-					0 => if char == '"' {key_fsm += 1} else {key_fsm = 0},
-					1 => if char == '"' {key_fsm += 1},
-					2 => if char == '{' {return Ok(key_str)},
-					_ => panic!("Unexpected key fsm value of {key_fsm}."),
-				}
-			} else {
-				if key_str.len() > 0 {
-					key_fsm = 0;
-					self.writer.write(key_str.as_bytes()).map_err(|e| {
-						ManifestError::StdErr(e)
-					})?;
-					key_str.clear();
-				}
-
-				let mut char_out : Vec<u8> = Vec::new();
-				char.encode_utf8(&mut char_out);
-				
-				self.writer.write(&char_out).map_err(|e| {
-					ManifestError::StdErr(e)
-				})?;
-
-				// if char == '}' {
-				// 	return Err(ManifestError::ExitedObject());
-				// }
-			}
-		}
-		Err(ManifestError::StdErr(Error::new(ErrorKind::NotFound, format!("Unexpected end of input for read_until_key."))))
-	}
-
-	/// Read [`ManifestWriter::read_iter`] until we find `key_to_match`.
-	pub fn find_key(&mut self, key_to_match : String) -> Result<(), ManifestError> {
-		let formatted_key = format!(r#""{}":{{"#, key_to_match);
-
-		loop {
-			let key = self.read_until_key()?;
-			if formatted_key == key {
-				return Ok(())
-			}
-		}
-	}
-
-	pub fn read_object(&mut self, writer : Option<&mut dyn Write>) -> std::io::Result<()> {
-		let writer_exists = writer.is_some();
-		let mut empty = Empty::default();
-		let start_depth = self.curr_path.len();
-		let mut curr_depth = start_depth;
-		// ONLY use if writer_exists:
-		let unwrapped_writer = writer.unwrap_or(&mut empty);
-		while let Some(c) = self.read_iter.next() {
-			let char = c?;
-			if char == '{' {
-				curr_depth += 1;
-			} else if char == '}' {
-				curr_depth -= 1;
-			}
-
-			if writer_exists {
-				let mut to_write = Vec::new();
-				char.encode_utf8(&mut to_write);
-				unwrapped_writer.write(&to_write)?;
-			}
-
-			if curr_depth == start_depth {
-				return Ok(());
-			}
-		}
-		Err(Error::new(ErrorKind::InvalidData, format!("Missing {} }}", curr_depth)))
+	/// Based on https://www.json.org/json-en.html
+	/// Not an actual AST parser, but this does enough to look through JSON.
+	/// Returns whenever ANY of the [`ManifestNode`] types are found.
+	pub fn parse_node(&mut self) -> Result<ManifestNode, ManifestError> {
+		let state = self.parse_state.last().expect("Could not get parse_state value.");
+		let value = match state {
+			ManifestParseState::Uninitialized => {
+				self.initialize()
+			},
+			ManifestParseState::Empty => {
+				Ok(ManifestNode::EOF)
+			},
+			ManifestParseState::ObjectParse => {
+				self.read_object()
+			},
+			ManifestParseState::ArrayParse => {
+				self.read_array()
+			},
+			ManifestParseState::KeyParsed => {
+				self.verify_value()
+			},
+		}?;
+		return Ok(value);
 	}
 
 	pub fn insert(&mut self, key : String, value : serde_json::Value) -> Result<(), ManifestError> {
 		let mut written_values = false;
 
 		// TODO: Allow for multiple key values.
-		self.find_key(key)?;
-		self.read_object(None::<&mut dyn std::io::Write>).map_err(|e| {
-			ManifestError::StdErr(e)
-		})?;
+		// self.find_key(key)?;
+		// self.read_object(None::<&mut dyn std::io::Write>).map_err(|e| {
+		// 	ManifestError::StdErr(e)
+		// })?;
 
 		if !written_values {
 			let buf = serde_json::to_vec(&value).map_err(|e| {
