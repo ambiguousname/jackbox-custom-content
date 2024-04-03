@@ -1,4 +1,4 @@
-use std::{fs::{File, OpenOptions}, io::{BufRead, BufReader, BufWriter, Empty, Error, ErrorKind, Read, Write}, path::{Path, PathBuf}, rc::Rc, vec::IntoIter};
+use std::{borrow::BorrowMut, fs::{File, OpenOptions}, io::{BufRead, BufReader, BufWriter, Empty, Error, ErrorKind, Read, Write}, path::{Path, PathBuf}, rc::Rc, vec::IntoIter};
 
 use regex::Regex;
 
@@ -77,14 +77,16 @@ pub struct ManifestWriter<'a> {
 	parse_state: ManifestParseState,
 }
 
-enum NodeType {
-	Key,
-	Value
+enum ManifestValue {
+	ObjectStart(()),
+
 }
 
-struct ManifestNode {
-	node_type : NodeType,
-	value: String,
+/// The types of nodes we support reading.
+enum ManifestNode {
+	/// A key, formatted as "key":
+	Key(String),
+	Value(ManifestValue),
 }
 
 /// During a read of a node, how are we doing?
@@ -93,10 +95,8 @@ enum ManifestNodeReadState {
 	Regular,
 	/// We're reading a string.
 	String,
-	/// We've just read a :, and now we expect to enter into a new node.
-	ExpectingNewNode,
 	/// We've encountered an escape character in a string.
-	StringEscape
+	StringEscape,
 }
 
 impl<'a> ManifestWriter<'a> {
@@ -117,8 +117,49 @@ impl<'a> ManifestWriter<'a> {
 		})
 	}
 
-	fn verify_value(&mut self) -> bool {
+	/// When we have a :, we need to find the next value after that.
+	fn verify_value(&mut self) -> Result<ManifestNode, ManifestError> {
+		while let Some(c) = self.read_iter.next() {
+			let ch = c.map_err(|e| {
+				ManifestError::StdErr(e)
+			})?;
+		}
+		Ok(ManifestNode::Value(ManifestValue::ObjectStart(())))
+	}
 
+	fn parse_char(&mut self, read_state : &mut ManifestNodeReadState, ch : char) -> Option<Result<ManifestNode, ManifestError>> {
+		match read_state {
+			ManifestNodeReadState::Regular => 
+			match ch {
+				'"' => *read_state = ManifestNodeReadState::String,
+				'{' => {
+					if self.curr_path.len() == 0 {
+						self.curr_path.push(String::from("/"));
+					} else {
+						return Some(Err(ManifestError::UnexpectedValue(String::from("Unexpected starting {"))));
+					}
+				},
+				':' => {
+					self.parse_state = ManifestParseState::Key;
+					return Some(Ok(ManifestNode::Key(node_value)));
+				},
+				'}' => {
+					self.curr_path.pop();
+				},
+				_ => node_value.push(ch),
+			},
+			ManifestNodeReadState::String =>
+			match ch {
+				'"' => {*read_state = ManifestNodeReadState::Regular;},
+				'\\' => {node_value.push(ch); *read_state = ManifestNodeReadState::StringEscape;},
+				_ => node_value.push(ch),
+			},
+			ManifestNodeReadState::StringEscape => {
+				node_value.push(ch);
+				*read_state = ManifestNodeReadState::Regular;
+			},
+		};
+		None
 	}
 
 	/// Based on https://www.json.org/json-en.html
@@ -128,55 +169,13 @@ impl<'a> ManifestWriter<'a> {
 	/// 3. Keys. Returns on a key found.
 	/// 4. Values. Returns on a value found.
 	pub fn parse_node(&mut self) -> Result<ManifestNode, ManifestError> {
-		let mut value = String::new();
-
 		let mut state = ManifestNodeReadState::Regular;
 		while let Some(c) = self.read_iter.next() {
 			let ch = c.map_err(|e| {
 				ManifestError::StdErr(e)
 			})?;
 
-			match state {
-				ManifestNodeReadState::ExpectingNewNode =>
-				match ch {
-					'{' => {
-						self.curr_path.push(value);
-						return Ok(ManifestNode {
-							node_type: NodeType::Key,
-							value
-						});
-					},
-					_ => {self.verify_value();},
-				},
-				ManifestNodeReadState::Regular => 
-				match ch {
-					'"' => state = ManifestNodeReadState::String,
-					'{' => {
-						// FIXME
-						if self.curr_path.len() == 0 {
-							self.curr_path.push(String::from("/"));
-						} else {
-							return Err(ManifestError::UnexpectedValue(String::from("Unexpected starting {")));
-						}
-					},
-					// TODO: This needs to work with values.
-					':' => state = ManifestNodeReadState::ExpectingNewNode,
-					'}' => {
-						self.curr_path.pop();
-					},
-					_ => value.push(ch),
-				},
-				ManifestNodeReadState::String =>
-				match ch {
-					'"' => {state = ManifestNodeReadState::Regular;},
-					'\\' => {value.push(ch); state = ManifestNodeReadState::StringEscape;},
-					_ => value.push(ch),
-				},
-				ManifestNodeReadState::StringEscape => {
-					value.push(ch);
-					state = ManifestNodeReadState::Regular;
-				},
-			};
+			self.parse_char(&mut state, ch);
 		}
 		Err(ManifestError::UnexpectedEOF())
 	}
@@ -217,9 +216,9 @@ impl<'a> ManifestWriter<'a> {
 					ManifestError::StdErr(e)
 				})?;
 
-				if char == '}' {
-					return Err(ManifestError::ExitedObject());
-				}
+				// if char == '}' {
+				// 	return Err(ManifestError::ExitedObject());
+				// }
 			}
 		}
 		Err(ManifestError::StdErr(Error::new(ErrorKind::NotFound, format!("Unexpected end of input for read_until_key."))))
