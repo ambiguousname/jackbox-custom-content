@@ -1,4 +1,4 @@
-use std::{borrow::BorrowMut, fs::{File, OpenOptions}, io::{BufRead, BufReader, BufWriter, Empty, Error, ErrorKind, Read, Write}, path::{Path, PathBuf}, rc::Rc, vec::IntoIter};
+use std::{fs::File, io::{BufRead, BufReader, BufWriter, Error, Write}, path::Path, vec::IntoIter};
 
 struct CharFileIter {
 	// From https://stackoverflow.com/questions/47193584/is-there-an-owned-version-of-stringchars
@@ -117,7 +117,7 @@ pub struct ManifestWriter<'a> {
 /// The types of nodes we support reading.
 /// Could be expanded in the future, but [`ManifestWriter`] is mostly meant to look for key values
 #[derive(PartialEq)]
-enum ManifestNode {
+pub enum ManifestNode {
 	/// A key, formatted as "key":
 	Key(String),
 	/// A value. This doesn't match ALL of the JSON value types, just anything that isn't an array or object start. (i.e., true, false, "string", etc.)
@@ -268,8 +268,10 @@ impl<'a> ManifestWriter<'a> {
 
 	/// When we have a :, we need to find the next value after that.
 	fn verify_value(&mut self) -> Result<ManifestNode, ManifestError> {
-		let mut value_out = String::new();
-
+		// Remove KeyParsed if it exists since we're now trying to read a value:
+		if self.parse_state.last() == Some(&ManifestParseState::KeyParsed) {
+			self.curr_path.pop();
+		}
 		loop {
 			let ch = self.next()?;
 
@@ -301,12 +303,8 @@ impl<'a> ManifestWriter<'a> {
 	/// Assuming we're inside an object and we've discovered a `"` character,
 	/// continue going until we find the full key.
 	fn verify_key(&mut self) -> Result<ManifestNode, ManifestError> {
-		let mut key_value = String::new();
-
-		let mut end_quote = false;
-
 		let key = self.get_string()?;
-		if let ManifestNode::Value(key_name) = key {
+		if let ManifestNode::Value(key_value) = key {
 			loop {
 				let ch = self.next()?;
 
@@ -315,7 +313,7 @@ impl<'a> ManifestWriter<'a> {
 				}
 
 				return match ch {
-					':' => Ok(ManifestNode::Key(key_value)),
+					':' => {self.parse_state.push(ManifestParseState::KeyParsed); Ok(ManifestNode::Key(key_value))},
 					_ => Err(ManifestError::UnexpectedValue(format!("Expected : not {ch}"))),
 				}
 			}
@@ -368,7 +366,7 @@ impl<'a> ManifestWriter<'a> {
 			if ch.is_whitespace() {
 				continue;
 			}
-			match ch {
+			return match ch {
 				'{' => {Ok(self.start_object())},
 				'[' => {Ok(self.start_array())},
 				_ => Err(ManifestError::UnexpectedValue(format!("Expected [ or {{, found {ch}"))),
@@ -420,6 +418,9 @@ impl<'a> ManifestWriter<'a> {
 
 		loop {
 			let node = self.parse_node()?;
+			if node == ManifestNode::EOF {
+				return Ok(())
+			}
 
 			if ManifestNode::Key(key.clone()) == node && !written_values {
 				// Now we just overwrite the object value:
