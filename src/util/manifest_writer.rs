@@ -84,6 +84,9 @@ pub struct ManifestWriter<'a> {
 	read_path : &'a Path,
 
 	writer : BufWriter<File>,
+	/// Should we write every character we're currently reading to the bufwriter?
+	write_out : bool,
+	
 	/// Where we currently are in the JSON (relative to objects).
 	curr_path : Vec<String>,
 	/// A stack FSM for reading through JSON:
@@ -94,6 +97,7 @@ pub struct ManifestWriter<'a> {
 
 /// The types of nodes we support reading.
 /// Could be expanded in the future, but [`ManifestWriter`] is mostly meant to look for key values
+#[derive(PartialEq)]
 enum ManifestNode {
 	/// A key, formatted as "key":
 	Key(String),
@@ -122,11 +126,34 @@ impl<'a> ManifestWriter<'a> {
 				line: None,
 				reader: BufReader::new(read),
 			},
+			
 			writer: BufWriter::new(write),
+			write_out: true,
+
 			curr_path: vec![],
 			parse_state: vec![ManifestParseState::Uninitialized],
 			key_buf: String::new(),
 		})
+	}
+
+	pub fn next(&mut self) -> Result<char, ManifestError> {
+		let char = self.read_iter.next();
+		
+		if char.is_some() {
+			return char.unwrap().map_err(|e| {
+				ManifestError::StdErr(e)
+			}).and_then(|c| {
+				if self.write_out {
+					let mut out_bytes = Vec::<u8>::new();
+					c.encode_utf8(&mut out_bytes);
+					self.writer.write(&out_bytes).map_err(|e| { ManifestError::StdErr(e) })?;
+				}
+				Ok(c)
+			});
+
+		}
+
+		Err(ManifestError::UnexpectedEOF())
 	}
 
 	fn start_object(&mut self) -> ManifestNode {
@@ -167,11 +194,8 @@ impl<'a> ManifestWriter<'a> {
 	fn expect_value(&mut self, first_char : char, rest_of_value : &str) -> Result<ManifestNode, ManifestError> {
 		let mut chars = rest_of_value.chars();
 
-
-		while let Some(c) = self.read_iter.next() {
-			let ch = c.map_err(|e| {
-				ManifestError::StdErr(e)
-			})?;
+		loop {
+			let ch = self.next()?;
 
 			let next = chars.next();
 
@@ -187,16 +211,12 @@ impl<'a> ManifestWriter<'a> {
 				return Err(ManifestError::UnexpectedValue(format!("Expected `{next_ch}`, got `{ch}`")))
 			}
 		}
-		
-		Err(ManifestError::UnexpectedEOF())
 	}
 
 	fn get_numeric(&mut self) -> Result<ManifestNode, ManifestError> {
 		let mut number_val = String::new();
-		while let Some(c) = self.read_iter.next() {
-			let ch = c.map_err(|e| {
-				ManifestError::StdErr(e)
-			})?;
+		loop {
+			let ch = self.next()?;
 
 			if ch.is_numeric() {
 				number_val.push(ch);
@@ -206,17 +226,14 @@ impl<'a> ManifestWriter<'a> {
 				return Err(ManifestError::UnexpectedValue(format!("Expected a digit or `,`, got `{ch}`")));
 			}
 		}
-
-		Err(ManifestError::UnexpectedEOF())
 	}
 
 	fn get_string(&mut self) -> Result<ManifestNode, ManifestError> {
 		let mut string = String::new();
 		let mut backslash = false;
-		while let Some(c) = self.read_iter.next() {
-			let ch = c.map_err(|e| {
-				ManifestError::StdErr(e)
-			})?;
+
+		loop {
+			let ch = self.next()?;
 
 			if backslash {
 				string.push(ch);
@@ -228,17 +245,14 @@ impl<'a> ManifestWriter<'a> {
 				}
 			}
 		}
-		Err(ManifestError::UnexpectedEOF())
 	}
 
 	/// When we have a :, we need to find the next value after that.
 	fn verify_value(&mut self) -> Result<ManifestNode, ManifestError> {
 		let mut value_out = String::new();
 
-		while let Some(c) = self.read_iter.next() {
-			let ch = c.map_err(|e| {
-				ManifestError::StdErr(e)
-			})?;
+		loop {
+			let ch = self.next()?;
 
 			if ch.is_whitespace() {
 				continue;
@@ -263,8 +277,6 @@ impl<'a> ManifestWriter<'a> {
 				_ => Err(ManifestError::UnexpectedValue(format!("Unexpected value character start: {ch}"))),
 			}
 		}
-		
-		Err(ManifestError::UnexpectedEOF())
 	}
 
 	/// Assuming we're inside an object and we've discovered a `"` character,
@@ -276,11 +288,9 @@ impl<'a> ManifestWriter<'a> {
 
 		let key = self.get_string()?;
 		if let ManifestNode::Value(key_name) = key {
-			while let Some(c) = self.read_iter.next() {
-				let ch = c.map_err(|e| {
-					ManifestError::StdErr(e)
-				})?;
-	
+			loop {
+				let ch = self.next()?;
+
 				if ch.is_whitespace() {
 					continue;
 				}
@@ -290,18 +300,14 @@ impl<'a> ManifestWriter<'a> {
 					_ => Err(ManifestError::UnexpectedValue(format!("Expected : not {ch}"))),
 				}
 			}
-			
-			return Err(ManifestError::UnexpectedEOF());
 		} else {
 			unreachable!("ManifestWriter::get_string returned a non-value on success. This should not be possible.");
 		}
 	}
 
 	fn read_array(&mut self) -> Result<ManifestNode, ManifestError> {
-		while let Some(c) = self.read_iter.next() {
-			let ch = c.map_err(|e| {
-				ManifestError::StdErr(e)
-			})?;
+		loop {
+			let ch = self.next()?;
 
 			if ch.is_whitespace() {
 				continue;
@@ -313,15 +319,11 @@ impl<'a> ManifestWriter<'a> {
 				_ => { return self.verify_value(); }
 			}
 		}
-		
-		Err(ManifestError::UnexpectedEOF())
 	}
 
 	fn read_object(&mut self) -> Result<ManifestNode, ManifestError> {
-		while let Some(c) = self.read_iter.next() {
-			let ch = c.map_err(|e| {
-				ManifestError::StdErr(e)
-			})?;
+		loop {
+			let ch = self.next()?;
 
 			if ch.is_whitespace() {
 				continue;
@@ -337,16 +339,12 @@ impl<'a> ManifestWriter<'a> {
 				_ => { return Err(ManifestError::UnexpectedValue(format!("Unexpected value reading object: {ch}"))); }
 			}
 		}
-		
-		Err(ManifestError::UnexpectedEOF())
 	}
 
 	fn initialize(&mut self) -> Result<ManifestNode, ManifestError> {
 		self.parse_state = vec![ManifestParseState::Empty];
-		while let Some(c) = self.read_iter.next() {
-			let ch = c.map_err(|e| {
-				ManifestError::StdErr(e)
-			})?;
+		loop {
+			let ch = self.next()?;
 
 			if ch.is_whitespace() {
 				continue;
@@ -357,7 +355,6 @@ impl<'a> ManifestWriter<'a> {
 				_ => Err(ManifestError::UnexpectedValue(format!("Expected [ or {{, found {ch}"))),
 			};
 		}
-		Err(ManifestError::UnexpectedEOF())
 	}
 	// TODO: Output read values from parse_node to the writer.
 
@@ -386,25 +383,41 @@ impl<'a> ManifestWriter<'a> {
 		return Ok(value);
 	}
 
+	/// Skip over characters on our current depth level until we find a node of a certain type.
+	fn skip_node(&mut self, node_type : ManifestNode) -> Result<(), ManifestError> {
+		self.write_out = false;
+		let curr_depth = self.curr_path.len();
+		loop {
+			let node = self.parse_node()?;
+
+			if node_type == node && curr_depth == self.curr_path.len() {
+				return Ok(());
+			}
+		}
+	}
+
 	pub fn insert(&mut self, key : String, value : serde_json::Value) -> Result<(), ManifestError> {
 		let mut written_values = false;
 
-		// TODO: Allow for multiple key values.
-		// self.find_key(key)?;
-		// self.read_object(None::<&mut dyn std::io::Write>).map_err(|e| {
-		// 	ManifestError::StdErr(e)
-		// })?;
+		loop {
+			let node = self.parse_node()?;
 
-		if !written_values {
-			let buf = serde_json::to_vec(&value).map_err(|e| {
-				ManifestError::SerdeJsonErr(e)
-			})?;
-			self.writer.write(&buf).map_err(|e| {
-				ManifestError::StdErr(e)
-			})?;
+			if ManifestNode::Key(key) == node && !written_values {
+				// Now we just overwrite the object value:
+				self.skip_node(ManifestNode::ObjectClose);
+				
+				let buf = serde_json::to_vec(&value).map_err(|e| {
+					ManifestError::SerdeJsonErr(e)
+				})?;
+				self.writer.write(&buf).map_err(|e| {
+					ManifestError::StdErr(e)
+				})?;
+			} else {
+				// TODO: We need to move the writer back and delete the key value.
+
+				self.skip_node(ManifestNode::ObjectClose);
+			}
 		}
-
-		Ok(())
 	}
 
 	pub fn close(&self) -> std::io::Result<()> {
