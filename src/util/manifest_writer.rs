@@ -6,7 +6,7 @@ struct CharFileIter {
 	reader : BufReader<File>,
 }
 
-enum ManifestError {
+pub enum ManifestError {
 	/// An error thrown by the writer or reader.
 	StdErr(Error),
 	SerdeJsonErr(serde_json::Error),
@@ -14,6 +14,25 @@ enum ManifestError {
 	UnexpectedValue(String),
 	/// If we've left the file unexpectedly.
 	UnexpectedEOF(),
+}
+
+impl ManifestError {
+	pub fn to_string(&self) -> String {
+		match self {
+			Self::StdErr(e) => {
+				format!("stderr trying to write to manifest: {}", e.to_string())
+			},
+			Self::SerdeJsonErr(e) => {
+				format!("serde error trying to write to manifest: {}", e.to_string())
+			},
+			Self::UnexpectedEOF() => {
+				String::from("Unexpected end of file when reading manifest.")
+			},
+			Self::UnexpectedValue(s) => {
+				s.to_string()
+			}
+		}
+	}
 }
 
 impl CharFileIter {
@@ -402,9 +421,9 @@ impl<'a> ManifestWriter<'a> {
 		loop {
 			let node = self.parse_node()?;
 
-			if ManifestNode::Key(key) == node && !written_values {
+			if ManifestNode::Key(key.clone()) == node && !written_values {
 				// Now we just overwrite the object value:
-				self.skip_node(ManifestNode::ObjectClose);
+				self.skip_node(ManifestNode::ObjectClose)?;
 				
 				let buf = serde_json::to_vec(&value).map_err(|e| {
 					ManifestError::SerdeJsonErr(e)
@@ -415,7 +434,7 @@ impl<'a> ManifestWriter<'a> {
 			} else {
 				// TODO: We need to move the writer back and delete the key value.
 
-				self.skip_node(ManifestNode::ObjectClose);
+				self.skip_node(ManifestNode::ObjectClose)?;
 			}
 		}
 	}

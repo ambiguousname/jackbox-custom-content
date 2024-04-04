@@ -2,7 +2,7 @@ use std::{fs::{self, File, OpenOptions}, io::{BufRead, BufReader, BufWriter, Err
 
 use regex::Regex;
 
-use crate::util::manifest_writer::ManifestWriter;
+use crate::util::manifest_writer::{ManifestError, ManifestWriter};
 
 use super::Subcontent;
 
@@ -115,7 +115,12 @@ impl Subcontent for ManifestItem {
 		to_insert.insert(String::from("id"), serde_json::Value::String(id.clone()));
 		// Now update our manifest value:
 		// TODO: Make this a list of objects instead of an array, to make our utility functions easier.
-		manifest.insert(id, serde_json::Value::Object(to_insert))?;
+		manifest.insert(id, serde_json::Value::Object(to_insert)).map_err(|e| {
+			if let ManifestError::StdErr(err) = e {
+				return err;
+			}
+			std::io::Error::new(ErrorKind::Other, e.to_string())
+		})?;
 		manifest.close()?;
 
 		Ok(())
