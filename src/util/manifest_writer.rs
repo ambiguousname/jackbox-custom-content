@@ -413,6 +413,15 @@ impl<'a> ManifestWriter<'a> {
 		}
 	}
 
+	fn read_search_rewind(&mut self, past : &str) -> Result<(), ManifestError> {
+		
+	}
+
+	/// Rewinds the reader all the way.
+	pub fn full_rewind(&mut self) {
+
+	}
+
 	pub fn insert(&mut self, key : String, value : serde_json::Value) -> Result<(), ManifestError> {
 		let mut written_values = false;
 
