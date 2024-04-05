@@ -466,16 +466,18 @@ impl<'a> ManifestWriter<'a> {
 			}
 
 			if ManifestNode::ObjectClose == node && self.curr_path.len() == current_depth - 1 && !written_values {
-				// Go back two from object close:
+				// Go back from object close:
 				self.write_search_seek(SeekFrom::Current(-1))?;
 				
 				// Write our key:
 				self.writer.write(format!(r#""{key}": "#).as_bytes()).map_err(|e| {
 					ManifestError::StdErr(e)
 				})?;
-				write(&mut self.writer, &mut written_values)?;
 				
 				// Then re-write our value:
+				write(&mut self.writer, &mut written_values)?;
+				
+				// And re-write the end of the object we just exited:
 				self.writer.write(b"}").map_err(|e| {
 					ManifestError::StdErr(e)
 				})?;
