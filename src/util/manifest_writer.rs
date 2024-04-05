@@ -415,14 +415,14 @@ impl<'a> ManifestWriter<'a> {
 	}
 
 
-	/// Seek by character.
+	/// Seek by [`char`].
 	fn write_search_seek(&mut self, offset : SeekFrom) -> Result<(), ManifestError> {
-		let size : usize = std::mem::size_of::<char>();
+		// Per https://doc.rust-lang.org/std/mem/fn.size_of.html, the size for char will always be 4.
 		let new_offset : SeekFrom;
 		match offset {
-			SeekFrom::Current(i) => new_offset = SeekFrom::Current(i * <usize as TryInto<i64>>::try_into(size).expect("Could not convert sizeof char to i64")),
-			SeekFrom::End(i) => new_offset = SeekFrom::End(i * <usize as TryInto<i64>>::try_into(size).expect("Could not convert sizeof char to i64")),
-			SeekFrom::Start(i) => new_offset = SeekFrom::Start(i * <usize as TryInto<u64>>::try_into(size).expect("Could not convert sizeof char to u64")),
+			SeekFrom::Current(i) => new_offset = SeekFrom::Current(i * 4),
+			SeekFrom::End(i) => new_offset = SeekFrom::End(i * 4),
+			SeekFrom::Start(i) => new_offset = SeekFrom::Start(i * 4),
 		}
 
 		self.writer.seek(new_offset).map_err(|e| {
