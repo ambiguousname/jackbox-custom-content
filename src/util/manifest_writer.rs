@@ -1,4 +1,4 @@
-use std::{fs::File, io::{BufRead, BufReader, BufWriter, Error, Write}, path::Path, vec::IntoIter};
+use std::{fs::File, io::{BufRead, BufReader, BufWriter, Error, Seek, SeekFrom, Write}, path::Path, vec::IntoIter};
 
 struct CharFileIter {
 	// From https://stackoverflow.com/questions/47193584/is-there-an-owned-version-of-stringchars
@@ -159,6 +159,7 @@ impl<'a> ManifestWriter<'a> {
 		let char = self.read_iter.next();
 		
 		if char.is_some() {
+			// Given how much map_err is used, maybe this should be a macro.
 			return char.unwrap().map_err(|e| {
 				ManifestError::StdErr(e)
 			}).and_then(|c| {
@@ -413,17 +414,41 @@ impl<'a> ManifestWriter<'a> {
 		}
 	}
 
-	fn read_search_rewind(&mut self, past : &str) -> Result<(), ManifestError> {
-		
+
+	/// Seek by character.
+	fn write_search_seek(&mut self, offset : SeekFrom) -> Result<(), ManifestError> {
+		let size : usize = std::mem::size_of::<char>();
+		let new_offset : SeekFrom;
+		match offset {
+			SeekFrom::Current(i) => new_offset = SeekFrom::Current(i * <usize as TryInto<i64>>::try_into(size).expect("Could not convert sizeof char to i64")),
+			SeekFrom::End(i) => new_offset = SeekFrom::End(i * <usize as TryInto<i64>>::try_into(size).expect("Could not convert sizeof char to i64")),
+			SeekFrom::Start(i) => new_offset = SeekFrom::Start(i * <usize as TryInto<u64>>::try_into(size).expect("Could not convert sizeof char to u64")),
+		}
+
+		self.writer.seek(new_offset).map_err(|e| {
+			ManifestError::StdErr(e)
+		})?;
+		Ok(())
 	}
 
-	/// Rewinds the reader all the way.
-	pub fn full_rewind(&mut self) {
-
-	}
-
+	/// Insert an object into in another object, assuming that we are presently in an object.
 	pub fn insert(&mut self, key : String, value : serde_json::Value) -> Result<(), ManifestError> {
 		let mut written_values = false;
+
+		let write = |writer : &mut BufWriter<File>, written_val : &mut bool| -> Result<(), ManifestError> {
+			let buf = serde_json::to_vec(&value).map_err(|e| {
+				ManifestError::SerdeJsonErr(e)
+			})?;
+			writer.write(&buf).map_err(|e| {
+				ManifestError::StdErr(e)
+			})?;
+			writer.write(b",\n").map_err(|e| {ManifestError::StdErr(e)})?;
+
+			*written_val = true;
+			Ok(())
+		};
+
+		let current_depth = self.curr_path.len();
 
 		loop {
 			let node = self.parse_node()?;
@@ -431,20 +456,29 @@ impl<'a> ManifestWriter<'a> {
 				return Ok(())
 			}
 
-			if ManifestNode::Key(key.clone()) == node && !written_values {
+			if ManifestNode::Key(key.clone()) == node {
 				// Now we just overwrite the object value:
 				self.skip_node(ManifestNode::ObjectClose)?;
 				
-				let buf = serde_json::to_vec(&value).map_err(|e| {
-					ManifestError::SerdeJsonErr(e)
-				})?;
-				self.writer.write(&buf).map_err(|e| {
+				if !written_values {
+					write(&mut self.writer, &mut written_values)?;
+				}
+			}
+
+			if ManifestNode::ObjectClose == node && self.curr_path.len() == current_depth - 1 && !written_values {
+				// Go back two from object close:
+				self.write_search_seek(SeekFrom::Current(-1))?;
+				
+				// Write our key:
+				self.writer.write(format!(r#""{key}": "#).as_bytes()).map_err(|e| {
 					ManifestError::StdErr(e)
 				})?;
-			} else {
-				// TODO: We need to move the writer back and delete the key value.
-
-				self.skip_node(ManifestNode::ObjectClose)?;
+				write(&mut self.writer, &mut written_values)?;
+				
+				// Then re-write our value:
+				self.writer.write(b"}").map_err(|e| {
+					ManifestError::StdErr(e)
+				})?;
 			}
 		}
 	}
