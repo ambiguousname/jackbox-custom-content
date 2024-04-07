@@ -133,6 +133,19 @@ pub enum ManifestNode {
 	EOF
 }
 
+macro_rules! map_err {
+	($e:expr) => {
+		$e.map_err(|err| {
+			ManifestError::StdErr(err)
+		})
+	};
+	(serde, $e:expr) => {
+		$e.map_err(|err| {
+			ManifestError::SerdeJsonErr(err)
+		})
+	}
+}
+
 impl<'a> ManifestWriter<'a> {
 	pub fn open(path : &'a Path) -> std::io::Result<Self> {
 		let read = File::open(path)?;
@@ -160,13 +173,11 @@ impl<'a> ManifestWriter<'a> {
 		
 		if char.is_some() {
 			// Given how much map_err is used, maybe this should be a macro.
-			return char.unwrap().map_err(|e| {
-				ManifestError::StdErr(e)
-			}).and_then(|c| {
+			return map_err!(char.unwrap()).and_then(|c| {
 				if self.write_out {
 					let mut out_bytes = Vec::<u8>::new();
 					c.encode_utf8(&mut out_bytes);
-					self.writer.write(&out_bytes).map_err(|e| { ManifestError::StdErr(e) })?;
+					map_err!(self.writer.write(&out_bytes))?;
 				}
 				Ok(c)
 			});
@@ -425,9 +436,7 @@ impl<'a> ManifestWriter<'a> {
 			SeekFrom::Start(i) => new_offset = SeekFrom::Start(i * 4),
 		}
 
-		self.writer.seek(new_offset).map_err(|e| {
-			ManifestError::StdErr(e)
-		})?;
+		map_err!(self.writer.seek(new_offset))?;
 		Ok(())
 	}
 
@@ -436,13 +445,9 @@ impl<'a> ManifestWriter<'a> {
 		let mut written_values = false;
 
 		let write = |writer : &mut BufWriter<File>, written_val : &mut bool| -> Result<(), ManifestError> {
-			let buf = serde_json::to_vec(&value).map_err(|e| {
-				ManifestError::SerdeJsonErr(e)
-			})?;
-			writer.write(&buf).map_err(|e| {
-				ManifestError::StdErr(e)
-			})?;
-			writer.write(b",\n").map_err(|e| {ManifestError::StdErr(e)})?;
+			let buf = map_err!(serde, serde_json::to_vec(&value))?;
+			map_err!(writer.write(&buf))?;
+			map_err!(writer.write(b",\n"))?;
 
 			*written_val = true;
 			Ok(())
@@ -470,17 +475,13 @@ impl<'a> ManifestWriter<'a> {
 				self.write_search_seek(SeekFrom::Current(-1))?;
 				
 				// Write our key:
-				self.writer.write(format!(r#""{key}": "#).as_bytes()).map_err(|e| {
-					ManifestError::StdErr(e)
-				})?;
+				map_err!(self.writer.write(format!(r#""{key}": "#).as_bytes()))?;
 				
 				// Then re-write our value:
 				write(&mut self.writer, &mut written_values)?;
 				
 				// And re-write the end of the object we just exited:
-				self.writer.write(b"}").map_err(|e| {
-					ManifestError::StdErr(e)
-				})?;
+				map_err!(self.writer.write(b"}"))?;
 			}
 		}
 	}
