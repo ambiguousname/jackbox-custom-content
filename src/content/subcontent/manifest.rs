@@ -113,14 +113,40 @@ impl Subcontent for ManifestItem {
 		let mut to_insert = self.item_content.as_object().unwrap().clone();
 		// Add our given ID to the manifest:
 		to_insert.insert(String::from("id"), serde_json::Value::String(id.clone()));
-		// Now update our manifest value:
-		// TODO: Make this a list of objects instead of an array, to make our utility functions easier.
-		manifest.insert(id, serde_json::Value::Object(to_insert)).map_err(|e| {
+
+		// Parse the first node to enter our manifest object:
+		let _ = manifest.initialize().map_err(|e| {
 			if let ManifestError::StdErr(err) = e {
 				return err;
 			}
 			std::io::Error::new(ErrorKind::Other, e.to_string())
 		})?;
+
+		
+		let serde_out = serde_json::to_vec(&to_insert).map_err(|e| {
+			std::io::Error::new(ErrorKind::InvalidData, e.to_string())
+		})?;
+		
+		manifest.write_out = false;
+		// Now update our manifest value:
+		while let Some(array_value) = manifest.read_array_item() {
+			let val = array_value.map_err(|e| {
+				if let ManifestError::StdErr(err) = e {
+					return err;
+				}
+				std::io::Error::new(ErrorKind::Other, e.to_string())
+			})?;
+
+			let id = val.as_object().and_then(|o| {
+				o.get("id")
+			});
+
+			if id.is_some() {
+
+				manifest.write(&serde_out)?;
+			}
+		}
+		manifest.write_out = true;
 		manifest.close()?;
 
 		Ok(())

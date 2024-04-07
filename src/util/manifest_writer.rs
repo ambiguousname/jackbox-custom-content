@@ -6,6 +6,7 @@ struct CharFileIter {
 	reader : BufReader<File>,
 }
 
+#[derive(Debug)]
 pub enum ManifestError {
 	/// An error thrown by the writer or reader.
 	StdErr(Error),
@@ -14,6 +15,8 @@ pub enum ManifestError {
 	UnexpectedValue(String),
 	/// If we've left the file unexpectedly.
 	UnexpectedEOF(),
+	/// If our Manifest is in a state we don't expect it to be in.
+	UnexpectedState(String),
 }
 
 impl ManifestError {
@@ -28,9 +31,10 @@ impl ManifestError {
 			Self::UnexpectedEOF() => {
 				String::from("Unexpected end of file when reading manifest.")
 			},
+			Self::UnexpectedState(s) |
 			Self::UnexpectedValue(s) => {
 				s.to_string()
-			}
+			},
 		}
 	}
 }
@@ -104,7 +108,7 @@ pub struct ManifestWriter<'a> {
 
 	writer : BufWriter<File>,
 	/// Should we write every character we're currently reading to the bufwriter?
-	write_out : bool,
+	pub write_out : bool,
 	
 	/// Where we currently are in the JSON (relative to objects).
 	curr_path : Vec<String>,
@@ -117,7 +121,7 @@ pub struct ManifestWriter<'a> {
 /// The types of nodes we support reading.
 /// Could be expanded in the future, but [`ManifestWriter`] is mostly meant to look for key values
 #[derive(PartialEq)]
-pub enum ManifestNode {
+pub enum ManifestNodeType {
 	/// A key, formatted as "key":
 	Key(String),
 	/// A value. This doesn't match ALL of the JSON value types, just anything that isn't an array or object start. (i.e., true, false, "string", etc.)
@@ -131,6 +135,11 @@ pub enum ManifestNode {
 	/// End of an array `]`
 	ArrayClose,
 	EOF
+}
+
+pub struct ManifestNode {
+	node_type : ManifestNodeType,
+	value_read : String,
 }
 
 macro_rules! map_err {
@@ -208,6 +217,8 @@ impl<'a> ManifestWriter<'a> {
 		if self.key_buf.len() > 0 {
 			self.curr_path.push(self.key_buf.clone());
 			self.key_buf.clear();
+		} else {
+			self.curr_path.push(String::from("$ARRAY$"));
 		}
 		self.parse_state.push(ManifestParseState::ArrayParse);
 		ManifestNode::ArrayStart
@@ -215,10 +226,7 @@ impl<'a> ManifestWriter<'a> {
 
 	fn end_array(&mut self) -> ManifestNode {
 		self.parse_state.pop();
-		let last_state = self.parse_state.last();
-		if last_state.is_some() && ManifestParseState::ObjectParse == *last_state.unwrap() {
-			self.curr_path.pop();
-		}
+		self.curr_path.pop();
 		ManifestNode::ArrayClose
 	}
 
@@ -370,7 +378,11 @@ impl<'a> ManifestWriter<'a> {
 		}
 	}
 
-	fn initialize(&mut self) -> Result<ManifestNode, ManifestError> {
+	/// Start actually 
+	pub fn initialize(&mut self) -> Result<ManifestNode, ManifestError> {
+		if self.parse_state.last() != Some(&ManifestParseState::Uninitialized) {
+			return Err(ManifestError::UnexpectedState(String::from("Expected an uninitialized manifest to initialize.")));
+		}
 		self.parse_state = vec![ManifestParseState::Empty];
 		loop {
 			let ch = self.next()?;
@@ -420,6 +432,7 @@ impl<'a> ManifestWriter<'a> {
 			let node = self.parse_node()?;
 
 			if node_type == node && curr_depth == self.curr_path.len() {
+				self.write_out = true;
 				return Ok(());
 			}
 		}
@@ -442,6 +455,9 @@ impl<'a> ManifestWriter<'a> {
 
 	/// Insert an object into in another object, assuming that we are presently in an object.
 	pub fn insert(&mut self, key : String, value : serde_json::Value) -> Result<(), ManifestError> {
+		if self.parse_state.last() != Some(&ManifestParseState::ObjectParse) {
+			return Err(ManifestError::UnexpectedState(String::from("Cannot insert, Manifest is not parsing an object.")));
+		}
 		let mut written_values = false;
 
 		let write = |writer : &mut BufWriter<File>, written_val : &mut bool| -> Result<(), ManifestError> {
@@ -458,7 +474,7 @@ impl<'a> ManifestWriter<'a> {
 		loop {
 			let node = self.parse_node()?;
 			if node == ManifestNode::EOF {
-				return Ok(())
+				return Err(ManifestError::UnexpectedEOF())
 			}
 
 			if ManifestNode::Key(key.clone()) == node {
@@ -470,20 +486,61 @@ impl<'a> ManifestWriter<'a> {
 				}
 			}
 
-			if ManifestNode::ObjectClose == node && self.curr_path.len() == current_depth - 1 && !written_values {
-				// Go back from object close:
-				self.write_search_seek(SeekFrom::Current(-1))?;
-				
-				// Write our key:
-				map_err!(self.writer.write(format!(r#""{key}": "#).as_bytes()))?;
-				
-				// Then re-write our value:
-				write(&mut self.writer, &mut written_values)?;
-				
-				// And re-write the end of the object we just exited:
-				map_err!(self.writer.write(b"}"))?;
+			if ManifestNode::ObjectClose == node && self.curr_path.len() == current_depth - 1 {
+				if !written_values { 
+					// Go back from object close:
+					self.write_search_seek(SeekFrom::Current(-1))?;
+					
+					// Write our key:
+					map_err!(self.writer.write(format!(r#""{key}": "#).as_bytes()))?;
+					
+					// Then re-write our value:
+					write(&mut self.writer, &mut written_values)?;
+					
+					// And re-write the end of the object we just exited:
+					map_err!(self.writer.write(b"}"))?;
+				}
+				return Ok(());
 			}
 		}
+	}
+
+	/// Assuming we're inside an array, a value from within that array.
+	/// Will return [`None`] when no value is done.
+	pub fn read_array_item(&mut self) -> Option<Result<serde_json::Value, ManifestError>> {
+		if self.parse_state.last() != Some(&ManifestParseState::ArrayParse) {
+			return Some(Err(ManifestError::UnexpectedState(String::from("Could not parse array item, Manifest is not in an array."))));
+		}
+		let mut str = String::new();
+		let curr_depth = self.curr_path.len();
+		loop {
+			let node_result = self.parse_node();
+			if node_result.is_err() {
+				return Some(node_result.map(|v| {serde_json::Value::Null}))
+			}
+
+			let node = node_result.expect("Could not unwrap ");
+			if node == ManifestNode::EOF {
+				return Some(Err(ManifestError::UnexpectedEOF()));
+			}
+
+			if node == ManifestNode::ArrayClose && curr_depth == self.curr_path.len() - 1 {
+				return None;
+			}
+
+			str.push();
+		}
+
+		let val = map_err!(serde, serde_json::from_str(&str));
+		Some(val)
+	}
+
+	pub fn write(&mut self, buf : &[u8]) -> std::io::Result<usize> {
+		self.writer.write(buf)
+	}
+
+	pub fn flush(&mut self) -> Result<(), ManifestError> {
+		
 	}
 
 	pub fn close(&self) -> std::io::Result<()> {
