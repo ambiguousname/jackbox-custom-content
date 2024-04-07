@@ -121,7 +121,7 @@ pub struct ManifestWriter<'a> {
 /// The types of nodes we support reading.
 /// Could be expanded in the future, but [`ManifestWriter`] is mostly meant to look for key values
 #[derive(PartialEq)]
-pub enum ManifestNodeType {
+pub enum ManifestNode {
 	/// A key, formatted as "key":
 	Key(String),
 	/// A value. This doesn't match ALL of the JSON value types, just anything that isn't an array or object start. (i.e., true, false, "string", etc.)
@@ -135,11 +135,6 @@ pub enum ManifestNodeType {
 	/// End of an array `]`
 	ArrayClose,
 	EOF
-}
-
-pub struct ManifestNode {
-	node_type : ManifestNodeType,
-	value_read : String,
 }
 
 macro_rules! map_err {
@@ -178,10 +173,10 @@ impl<'a> ManifestWriter<'a> {
 	}
 
 	pub fn next(&mut self) -> Result<char, ManifestError> {
+		// TODO: Make a string reader for if we decide not to write, but then change our minds.
 		let char = self.read_iter.next();
 		
 		if char.is_some() {
-			// Given how much map_err is used, maybe this should be a macro.
 			return map_err!(char.unwrap()).and_then(|c| {
 				if self.write_out {
 					let mut out_bytes = Vec::<u8>::new();
