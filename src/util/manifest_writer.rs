@@ -464,6 +464,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 		Ok(())
 	}
 
+	/// Helper function for [`Self::insert`]
 	fn write_insert(&mut self, written_val : &mut bool, value : &serde_json::Value) -> Result<(), ManifestError> {
 		let buf = map_err!(serde, serde_json::to_vec(value))?;
 		map_err!(self.write(&buf))?;
@@ -541,6 +542,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 		}
 	}
 
+	/// Based on [`Self::active_writer`], write a buffer to a writer.
 	pub fn write(&mut self, buf : &[u8]) -> std::io::Result<()> {
 		return match &mut self.active_writer {
 			WriteTo::OutFile => self.write_to_outfile(buf),
@@ -549,10 +551,12 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 		};
 	}
 
+	/// Ignore the [`Self::active_writer`], just write directly to the outfile writer ([`Self::writer`]).
 	pub fn write_to_outfile(&mut self, buf : &[u8]) -> std::io::Result<()> {
 		self.writer.write_all(buf)
 	}
 
+	/// Fully finish reading/writing our manifest file, flush everything from the reader into the active writer.
 	pub fn flush(&mut self) -> std::io::Result<()> {
 		let mut buf = Vec::<u8>::new();
 		self.read_iter.read_to_end(&mut buf)?;
