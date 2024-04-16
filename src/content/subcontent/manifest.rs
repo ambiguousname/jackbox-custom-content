@@ -72,6 +72,7 @@ impl Subcontent for ManifestItem {
 		})?;
 
 		manifest.active_writer = WriteTo::CustomWriter::<Cursor::<Vec::<u8>>>(Cursor::new(Vec::new()));
+		let mut written_values = false;
 		// Now update our manifest value:
 		while let Some(array_value) = manifest.read_array_item() {
 			let val = array_value.map_err(|e| {
@@ -85,9 +86,13 @@ impl Subcontent for ManifestItem {
 				o.get("id")
 			});
 
-			if test_id.is_some() {
+			if !written_values && test_id.is_some() {
 				if test_id.unwrap().to_string() == id {
+					manifest.active_writer = WriteTo::OutFile;
+
 					manifest.write(&serde_out)?;
+					manifest.write(b",")?;
+					written_values = true;
 				} else {
 					let inner : &mut Vec<u8> = &mut Vec::new();
 					// Write what was in our buffer to the out file.
@@ -102,7 +107,18 @@ impl Subcontent for ManifestItem {
 				}
 			}
 		}
-		manifest.active_writer = WriteTo::OutFile;
+		// If we've reached the end of the array with no out values, then we need to go back right before the array ends and write our value.
+		if !written_values {
+			manifest.active_writer = WriteTo::OutFile;
+			manifest.write_search_seek(std::io::SeekFrom::Current(-1)).map_err(|e| {
+				if let ManifestError::StdErr(err) = e {
+					return err;
+				}
+				std::io::Error::new(ErrorKind::Other, e.to_string())
+			})?;
+			manifest.write(&serde_out)?;
+			manifest.write(b",")?;
+		}
 		manifest.flush()?;
 		manifest.close()?;
 
