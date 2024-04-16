@@ -1,10 +1,5 @@
-use std::{fs::File, io::{BufRead, BufReader, BufWriter, Error, Seek, SeekFrom, Write}, path::Path, vec::IntoIter};
+use std::{fs::File, io::{BufRead, BufReader, BufWriter, Error, Read, Seek, SeekFrom, Write}, path::Path, vec::IntoIter};
 
-struct CharFileIter {
-	// From https://stackoverflow.com/questions/47193584/is-there-an-owned-version-of-stringchars
-	line : Option<IntoIter<char>>,
-	reader : BufReader<File>,
-}
 
 #[derive(Debug)]
 pub enum ManifestError {
@@ -39,6 +34,12 @@ impl ManifestError {
 	}
 }
 
+struct CharFileIter {
+	// From https://stackoverflow.com/questions/47193584/is-there-an-owned-version-of-stringchars
+	line : Option<IntoIter<char>>,
+	reader : BufReader<File>,
+}
+
 impl CharFileIter {
 	fn get_line(&mut self) -> Option<<CharFileIter as Iterator>::Item> {
 		let mut line = String::new();
@@ -58,6 +59,13 @@ impl CharFileIter {
 		} else {
 			return None;
 		}
+	}
+
+	fn read_to_end(&mut self, buf : &mut Vec<u8>) -> std::io::Result<()> {
+		let string : String = self.line.as_mut().unwrap().collect();
+		buf.write_all(string.as_bytes())?;
+		self.reader.read_to_end(buf)?;
+		Ok(())
 	}
 }
 
@@ -99,16 +107,25 @@ enum ManifestParseState {
 	KeyParsed,
 }
 
+pub enum WriteTo<T : Write> {
+	OutFile,
+	None,
+	/// Allow us to set whatever kind of custom 
+	CustomWriter(T),
+}
+
 /// A utility structure for going through manifest (i.e., JSON files), and reading/writing data to/from them.
 /// Meant for fast and dirty writing rather than parsing the whole thing.
 /// It has some limitations for this reason. For example, it is not a fully-fledged linter. It assumes that the JSON is mostly accurate, but it won't look for things like only one object in a JSON. It's on you to provide correctly written JSON.
-pub struct ManifestWriter<'a> {
+/// 
+/// `T` Represents something we might want to use when not directly outputting to the writer.
+pub struct ManifestWriter<'a, T : Write> {
 	read_iter : CharFileIter,
 	read_path : &'a Path,
 
 	writer : BufWriter<File>,
-	/// Should we write every character we're currently reading to the bufwriter?
-	pub write_out : bool,
+	/// Where should we be writing?
+	pub active_writer : WriteTo<T>,
 	
 	/// Where we currently are in the JSON (relative to objects).
 	curr_path : Vec<String>,
@@ -150,7 +167,7 @@ macro_rules! map_err {
 	}
 }
 
-impl<'a> ManifestWriter<'a> {
+impl<'a, T: Write> ManifestWriter<'a, T> {
 	pub fn open(path : &'a Path) -> std::io::Result<Self> {
 		let read = File::open(path)?;
 		let tmp_path = path.with_extension(".tmp");
@@ -164,7 +181,7 @@ impl<'a> ManifestWriter<'a> {
 			},
 			
 			writer: BufWriter::new(write),
-			write_out: true,
+			active_writer: WriteTo::OutFile,
 
 			curr_path: vec![],
 			parse_state: vec![ManifestParseState::Uninitialized],
@@ -178,11 +195,10 @@ impl<'a> ManifestWriter<'a> {
 		
 		if char.is_some() {
 			return map_err!(char.unwrap()).and_then(|c| {
-				if self.write_out {
-					let mut out_bytes = Vec::<u8>::new();
-					c.encode_utf8(&mut out_bytes);
-					map_err!(self.writer.write(&out_bytes))?;
-				}
+				
+				let mut out_bytes = Vec::<u8>::new();
+				c.encode_utf8(&mut out_bytes);
+				map_err!(self.write(&out_bytes))?;
 				Ok(c)
 			});
 
@@ -392,7 +408,6 @@ impl<'a> ManifestWriter<'a> {
 			};
 		}
 	}
-	// TODO: Output read values from parse_node to the writer.
 
 	/// Based on https://www.json.org/json-en.html
 	/// Not an actual AST parser, but this does enough to look through JSON.
@@ -421,13 +436,14 @@ impl<'a> ManifestWriter<'a> {
 
 	/// Skip over characters on our current depth level until we find a node of a certain type.
 	fn skip_node(&mut self, node_type : ManifestNode) -> Result<(), ManifestError> {
-		self.write_out = false;
+		let mut prev_writer = WriteTo::None;
+		std::mem::swap(&mut prev_writer, &mut self.active_writer);
 		let curr_depth = self.curr_path.len();
 		loop {
 			let node = self.parse_node()?;
 
 			if node_type == node && curr_depth == self.curr_path.len() {
-				self.write_out = true;
+				self.active_writer = prev_writer;
 				return Ok(());
 			}
 		}
@@ -448,6 +464,15 @@ impl<'a> ManifestWriter<'a> {
 		Ok(())
 	}
 
+	fn write_insert(&mut self, written_val : &mut bool, value : &serde_json::Value) -> Result<(), ManifestError> {
+		let buf = map_err!(serde, serde_json::to_vec(value))?;
+		map_err!(self.write(&buf))?;
+		map_err!(self.write(b",\n"))?;
+
+		*written_val = true;
+		Ok(())
+	}
+
 	/// Insert an object into in another object, assuming that we are presently in an object.
 	pub fn insert(&mut self, key : String, value : serde_json::Value) -> Result<(), ManifestError> {
 		if self.parse_state.last() != Some(&ManifestParseState::ObjectParse) {
@@ -455,14 +480,6 @@ impl<'a> ManifestWriter<'a> {
 		}
 		let mut written_values = false;
 
-		let write = |writer : &mut BufWriter<File>, written_val : &mut bool| -> Result<(), ManifestError> {
-			let buf = map_err!(serde, serde_json::to_vec(&value))?;
-			map_err!(writer.write(&buf))?;
-			map_err!(writer.write(b",\n"))?;
-
-			*written_val = true;
-			Ok(())
-		};
 
 		let current_depth = self.curr_path.len();
 
@@ -477,7 +494,7 @@ impl<'a> ManifestWriter<'a> {
 				self.skip_node(ManifestNode::ObjectClose)?;
 				
 				if !written_values {
-					write(&mut self.writer, &mut written_values)?;
+					self.write_insert(&mut written_values, &value)?;
 				}
 			}
 
@@ -490,7 +507,7 @@ impl<'a> ManifestWriter<'a> {
 					map_err!(self.writer.write(format!(r#""{key}": "#).as_bytes()))?;
 					
 					// Then re-write our value:
-					write(&mut self.writer, &mut written_values)?;
+					self.write_insert(&mut written_values, &value)?;
 					
 					// And re-write the end of the object we just exited:
 					map_err!(self.writer.write(b"}"))?;
@@ -506,7 +523,6 @@ impl<'a> ManifestWriter<'a> {
 		if self.parse_state.last() != Some(&ManifestParseState::ArrayParse) {
 			return Some(Err(ManifestError::UnexpectedState(String::from("Could not parse array item, Manifest is not in an array."))));
 		}
-		let mut str = String::new();
 		let curr_depth = self.curr_path.len();
 		loop {
 			let node_result = self.parse_node();
@@ -514,7 +530,7 @@ impl<'a> ManifestWriter<'a> {
 				return Some(node_result.map(|v| {serde_json::Value::Null}))
 			}
 
-			let node = node_result.expect("Could not unwrap ");
+			let node = node_result.expect("Could not unwrap ManifestNode.");
 			if node == ManifestNode::EOF {
 				return Some(Err(ManifestError::UnexpectedEOF()));
 			}
@@ -522,20 +538,26 @@ impl<'a> ManifestWriter<'a> {
 			if node == ManifestNode::ArrayClose && curr_depth == self.curr_path.len() - 1 {
 				return None;
 			}
-
-			str.push();
 		}
-
-		let val = map_err!(serde, serde_json::from_str(&str));
-		Some(val)
 	}
 
-	pub fn write(&mut self, buf : &[u8]) -> std::io::Result<usize> {
-		self.writer.write(buf)
+	pub fn write(&mut self, buf : &[u8]) -> std::io::Result<()> {
+		return match &mut self.active_writer {
+			WriteTo::OutFile => self.write_to_outfile(buf),
+			WriteTo::CustomWriter(w) => w.write_all(buf),
+			_ => Ok(()),
+		};
 	}
 
-	pub fn flush(&mut self) -> Result<(), ManifestError> {
-		
+	pub fn write_to_outfile(&mut self, buf : &[u8]) -> std::io::Result<()> {
+		self.writer.write_all(buf)
+	}
+
+	pub fn flush(&mut self) -> std::io::Result<()> {
+		let mut buf = Vec::<u8>::new();
+		self.read_iter.read_to_end(&mut buf)?;
+		self.write(&buf)?;
+		Ok(())
 	}
 
 	pub fn close(&self) -> std::io::Result<()> {

@@ -1,8 +1,6 @@
-use std::{fs::{self, File, OpenOptions}, io::{BufRead, BufReader, BufWriter, Error, ErrorKind, Lines, Write}, path::Path};
+use std::{fs::File, io::{Cursor, ErrorKind, Write}, path::Path};
 
-use regex::Regex;
-
-use crate::util::manifest_writer::{ManifestError, ManifestWriter};
+use crate::util::manifest_writer::{ManifestError, ManifestWriter, WriteTo};
 
 use super::Subcontent;
 
@@ -33,60 +31,6 @@ impl ManifestItem {
 		manifest.write(b"[\n]")?;
 		Ok(())
 	}
-
-	// region: Manifest Modifying
-
-	fn write_values(&self, id : &str, writer : &mut BufWriter<File>) -> std::io::Result<()> {
-		let mut base_value = serde_json::to_string(&self.item_content)?;
-		// Get rid of the opening {
-		base_value.remove(0);
-		// Insert our ID:
-		let out = format!("{{\"id\": \"{}\", {}", id, base_value);
-		writer.write(out.as_bytes())?;
-		writer.write(b",\n")?;
-		Ok(())
-	}
-
-	/// Given a file ID, modify an existing manifest to include our ID.
-	/// This does NOT create a new manifest. That should be done if the manifest does not exist.
-	/// This should NOT be called for Jackbox .jet files, since this only supports modifying one item of a manifest,
-	/// and assumes that each item has its own line.
-	/// 
-	/// AGAIN: This function assumes each item is on its own line.
-	fn modify_manifest(&self, id : String, reader : BufReader<File>, writer : &mut BufWriter<File>) -> std::io::Result<()> {
-		let id_regex = Regex::new(format!(r#""{}"\s*:"#, id).as_str()).unwrap();
-		
-		let mut line_iter = reader.lines();
-
-		let mut written_new : bool = false;
-		while let Some(l) = line_iter.next() {
-			let line = l?;
-
-			if line.ends_with("]") {
-				if !written_new {
-					self.write_values(&id, writer)?;
-					written_new = true;
-				}
-			}
-
-			// Assumes that per `modify_manifest`, there is one and only one item per one line.
-			if id_regex.is_match(&line) {
-				// Overwrite multiple IDs.
-				// Don't expect this to happen, but you never know.
-				if !written_new {
-					self.write_values(&id, writer)?;
-					written_new = true;
-				}
-			} else {
-				writer.write(line.as_bytes())?;
-				writer.write(b"\n")?;
-			}
-		}
-		
-		Ok(())
-	}
-
-	// endregion
 
 }
 
@@ -126,8 +70,8 @@ impl Subcontent for ManifestItem {
 		let serde_out = serde_json::to_vec(&to_insert).map_err(|e| {
 			std::io::Error::new(ErrorKind::InvalidData, e.to_string())
 		})?;
-		
-		manifest.write_out = false;
+
+		manifest.active_writer = WriteTo::CustomWriter::<Cursor::<Vec::<u8>>>(Cursor::new(Vec::new()));
 		// Now update our manifest value:
 		while let Some(array_value) = manifest.read_array_item() {
 			let val = array_value.map_err(|e| {
@@ -137,16 +81,29 @@ impl Subcontent for ManifestItem {
 				std::io::Error::new(ErrorKind::Other, e.to_string())
 			})?;
 
-			let id = val.as_object().and_then(|o| {
+			let test_id = val.as_object().and_then(|o| {
 				o.get("id")
 			});
 
-			if id.is_some() {
-
-				manifest.write(&serde_out)?;
+			if test_id.is_some() {
+				if test_id.unwrap().to_string() == id {
+					manifest.write(&serde_out)?;
+				} else {
+					let inner : &mut Vec<u8> = &mut Vec::new();
+					// Write what was in our buffer to the out file.
+					match &mut manifest.active_writer {
+						WriteTo::CustomWriter(w) => {
+							w.get_mut();
+						},
+						_ => unreachable!("Unrecognized writer.")
+					}
+					manifest.write_to_outfile(&inner)?;
+					inner.clear();
+				}
 			}
 		}
-		manifest.write_out = true;
+		manifest.active_writer = WriteTo::OutFile;
+		manifest.flush()?;
 		manifest.close()?;
 
 		Ok(())
