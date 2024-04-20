@@ -190,13 +190,11 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 	}
 
 	pub fn next(&mut self) -> Result<char, ManifestError> {
-		// TODO: Make a string reader for if we decide not to write, but then change our minds.
 		let char = self.read_iter.next();
 		
 		if char.is_some() {
 			return map_err!(char.unwrap()).and_then(|c| {
-				
-				let mut out_bytes = Vec::<u8>::new();
+				let mut out_bytes = vec![0];
 				c.encode_utf8(&mut out_bytes);
 				map_err!(self.write(&out_bytes))?;
 				Ok(c)
@@ -633,7 +631,7 @@ use super::*;
 		assert!(write_out.is_ok(), "{}", write_out.err().unwrap());
 	}
 
-	fn assert_file_matches(path : &Path, buf : &[u8]) {
+	fn assert_file_matches(path : &Path, buf : String) {
 		let read = File::open(path);
 		assert!(read.is_ok(), "{}", read.err().unwrap());
 
@@ -641,7 +639,7 @@ use super::*;
 		let mut out_str = String::new();
 		let write = reader.read_to_string(&mut out_str);
 		assert!(write.is_ok(), "{}", write.err().unwrap());
-		assert_eq!(out_str, "[]");
+		assert_eq!(out_str, buf);
 	}
 
 	#[test]
@@ -650,7 +648,7 @@ use super::*;
 		let file = TestFile::create(path);
 
 		self::write_something(path, b"[]");
-		self::assert_file_matches(path, b"[]");
+		self::assert_file_matches(path, String::from("[]"));
 	}
 
 	#[test]
@@ -667,17 +665,20 @@ use super::*;
 		
 		{
 			let mut manifest = get_manifest::<std::io::Empty>(path);
+			let initialize_result = manifest.initialize();
+			assert!(initialize_result.is_ok(), "{:?}", initialize_result.err().unwrap());
+
 			let insert_result = manifest.insert("five".to_string(), serde_json::Value::Array(vec![]));
 			assert!(insert_result.is_ok(), "{:?}", insert_result.err().unwrap());
 
 			let flush_result = manifest.flush();
 			assert!(flush_result.is_ok(), "{}", flush_result.err().unwrap());
 		}
-		assert_file_matches(path, br#"
+		assert_file_matches(path, String::from(r#"
 {
 	"test": 0,
 	"three": "four",
 	"five": [],
-}"#);
+}"#));
 	}
 }
