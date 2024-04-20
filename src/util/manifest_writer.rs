@@ -170,7 +170,7 @@ macro_rules! map_err {
 impl<'a, T: Write> ManifestWriter<'a, T> {
 	pub fn open(path : &'a Path) -> std::io::Result<Self> {
 		let read = File::open(path)?;
-		let tmp_path = path.with_extension(".tmp");
+		let tmp_path = path.with_extension("tmp");
 		let write = File::create(tmp_path)?;
 		
 		Ok(ManifestWriter {
@@ -568,7 +568,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 		// Remove the old file:
 		std::fs::remove_file(self.read_path)?;
 		// Replace it with our temp file:
-		std::fs::rename(self.read_path.with_extension(".tmp"), self.read_path)?;
+		std::fs::rename(self.read_path.with_extension("tmp"), self.read_path)?;
 		Ok(())
 	}
 }
