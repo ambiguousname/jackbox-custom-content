@@ -89,7 +89,7 @@ impl<'a> Iterator for CharFileIter {
 }
 
 /// During a read of the whole file, where are we?
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 enum ManifestParseState {
 	/// JSON accepts many possible characters to start with: https://www.json.org/json-en.html
 	/// But for our utility purposes, there's no way anyone would want to just edit a file with a number or a string.
@@ -137,7 +137,7 @@ pub struct ManifestWriter<'a, T : Write> {
 
 /// The types of nodes we support reading.
 /// Could be expanded in the future, but [`ManifestWriter`] is mostly meant to look for key values
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum ManifestNode {
 	/// A key, formatted as "key":
 	Key(String),
@@ -299,7 +299,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 	fn verify_value(&mut self) -> Result<ManifestNode, ManifestError> {
 		// Remove KeyParsed if it exists since we're now trying to read a value:
 		if self.parse_state.last() == Some(&ManifestParseState::KeyParsed) {
-			self.curr_path.pop();
+			self.parse_state.pop();
 		}
 		loop {
 			let ch = self.next()?;
