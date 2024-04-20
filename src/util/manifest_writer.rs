@@ -582,7 +582,7 @@ impl<T> Drop for ManifestWriter<'_, T> where T: Write {
 #[cfg(test)]
 mod tests {
 
-use super::*;
+	use super::*;
 
 	struct TestFile {
 		pub file : File,
@@ -622,12 +622,16 @@ use super::*;
 	#[test]
 	fn write_create_array() {
 		let file = TestFile::create("array.json".to_string());
-		let manifest_res = ManifestWriter::<std::io::Empty>::open(Path::new("array.json"));
-		assert!(manifest_res.is_ok(), "{}", manifest_res.err().unwrap());
-		
-		let mut manifest = manifest_res.unwrap();
-		let write_out = manifest.write(b"[]");
-		assert!(write_out.is_ok(), "{}", write_out.err().unwrap());
+
+		// Write something:
+		{
+			let manifest_res = ManifestWriter::<std::io::Empty>::open(Path::new("array.json"));
+			assert!(manifest_res.is_ok(), "{}", manifest_res.err().unwrap());
+			
+			let mut manifest = manifest_res.unwrap();
+			let write_out = manifest.write(b"[]");
+			assert!(write_out.is_ok(), "{}", write_out.err().unwrap());
+		}
 
 		let read = File::open("array.json");
 		assert!(read.is_ok(), "{}", read.err().unwrap());
