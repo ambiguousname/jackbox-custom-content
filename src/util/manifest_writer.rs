@@ -582,32 +582,34 @@ impl<T> Drop for ManifestWriter<'_, T> where T: Write {
 #[cfg(test)]
 mod tests {
 
-	use super::*;
+	use std::path::PathBuf;
+
+use super::*;
 
 	struct TestFile {
 		pub file : File,
-		file_pth : String
+		file_pth : PathBuf
 	}
 	impl TestFile {
-		fn create(path : String) -> Self {
+		fn create(path : &Path) -> Self {
 			return TestFile {
-				file: File::create(&path).expect(format!("Could not open {}", &path).as_str()),
-				file_pth: path.to_string()
+				file: File::create(path).expect(format!("Could not open {}", path.display()).as_str()),
+				file_pth: path.into()
 			}
 		}
 	}
 
 	impl Drop for TestFile {
 		fn drop(&mut self) {
-			std::fs::remove_file(self.file_pth.clone()).expect(format!("Could not remove {}", &self.file_pth).as_str());
+			std::fs::remove_file(self.file_pth.clone()).expect(format!("Could not remove {}", &self.file_pth.display()).as_str());
 		}
 	}
 
 	#[test]
 	fn test_write_close() {
-		let file = TestFile::create("test.json".to_string());
-	
 		let test_json = Path::new("test.json");
+		let file = TestFile::create(test_json);
+	
 		let test_tmp_json = Path::new("test.tmp");
 		{
 			assert!(test_json.exists(), "test.json does not exist.");
@@ -619,29 +621,63 @@ mod tests {
 		assert!(!test_tmp_json.exists(), "test.tmp exists.");
 	}
 
-	#[test]
-	fn write_create_array() {
-		let file = TestFile::create("array.json".to_string());
+	fn get_manifest<T : Write>(path : &Path) -> ManifestWriter<T> {
+		let manifest_res = ManifestWriter::<T>::open(path);
+		assert!(manifest_res.is_ok(), "{}", manifest_res.err().unwrap());
+		manifest_res.unwrap()
+	}
 
-		// Write something:
-		{
-			let manifest_res = ManifestWriter::<std::io::Empty>::open(Path::new("array.json"));
-			assert!(manifest_res.is_ok(), "{}", manifest_res.err().unwrap());
-			
-			let mut manifest = manifest_res.unwrap();
-			let write_out = manifest.write(b"[]");
-			assert!(write_out.is_ok(), "{}", write_out.err().unwrap());
-		}
+	fn write_something(path : &Path, buf : &[u8]) {
+		let mut manifest = get_manifest::<std::io::Empty>(path);
+		let write_out = manifest.write(buf);
+		assert!(write_out.is_ok(), "{}", write_out.err().unwrap());
+	}
 
-		let read = File::open("array.json");
+	fn assert_file_matches(path : &Path, buf : &[u8]) {
+		let read = File::open(path);
 		assert!(read.is_ok(), "{}", read.err().unwrap());
 
 		let mut reader = read.unwrap();
-		
 		let mut out_str = String::new();
 		let write = reader.read_to_string(&mut out_str);
 		assert!(write.is_ok(), "{}", write.err().unwrap());
-
 		assert_eq!(out_str, "[]");
+	}
+
+	#[test]
+	fn test_write() {
+		let path = Path::new("array.json");
+		let file = TestFile::create(path);
+
+		self::write_something(path, b"[]");
+		self::assert_file_matches(path, b"[]");
+	}
+
+	#[test]
+	fn test_object_insert() {
+		let path = Path::new("object.json");
+		let file = TestFile::create(path);
+		
+		self::write_something(path, br#"
+{
+	"test": 0,
+	"three": "four",
+	"five": null,
+}"#);
+		
+		{
+			let mut manifest = get_manifest::<std::io::Empty>(path);
+			let insert_result = manifest.insert("five".to_string(), serde_json::Value::Array(vec![]));
+			assert!(insert_result.is_ok(), "{:?}", insert_result.err().unwrap());
+
+			let flush_result = manifest.flush();
+			assert!(flush_result.is_ok(), "{}", flush_result.err().unwrap());
+		}
+		assert_file_matches(path, br#"
+{
+	"test": 0,
+	"three": "four",
+	"five": [],
+}"#);
 	}
 }
