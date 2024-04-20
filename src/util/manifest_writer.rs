@@ -575,7 +575,9 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 
 #[cfg(test)]
 mod tests {
-	use super::*;
+	use std::{thread::sleep, time::Duration};
+
+use super::*;
 
 	struct TestFile {
 		pub file : File,
@@ -612,5 +614,33 @@ mod tests {
 		assert!(close_result.is_ok(), "{}", close_result.err().unwrap());
 
 		assert!(!test_tmp_json.exists(), "test.tmp exists.");
+	}
+
+	#[test]
+	fn write_create_array() {
+		let file = TestFile::create("test.json".to_string());
+		let manifest_res = ManifestWriter::<std::io::Empty>::open(Path::new("test.json"));
+		assert!(manifest_res.is_ok(), "{}", manifest_res.err().unwrap());
+
+		// Wait for the write to update the system.
+		sleep(Duration::from_millis(100));
+		
+		let mut manifest = manifest_res.unwrap();
+		let write_out = manifest.write(b"[]");
+		assert!(write_out.is_ok(), "{}", write_out.err().unwrap());
+
+		let read = File::open("test.json");
+		assert!(read.is_ok(), "{}", read.err().unwrap());
+
+		let mut reader = read.unwrap();
+		
+		let mut out_str = String::new();
+		let write = reader.read_to_string(&mut out_str);
+		assert!(write.is_ok(), "{}", write.err().unwrap());
+
+		assert_eq!(out_str, "[]");
+
+		let close_result = manifest.close();
+		assert!(close_result.is_ok(), "{}", close_result.err().unwrap());
 	}
 }
