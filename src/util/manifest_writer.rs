@@ -572,3 +572,45 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 		Ok(())
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	struct TestFile {
+		pub file : File,
+		file_pth : String
+	}
+	impl TestFile {
+		fn create(path : String) -> Self {
+			return TestFile {
+				file: File::create(&path).expect(format!("Could not open {}", &path).as_str()),
+				file_pth: path.to_string()
+			}
+		}
+	}
+
+	impl Drop for TestFile {
+		fn drop(&mut self) {
+			std::fs::remove_file(self.file_pth.clone()).expect(format!("Could not remove {}", &self.file_pth).as_str());
+		}
+	}
+
+	#[test]
+	fn test_write_close() {
+		let file = TestFile::create("test.json".to_string());
+		
+		let test_json = Path::new("test.json");
+		let test_tmp_json = Path::new("test.tmp");
+		assert!(test_json.exists(), "test.json does not exist.");
+
+		let manifest = ManifestWriter::<std::io::Empty>::open(test_json);
+		assert!(manifest.is_ok(), "{}", manifest.err().unwrap());
+		assert!(test_tmp_json.exists(), "test.tmp does not exist.");
+
+		let close_result = manifest.unwrap().close();
+		assert!(close_result.is_ok(), "{}", close_result.err().unwrap());
+
+		assert!(!test_tmp_json.exists(), "test.tmp exists.");
+	}
+}
