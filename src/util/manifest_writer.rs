@@ -564,7 +564,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 		Ok(())
 	}
 
-	pub fn close(&self) -> std::io::Result<()> {
+	fn close(&self) -> std::io::Result<()> {
 		// Remove the old file:
 		std::fs::remove_file(self.read_path)?;
 		// Replace it with our temp file:
@@ -573,9 +573,14 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 	}
 }
 
+impl<T> Drop for ManifestWriter<'_, T> where T: Write {
+	fn drop(&mut self) {
+		let _ = self.close();
+	}
+}
+
 #[cfg(test)]
 mod tests {
-	use std::{thread::sleep, time::Duration};
 
 use super::*;
 
@@ -601,35 +606,30 @@ use super::*;
 	#[test]
 	fn test_write_close() {
 		let file = TestFile::create("test.json".to_string());
-		
+	
 		let test_json = Path::new("test.json");
 		let test_tmp_json = Path::new("test.tmp");
-		assert!(test_json.exists(), "test.json does not exist.");
+		{
+			assert!(test_json.exists(), "test.json does not exist.");
 
-		let manifest = ManifestWriter::<std::io::Empty>::open(test_json);
-		assert!(manifest.is_ok(), "{}", manifest.err().unwrap());
-		assert!(test_tmp_json.exists(), "test.tmp does not exist.");
-
-		let close_result = manifest.unwrap().close();
-		assert!(close_result.is_ok(), "{}", close_result.err().unwrap());
-
+			let manifest = ManifestWriter::<std::io::Empty>::open(test_json);
+			assert!(manifest.is_ok(), "{}", manifest.err().unwrap());
+			assert!(test_tmp_json.exists(), "test.tmp does not exist.");
+		}
 		assert!(!test_tmp_json.exists(), "test.tmp exists.");
 	}
 
 	#[test]
 	fn write_create_array() {
-		let file = TestFile::create("test.json".to_string());
-		let manifest_res = ManifestWriter::<std::io::Empty>::open(Path::new("test.json"));
+		let file = TestFile::create("array.json".to_string());
+		let manifest_res = ManifestWriter::<std::io::Empty>::open(Path::new("array.json"));
 		assert!(manifest_res.is_ok(), "{}", manifest_res.err().unwrap());
-
-		// Wait for the write to update the system.
-		sleep(Duration::from_millis(100));
 		
 		let mut manifest = manifest_res.unwrap();
 		let write_out = manifest.write(b"[]");
 		assert!(write_out.is_ok(), "{}", write_out.err().unwrap());
 
-		let read = File::open("test.json");
+		let read = File::open("array.json");
 		assert!(read.is_ok(), "{}", read.err().unwrap());
 
 		let mut reader = read.unwrap();
@@ -639,8 +639,5 @@ use super::*;
 		assert!(write.is_ok(), "{}", write.err().unwrap());
 
 		assert_eq!(out_str, "[]");
-
-		let close_result = manifest.close();
-		assert!(close_result.is_ok(), "{}", close_result.err().unwrap());
 	}
 }

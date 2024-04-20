@@ -120,7 +120,6 @@ impl Subcontent for ManifestItem {
 			manifest.write(b",")?;
 		}
 		manifest.flush()?;
-		manifest.close()?;
 
 		Ok(())
 	}
