@@ -478,7 +478,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 		Ok(())
 	}
 
-	/// Insert an object into in another object, assuming that we are presently in an object.
+	/// Insert an object into a given key, assuming that we are presently in an object.
 	pub fn insert(&mut self, key : String, value : serde_json::Value) -> Result<(), ManifestError> {
 		if self.parse_state.last() != Some(&ManifestParseState::ObjectParse) {
 			return Err(ManifestError::UnexpectedState(String::from("Cannot insert, Manifest is not parsing an object.")));
@@ -495,7 +495,8 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 			}
 
 			if ManifestNode::Key(key.clone()) == node {
-				// Now we just overwrite the object value:
+				// FIXME: This doesn't work if we haven't even started on an object yet.
+				// Or what if we're on a string?
 				self.skip_node(ManifestNode::ObjectClose)?;
 				
 				if !written_values {
@@ -503,7 +504,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 				}
 			}
 
-			if ManifestNode::ObjectClose == node && self.curr_path.len() == current_depth - 1 {
+			if node == ManifestNode::ObjectClose && self.curr_path.len() == current_depth - 1 {
 				if !written_values { 
 					// Go back from object close:
 					self.write_search_seek(SeekFrom::Current(-1))?;
