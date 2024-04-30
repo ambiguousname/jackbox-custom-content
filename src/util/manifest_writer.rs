@@ -244,17 +244,15 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 		let mut chars = rest_of_value.chars();
 
 		loop {
-			let ch = self.next()?;
-
 			let next = chars.next();
 
-			if (ch == ',' || ch.is_whitespace()) && next.is_none() {
+			// We can't rewind yet, so if we match we return. Even if there's more stuff after. Hopefully that will cause errors. But we're not a linter, so whatever.
+			if next.is_none() {
 				let full_str = vec![first_char.to_string(), rest_of_value.to_string()].join("");
 				return Ok(ManifestNode::Value(full_str));	
-			} else if next.is_none() {
-				return Err(ManifestError::UnexpectedValue(format!("Expected `,`, got {ch}")));
 			}
 
+			let ch = self.next()?;
 			let next_ch = next.unwrap();
 			if next_ch != ch {
 				return Err(ManifestError::UnexpectedValue(format!("Expected `{next_ch}`, got `{ch}`")))
@@ -527,7 +525,6 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 				
 				if !written_values {
 					self.write_insert(&mut written_values, &value)?;
-					map_err!(self.write(b","))?;
 				}
 			}
 
@@ -870,7 +867,8 @@ String::from(r#"
 	fn test_read_object_at_array_end() {
 		let path = Path::new("array_object_end.json");
 		let file = TestFile::create(path);
-		write_something(path, br#"[{"this": "is", "a": "test"}]"#);
+		write_something(path, br#"[
+{"id":"test_0","includesPlayerName":false,"prompt":"Was","safetyQuips":[],"us":false,"x":false}]"#);
 		{
 			let mut manifest = get_manifest::<std::io::Empty>(path);
 			let init_res = manifest.initialize();
