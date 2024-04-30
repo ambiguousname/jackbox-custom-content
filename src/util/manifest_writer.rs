@@ -553,7 +553,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 				return Some(Err(ManifestError::UnexpectedEOF()));
 			}
 
-			if node == ManifestNode::ArrayClose && curr_depth == self.curr_path.len() - 1 {
+			if node == ManifestNode::ArrayClose && curr_depth - 1 == self.curr_path.len() {
 				return None;
 			}
 		}
