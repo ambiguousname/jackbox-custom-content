@@ -1,4 +1,4 @@
-use std::{fs::File, io::{BufRead, BufReader, BufWriter, Error, Read, Seek, SeekFrom, Write}, path::Path, vec::IntoIter};
+use std::{fs::File, io::{BufRead, BufReader, BufWriter, Cursor, Error, Read, Seek, SeekFrom, Write}, path::Path, vec::IntoIter};
 
 
 #[derive(Debug)]
@@ -109,8 +109,9 @@ enum ManifestParseState {
 
 pub enum WriteTo<T : Write> {
 	OutFile,
+	Buffer(Cursor<Vec<u8>>),
 	None,
-	/// Allow us to set whatever kind of custom 
+	/// Allow us to set whatever kind of custom writer we want.
 	CustomWriter(T),
 }
 
@@ -261,8 +262,8 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 		}
 	}
 
-	fn get_numeric(&mut self, starting_digit : char) -> Result<ManifestNode, ManifestError> {
-		let mut number_val = String::from(starting_digit);
+	fn get_numeric(&mut self) -> Result<ManifestNode, ManifestError> {
+		let mut number_val = String::new();
 		loop {
 			let ch = self.next()?;
 
@@ -281,7 +282,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 	}
 
 	fn get_string(&mut self) -> Result<ManifestNode, ManifestError> {
-		let mut string = String::new();
+		let mut string = String::from("\"");
 		let mut backslash = false;
 
 		loop {
@@ -292,8 +293,10 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 			} else {
 				match ch {
 					'\\' => {string.push(ch); backslash = true;},
-					'"' => return Ok(ManifestNode::Value(string)),
 					_ => string.push(ch),
+				}
+				if ch == '"' {
+					return Ok(ManifestNode::Value(string));
 				}
 			}
 		}
@@ -302,7 +305,10 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 	/// If we know we're about to read a value with a starting character, use that character to parse the value.
 	fn get_value(&mut self, ch : char) -> Result<ManifestNode, ManifestError> {
 		if ch.is_numeric() || ch == '-' {
-			let number = self.get_numeric(ch)?;
+			// We need to make sure we overwrite our previous value, since we go back for the full number.
+			// self.write_search_seek(SeekFrom::Current(-1))?;
+
+			let number = self.get_numeric()?;
 			if let ManifestNode::Value(n) = number {
 				return Ok(ManifestNode::Value(vec![ch.to_string(), n].join("")));
 			} else {
@@ -351,7 +357,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 				}
 
 				return match ch {
-					':' => {self.parse_state.push(ManifestParseState::KeyParsed); Ok(ManifestNode::Key(key_value))},
+					':' => {self.parse_state.push(ManifestParseState::KeyParsed); Ok(ManifestNode::Key(key_value.replace('"', "")))},
 					_ => Err(ManifestError::UnexpectedValue(format!("Expected : not {ch}"))),
 				}
 			}
@@ -442,22 +448,28 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 		return Ok(value);
 	}
 
-	/// Skip over characters on our current depth level until we find a node of a certain type.
+	/// Read over all characters on our current depth level until we find a node of a certain type.
 	/// We use depth_offset for the caller to let us know what relative depth we should be looking for.
 	/// Like if we've already opened an ObjectOpen or ArrayOpen node, and so the depth is affected because of that.
-	fn skip_node(&mut self, node_type : ManifestNode, depth_offset : isize) -> Result<ManifestNode, ManifestError> {
-		let mut prev_writer = WriteTo::None;
-		std::mem::swap(&mut prev_writer, &mut self.active_writer);
+	fn read_until_node(&mut self, node_type : ManifestNode, depth_offset : isize) -> Result<ManifestNode, ManifestError> {
 		let curr_depth = self.curr_path.len().checked_add_signed(depth_offset).expect("depth_offset provided to skip_node leads to overflow.");
 
 		loop {
 			let node = self.parse_node()?;
 
 			if node_type == node && curr_depth == self.curr_path.len() {
-				self.active_writer = prev_writer;
 				return Ok(node);
 			}
 		}
+	}
+	
+	fn skip_node(&mut self, node_type : ManifestNode, depth_offset : isize) -> Result<ManifestNode, ManifestError> {
+		let mut prev_writer = WriteTo::None;
+		std::mem::swap(&mut prev_writer, &mut self.active_writer);
+
+		let out = self.read_until_node(node_type, depth_offset);
+		self.active_writer = prev_writer;
+		return out;
 	}
 
 
@@ -555,11 +567,54 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 			match node {
 				ManifestNode::EOF => return Some(Err(ManifestError::UnexpectedEOF())),
 				ManifestNode::ArrayClose => if curr_depth - 1 == self.curr_path.len() { return None },
-				ManifestNode::Value(v) => { return Some(Ok(serde_json::from_str(&v).expect(&format!("Could not parse given serde_json value {}", v)))) },
+				ManifestNode::Value(v) => { return Some(Ok(serde_json::from_str::<serde_json::Value>(&v).expect(&format!("Could not parse given serde_json value {}", v)))) },
 				ManifestNode::Key(k) => { return Some(Err(ManifestError::UnexpectedValue(format!("Found a key {k} inside an array.")))) },
 				ManifestNode::ObjectClose => { return Some(Err(ManifestError::UnexpectedValue(format!("Found a closing object }} inside an array.")))) },
-				ManifestNode::ObjectStart => { todo!() },
-				ManifestNode::ArrayStart => { todo!() },
+				ManifestNode::ObjectStart => {
+					let mut c = Cursor::new(vec![b'{']);
+					c.seek(SeekFrom::Current(1)).expect("Could not seek forward from initial buffer.");
+					let mut prev = WriteTo::Buffer(c);
+					std::mem::swap(&mut prev, &mut self.active_writer);
+
+					let read = self.read_until_node(ManifestNode::ObjectClose, -1);
+					
+					if read.is_err() {
+						return Some(Err(read.unwrap_err()));
+					}
+
+					return match &mut self.active_writer {
+						WriteTo::Buffer(b) => {
+							b.set_position(0);
+							let val : serde_json::Result<serde_json::Value> = serde_json::from_reader(b);
+
+							self.active_writer = prev;
+							Some(map_err!(serde, val))
+						},
+						_ => unreachable!("Active writer should be buffer."),
+					};
+				},
+				ManifestNode::ArrayStart => { 
+					let mut c = Cursor::new(vec![b'[']);
+					c.seek(SeekFrom::Current(1)).expect("Could not seek forward from initial buffer.");
+					let mut prev = WriteTo::Buffer(c);
+					std::mem::swap(&mut prev, &mut self.active_writer);
+
+					let read = self.read_until_node(ManifestNode::ArrayClose, -1);
+
+					if read.is_err() {
+						return Some(Err(read.unwrap_err()));
+					}
+
+					return match &mut self.active_writer {
+						WriteTo::Buffer(b) => {
+							b.set_position(0);
+							let val : serde_json::Result<serde_json::Value> = serde_json::from_reader(b);
+							self.active_writer = prev;
+							Some(map_err!(serde, val))
+						},
+						_ => unreachable!("Active writer should be buffer."),
+					}
+				},
 			};
 		}
 	}
@@ -569,6 +624,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 		return match &mut self.active_writer {
 			WriteTo::OutFile => self.write_to_outfile(buf),
 			WriteTo::CustomWriter(w) => w.write_all(buf),
+			WriteTo::Buffer(b) => b.write_all(buf),
 			_ => Ok(()),
 		};
 	}
