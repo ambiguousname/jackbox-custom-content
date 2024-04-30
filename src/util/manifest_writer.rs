@@ -247,7 +247,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 
 			let next = chars.next();
 
-			if ch == ',' && next.is_none() {
+			if (ch == ',' || ch.is_whitespace()) && next.is_none() {
 				let full_str = vec![first_char.to_string(), rest_of_value.to_string()].join("");
 				return Ok(ManifestNode::Value(full_str));	
 			} else if next.is_none() {
@@ -261,14 +261,14 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 		}
 	}
 
-	fn get_numeric(&mut self) -> Result<ManifestNode, ManifestError> {
-		let mut number_val = String::new();
+	fn get_numeric(&mut self, starting_digit : char) -> Result<ManifestNode, ManifestError> {
+		let mut number_val = String::from(starting_digit);
 		loop {
 			let ch = self.next()?;
 
 			if ch.is_numeric() {
 				number_val.push(ch);
-			} else if ch == ',' {
+			} else if ch == ',' || ch.is_whitespace() {
 				return Ok(ManifestNode::Value(number_val));
 			} else {
 				return Err(ManifestError::UnexpectedValue(format!("Expected a digit or `,`, got `{ch}`")));
@@ -295,6 +295,28 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 		}
 	}
 
+	/// If we know we're about to read a value with a starting character, use that character to parse the value.
+	fn get_value(&mut self, ch : char) -> Result<ManifestNode, ManifestError> {
+		if ch.is_numeric() || ch == '-' {
+			let number = self.get_numeric(ch)?;
+			if let ManifestNode::Value(n) = number {
+				return Ok(ManifestNode::Value(vec![ch.to_string(), n].join("")));
+			} else {
+				unreachable!("ManifestWriter::get_numeric returned a non-ManifestNode success.");
+			}
+		}
+
+		return match ch {
+			'"' => self.get_string(),
+			'{' => Ok(self.start_object()),
+			'[' => Ok(self.start_array()),
+			't' => self.expect_value('t', "rue"),
+			'f' => self.expect_value('f', "alse"),
+			'n' => self.expect_value('n', "ull"),
+			_ => Err(ManifestError::UnexpectedValue(format!("Unexpected value character start: {ch}"))),
+		}
+	}
+
 	/// When we have a :, we need to find the next value after that.
 	fn verify_value(&mut self) -> Result<ManifestNode, ManifestError> {
 		// Remove KeyParsed if it exists since we're now trying to read a value:
@@ -308,24 +330,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 				continue;
 			}
 
-			if ch.is_numeric() {
-				let number = self.get_numeric()?;
-				if let ManifestNode::Value(n) = number {
-					return Ok(ManifestNode::Value(vec![ch.to_string(), n].join("")));
-				} else {
-					unreachable!("ManifestWriter::get_numeric returned a non-ManifestNode success.");
-				}
-			}
-
-			return match ch {
-				'"' => self.get_string(),
-				'{' => Ok(self.start_object()),
-				'[' => Ok(self.start_array()),
-				't' => self.expect_value('t', "rue"),
-				'f' => self.expect_value('f', "alse"),
-				'n' => self.expect_value('n', "ull"),
-				_ => Err(ManifestError::UnexpectedValue(format!("Unexpected value character start: {ch}"))),
-			}
+			return self.get_value(ch);
 		}
 	}
 
@@ -355,14 +360,15 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 		loop {
 			let ch = self.next()?;
 
-			if ch.is_whitespace() {
+			// Ignore extra commas because we're not a linter.
+			if ch.is_whitespace() || ch == ',' {
 				continue;
 			}
 			match ch {
 				']' => {
 					return Ok(self.end_array());
 				},
-				_ => { return self.verify_value(); }
+				_ => { return self.get_value(ch); }
 			}
 		}
 	}
