@@ -71,13 +71,13 @@ impl Subcontent for ManifestItem {
 			std::io::Error::new(ErrorKind::InvalidData, e.to_string())
 		})?;
 
-		manifest.active_writer = WriteTo::CustomWriter::<Cursor::<Vec::<u8>>>(Cursor::new(Vec::new()));
+		manifest.active_writer = WriteTo::Buffer(Cursor::new(Vec::new()));
 
 		let flush_active_writer = |m : &mut ManifestWriter<Cursor<Vec<u8>>>| -> std::io::Result<()> {
 			let mut str = String::new();
 			// Write what was in our buffer to the out file.
 			match &mut m.active_writer {
-				WriteTo::CustomWriter(w) => {
+				WriteTo::Buffer(w) => {
 					w.set_position(0);
 					w.read_to_string(&mut str)?;
 					w.get_mut().clear();
