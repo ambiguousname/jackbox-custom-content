@@ -595,7 +595,9 @@ mod tests {
 
 	use std::path::PathBuf;
 
-	use super::*;
+	use serde_json::{Map, Number, Value};
+
+use super::*;
 
 	struct TestFile {
 		pub file : File,
@@ -693,5 +695,31 @@ mod tests {
 	"five":[],
 	"three": "four"
 }"#));
+	}
+
+	#[test]
+	fn test_read_array_item() {
+		let path = Path::new("array.json");
+		let file = TestFile::create(path);
+		self::write_something(path, br#"
+[
+	"string test",
+	{"id": "b"},
+	1243
+]"#);
+
+		{
+			let mut manifest = get_manifest::<std::io::Empty>(path);
+			let initialize_result = manifest.initialize();
+			assert!(initialize_result.is_ok(), "{:?}", initialize_result.err().unwrap());
+
+			let expected_items = vec![Value::String("string test".to_string()), serde_json::from_str(r#"{"id": "b"}"#).unwrap(), Value::Number(Number::from(1243))];
+			let mut i = 0;
+			while let Some(val) = manifest.read_array_item() {
+				assert!(val.is_ok(), "{:?}", val.unwrap_err());
+				assert_eq!(expected_items[i], val.unwrap());
+				i += 1;
+			}
+		}
 	}
 }
