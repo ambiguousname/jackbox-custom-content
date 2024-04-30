@@ -52,7 +52,7 @@ impl Subcontent for ManifestItem {
 			self.create_manifest(file_path)?;
 		}
 
-		let mut manifest = ManifestWriter::open(file_path)?;
+		let mut manifest = ManifestWriter::<std::io::Empty>::open(file_path)?;
 		// Clone our manifest to insert new values:
 		let mut to_insert = self.item_content.as_object().unwrap().clone();
 		// Add our given ID to the manifest:
@@ -72,21 +72,6 @@ impl Subcontent for ManifestItem {
 		})?;
 
 		manifest.active_writer = WriteTo::Buffer(Cursor::new(Vec::new()));
-
-		let flush_active_writer = |m : &mut ManifestWriter<Cursor<Vec<u8>>>| -> std::io::Result<()> {
-			let mut str = String::new();
-			// Write what was in our buffer to the out file.
-			match &mut m.active_writer {
-				WriteTo::Buffer(w) => {
-					w.set_position(0);
-					w.read_to_string(&mut str)?;
-					w.get_mut().clear();
-				},
-				_ => unreachable!("Unrecognized writer.")
-			};
-			m.write_to_outfile(str.as_bytes())?;
-			Ok(())
-		};
 
 		let mut written_values = false;
 		// Now update our manifest value:
@@ -110,14 +95,23 @@ impl Subcontent for ManifestItem {
 					manifest.write(b",")?;
 					written_values = true;
 				} else {
-					flush_active_writer(&mut manifest)?;
+					manifest.write(val.to_string().as_bytes())?;
 				}
 			}
 		}
 		// If we've reached the end of the array with no out values, then we need to go back right before the array ends and write our value.
 		if !written_values {
 			// Flush our buffer first:
-			flush_active_writer(&mut manifest)?;
+			let mut str = String::new();
+			match &mut manifest.active_writer {
+				WriteTo::Buffer(w) => {
+					w.set_position(0);
+					w.read_to_string(&mut str)?;
+					w.get_mut().clear();
+				},
+				_ => unreachable!("Unrecognized writer.")
+			};
+			manifest.write_to_outfile(str.as_bytes())?;
 
 			// Then write our values:
 			manifest.active_writer = WriteTo::OutFile;
