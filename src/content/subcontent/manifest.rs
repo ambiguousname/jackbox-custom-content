@@ -1,4 +1,4 @@
-use std::{fs::File, io::{Cursor, ErrorKind, Write}, path::Path};
+use std::{fs::File, io::{Cursor, ErrorKind, Read, Write}, path::Path};
 
 use crate::util::manifest_writer::{ManifestError, ManifestWriter, WriteTo};
 
@@ -94,16 +94,17 @@ impl Subcontent for ManifestItem {
 					manifest.write(b",")?;
 					written_values = true;
 				} else {
-					let inner : &mut Vec<u8> = &mut Vec::new();
+					let mut str = String::new();
 					// Write what was in our buffer to the out file.
 					match &mut manifest.active_writer {
 						WriteTo::CustomWriter(w) => {
-							w.get_mut();
+							w.set_position(0);
+							w.read_to_string(&mut str)?;
+							w.get_mut().clear();
 						},
 						_ => unreachable!("Unrecognized writer.")
-					}
-					manifest.write_to_outfile(&inner)?;
-					inner.clear();
+					};
+					manifest.write_to_outfile(str.as_bytes())?;
 				}
 			}
 		}
