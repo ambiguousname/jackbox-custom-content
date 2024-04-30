@@ -132,14 +132,15 @@ impl MainMenuWindow {
 
 		let about_action = ActionEntry::builder("about")
 		.activate(|window : &MainMenuWindow, _, _| {
+			let authors : Vec<&str> = option_env!("CARGO_PKG_AUTHORS").unwrap().split(",").collect();
 			let about = AboutDialog::builder()
 			.application(&window.application().unwrap())
-			.authors(["ambiguousname"])
-			.comments("Creates mods for the Jackbox Party Pack 7.\nWith much gratitude to Jackbox Games and the developers of the Jackbox Party Pack 7.\nMade with Rust 2021, GTK 4.12 (gtk-rs 0.7.3), Serde 1.0, and open 5.0.1")
-			.copyright("MIT License (c) 2023 ambiguousname")
-			.program_name("CustomBox")
-			.version("2.0.0 alpha")
-			.website("https://github.com/ambiguousname/jackbox-custom-content")
+			.authors(authors)
+			.comments(option_env!("CARGO_PKG_DESCRIPTION").unwrap())
+			.copyright(option_env!("CARGO_PKG_LICENSE").unwrap())
+			.program_name(option_env!("CARGO_PKG_NAME").unwrap())
+			.version(option_env!("CARGO_PKG_VERSION").unwrap())
+			.website(option_env!("CARGO_PKG_HOMEPAGE").unwrap())
 			.website_label("Source Code")
 			.title("About CustomBox")
 			.license_type(gtk::License::MitX11)
