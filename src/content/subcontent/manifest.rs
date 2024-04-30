@@ -128,7 +128,7 @@ impl Subcontent for ManifestItem {
 				std::io::Error::new(ErrorKind::Other, e.to_string())
 			})?;
 			manifest.write(&serde_out)?;
-			manifest.write(b",")?;
+			manifest.write(b"]")?;
 		}
 		manifest.flush()?;
 
