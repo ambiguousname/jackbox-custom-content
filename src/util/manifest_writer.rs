@@ -699,7 +699,7 @@ use super::*;
 
 	#[test]
 	fn test_read_array_item() {
-		let path = Path::new("array.json");
+		let path = Path::new("array_items.json");
 		let file = TestFile::create(path);
 		self::write_something(path, br#"
 [
