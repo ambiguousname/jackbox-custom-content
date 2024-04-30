@@ -664,13 +664,13 @@ mod tests {
 	use super::*;
 
 	struct TestFile {
-		pub file : File,
+		pub _file : File,
 		file_pth : PathBuf
 	}
 	impl TestFile {
 		fn create(path : &Path) -> Self {
 			return TestFile {
-				file: File::create(path).expect(format!("Could not open {}", path.display()).as_str()),
+				_file: File::create(path).expect(format!("Could not open {}", path.display()).as_str()),
 				file_pth: path.into()
 			}
 		}
