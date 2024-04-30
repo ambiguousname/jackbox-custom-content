@@ -557,7 +557,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 		loop {
 			let node_result = self.parse_node();
 			if node_result.is_err() {
-				return Some(node_result.map(|v| {serde_json::Value::Null}))
+				return Some(node_result.map(|_v| {serde_json::Value::Null}))
 			}
 
 			let node = node_result.expect("Could not unwrap ManifestNode.");
