@@ -538,7 +538,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 		}
 	}
 
-	/// Assuming we're inside an array, a value from within that array.
+	/// Assuming we're inside an array, get a value from within that array.
 	/// Will return [`None`] when no value is done.
 	pub fn read_array_item(&mut self) -> Option<Result<serde_json::Value, ManifestError>> {
 		if self.parse_state.last() != Some(&ManifestParseState::ArrayParse) {
@@ -552,13 +552,15 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 			}
 
 			let node = node_result.expect("Could not unwrap ManifestNode.");
-			if node == ManifestNode::EOF {
-				return Some(Err(ManifestError::UnexpectedEOF()));
-			}
-
-			if node == ManifestNode::ArrayClose && curr_depth - 1 == self.curr_path.len() {
-				return None;
-			}
+			match node {
+				ManifestNode::EOF => return Some(Err(ManifestError::UnexpectedEOF())),
+				ManifestNode::ArrayClose => if curr_depth - 1 == self.curr_path.len() { return None },
+				ManifestNode::Value(v) => { return Some(Ok(serde_json::from_str(&v).expect(&format!("Could not parse given serde_json value {}", v)))) },
+				ManifestNode::Key(k) => { return Some(Err(ManifestError::UnexpectedValue(format!("Found a key {k} inside an array.")))) },
+				ManifestNode::ObjectClose => { return Some(Err(ManifestError::UnexpectedValue(format!("Found a closing object }} inside an array.")))) },
+				ManifestNode::ObjectStart => { todo!() },
+				ManifestNode::ArrayStart => { todo!() },
+			};
 		}
 	}
 
@@ -806,5 +808,21 @@ String::from(r#"
 		}
 		// Our output should be blank:
 		assert_file_matches(path, String::from(""));
+	}
+
+	#[test]
+	fn test_read_object_at_array_end() {
+		let path = Path::new("array_object_end.json");
+		let file = TestFile::create(path);
+		write_something(path, br#"[{"this": "is", "a": "test"}]"#);
+		{
+			let mut manifest = get_manifest::<std::io::Empty>(path);
+			let init_res = manifest.initialize();
+			assert!(init_res.is_ok(), "{:?}", init_res.unwrap_err());
+			let array_read = manifest.read_array_item();
+			assert!(array_read.is_some(), "Read array value is none.");
+			let res = array_read.unwrap();
+			assert!(res.is_ok(), "{:?}", res.unwrap_err());
+		}
 	}
 }
