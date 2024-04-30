@@ -673,6 +673,33 @@ use super::*;
 	}
 
 	#[test]
+	fn test_write_search_seek() {
+		let path = Path::new("seek.json");
+		let file = TestFile::create(path);
+
+		self::write_something(path, b"[012, 234]");
+		{
+			let mut manifest = get_manifest::<std::io::Empty>(path);
+			
+			loop {
+				let n = manifest.parse_node();
+				assert!(n.is_ok(), "{:?}", n.unwrap_err());
+
+				if n.is_ok_and(|v| v == ManifestNode::EOF) {
+					break;
+				}
+			}
+			let seek = manifest.write_search_seek(SeekFrom::Current(-2));
+			assert!(seek.is_ok(), "{:?}", seek.unwrap_err());
+
+			let out_res = manifest.write(b"5");
+			assert!(out_res.is_ok(), "{:?}", out_res.unwrap_err());
+		}
+
+		assert_file_matches(path, String::from("[012, 235]"));
+	}
+
+	#[test]
 	fn test_object_insert() {
 		let path = Path::new("object.json");
 		let file = TestFile::create(path);
