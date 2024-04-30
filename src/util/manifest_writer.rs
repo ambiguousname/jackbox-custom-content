@@ -659,9 +659,9 @@ mod tests {
 
 	use std::path::PathBuf;
 
-	use serde_json::{Map, Number, Value};
+	use serde_json::{Number, Value};
 
-use super::*;
+	use super::*;
 
 	struct TestFile {
 		pub file : File,
@@ -696,6 +696,7 @@ use super::*;
 			assert!(test_tmp_json.exists(), "test.tmp does not exist.");
 		}
 		assert!(!test_tmp_json.exists(), "test.tmp exists.");
+		drop(file);
 	}
 
 	fn get_manifest<T : Write>(path : &Path) -> ManifestWriter<T> {
@@ -728,6 +729,7 @@ use super::*;
 
 		self::write_something(path, b"[]");
 		self::assert_file_matches(path, String::from("[]"));
+		drop(file);
 	}
 
 	#[test]
@@ -755,6 +757,7 @@ use super::*;
 		}
 
 		assert_file_matches(path, String::from("[012, \"te5t\"]"));
+		drop(file);
 	}
 
 	#[test]
@@ -786,6 +789,7 @@ use super::*;
 	"five":[],
 	"three": "four"
 }"#));
+		drop(file);
 	}
 
 	#[test]
@@ -812,6 +816,7 @@ use super::*;
 				i += 1;
 			}
 		}
+		drop(file);
 	}
 
 	#[test]
@@ -861,6 +866,7 @@ String::from(r#"
 		}
 		// Our output should be blank:
 		assert_file_matches(path, String::from(""));
+		drop(file);
 	}
 
 	#[test]
@@ -878,5 +884,6 @@ String::from(r#"
 			let res = array_read.unwrap();
 			assert!(res.is_ok(), "{:?}", res.unwrap_err());
 		}
+		drop(file);
 	}
 }
