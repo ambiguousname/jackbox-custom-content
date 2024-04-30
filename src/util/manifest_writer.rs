@@ -270,8 +270,12 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 				number_val.push(ch);
 			} else if ch == ',' || ch.is_whitespace() {
 				return Ok(ManifestNode::Value(number_val));
+			} else if ch == ']' {
+				// Are we closing an array? Right now our parser can't rewind reading, even though this is a valid JSON format.
+				// So return an error.
+				return Err(ManifestError::UnexpectedValue(format!("Closing ] while reading a number. This is valid, but the parser does not support reading this right now. Try inserting a whitespace to avoid these errors.")));
 			} else {
-				return Err(ManifestError::UnexpectedValue(format!("Expected a digit or `,`, got `{ch}`")));
+				return Err(ManifestError::UnexpectedValue(format!("Expected a digit, whitespace, or `,` got `{ch}`")));
 			}
 		}
 	}
@@ -677,7 +681,7 @@ use super::*;
 		let path = Path::new("seek.json");
 		let file = TestFile::create(path);
 
-		self::write_something(path, b"[012, 234]");
+		self::write_something(path, b"[012, \"test\"]");
 		{
 			let mut manifest = get_manifest::<std::io::Empty>(path);
 			
@@ -689,14 +693,14 @@ use super::*;
 					break;
 				}
 			}
-			let seek = manifest.write_search_seek(SeekFrom::Current(-2));
+			let seek = manifest.write_search_seek(SeekFrom::Current(-4));
 			assert!(seek.is_ok(), "{:?}", seek.unwrap_err());
 
 			let out_res = manifest.write(b"5");
 			assert!(out_res.is_ok(), "{:?}", out_res.unwrap_err());
 		}
 
-		assert_file_matches(path, String::from("[012, 235]"));
+		assert_file_matches(path, String::from("[012, \"te5t\"]"));
 	}
 
 	#[test]
