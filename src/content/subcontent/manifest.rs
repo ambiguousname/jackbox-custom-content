@@ -72,6 +72,22 @@ impl Subcontent for ManifestItem {
 		})?;
 
 		manifest.active_writer = WriteTo::CustomWriter::<Cursor::<Vec::<u8>>>(Cursor::new(Vec::new()));
+
+		let flush_active_writer = |m : &mut ManifestWriter<Cursor<Vec<u8>>>| -> std::io::Result<()> {
+			let mut str = String::new();
+			// Write what was in our buffer to the out file.
+			match &mut m.active_writer {
+				WriteTo::CustomWriter(w) => {
+					w.set_position(0);
+					w.read_to_string(&mut str)?;
+					w.get_mut().clear();
+				},
+				_ => unreachable!("Unrecognized writer.")
+			};
+			m.write_to_outfile(str.as_bytes())?;
+			Ok(())
+		};
+
 		let mut written_values = false;
 		// Now update our manifest value:
 		while let Some(array_value) = manifest.read_array_item() {
@@ -94,22 +110,16 @@ impl Subcontent for ManifestItem {
 					manifest.write(b",")?;
 					written_values = true;
 				} else {
-					let mut str = String::new();
-					// Write what was in our buffer to the out file.
-					match &mut manifest.active_writer {
-						WriteTo::CustomWriter(w) => {
-							w.set_position(0);
-							w.read_to_string(&mut str)?;
-							w.get_mut().clear();
-						},
-						_ => unreachable!("Unrecognized writer.")
-					};
-					manifest.write_to_outfile(str.as_bytes())?;
+					flush_active_writer(&mut manifest)?;
 				}
 			}
 		}
 		// If we've reached the end of the array with no out values, then we need to go back right before the array ends and write our value.
 		if !written_values {
+			// Flush our buffer first:
+			flush_active_writer(&mut manifest)?;
+
+			// Then write our values:
 			manifest.active_writer = WriteTo::OutFile;
 			manifest.write_search_seek(std::io::SeekFrom::Current(-1)).map_err(|e| {
 				if let ManifestError::StdErr(err) = e {
