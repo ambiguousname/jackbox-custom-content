@@ -734,7 +734,7 @@ use super::*;
 		let path = Path::new("custom_output.json");
 		let file = TestFile::create(path);
 		let out_str =
-br#"
+String::from(r#"
 {
 	"some": {
 		"body": []
@@ -751,8 +751,8 @@ br#"
 			}
 		}
 	}
-}"#;
-		self::write_something(path, out_str);
+}"#);
+		self::write_something(path, out_str.as_bytes());
 		{
 			let out = std::io::Cursor::new(Vec::new());
 			let mut manifest = get_manifest::<std::io::Cursor<Vec<u8>>>(path);
@@ -766,12 +766,15 @@ br#"
 			let mut string = String::new();
 			match &mut manifest.active_writer {
 				WriteTo::CustomWriter(o) => {
+					o.set_position(0);
 					let res = o.read_to_string(&mut string);
 					assert!(res.is_ok(), "{:?}", res.unwrap_err());
 				},
 				_ => unreachable!()
 			}
-			assert_eq!(out_str, string.as_bytes());
+			assert_eq!(out_str, string);
 		}
+		// Our output should be blank:
+		assert_file_matches(path, String::from(""));
 	}
 }
