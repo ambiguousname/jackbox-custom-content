@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-	<template class="JCCModStore" parent="GtkBox">
+	<template class="CustomBoxModStore" parent="GtkBox">
         <property name="orientation">horizontal</property>
         <child>
             <object class="GtkColumnView" id="column_view">
@@ -8,7 +8,7 @@
                     <object class="GtkSingleSelection">
                         <property name="model">
                             <object class="GListStore" id="store">
-                                <property name="item-type">JCCContentData</property>
+                                <property name="item-type">CustomBoxContentData</property>
                             </object>
                         </property>
                     </object>
@@ -27,7 +27,7 @@
                                             <property name="child">
                                                 <object class="GtkCheckButton">
                                                     <binding name="active">
-                                                        <lookup name="enabled" type="JCCContentData">
+                                                        <lookup name="enabled" type="CustomBoxContentData">
                                                             <lookup name="item">GtkListItem</lookup>
                                                         </lookup>
                                                     </binding>
@@ -54,7 +54,7 @@
                                             <property name="child">
                                                 <object class="GtkLabel">
                                                     <binding name="label">
-                                                        <lookup name="id" type="JCCContentData">
+                                                        <lookup name="id" type="CustomBoxContentData">
                                                             <lookup name="item">GtkListItem</lookup>
                                                         </lookup>
                                                     </binding>

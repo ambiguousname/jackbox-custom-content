@@ -1,4 +1,4 @@
-# What is this?
+# What is CustomBox?
 
 It's a program for adding your own content (stuff like prompts, certain sound files, etc.) to the Jackbox Party Pack 7.
 
@@ -7,7 +7,7 @@ WARNING: I've really only tested this on Windows, it might not work on other ope
 You may also want to keep a backup of the Jackbox Party Pack 7's files if you're not using Steam,
 otherwise you're going to have to uninstall and reinstall your entire game if something goes wrong.
 
-## Some screenshots of custom content in the Jackbox Party Pack 7:
+## Some screenshots of CustomBox in action:
 
 ![Talking Points](https://raw.githubusercontent.com/ambiguousname/jackbox-custom-content/main/screenshots/TalkingPoints2.PNG)
 ![Quiplash3](https://raw.githubusercontent.com/ambiguousname/jackbox-custom-content/main/screenshots/Quiplash3.PNG)
@@ -31,17 +31,17 @@ Check out the video [demo](https://youtu.be/4YO2SM21eIo).
 
 I will try to work on adding additional OSes when I can!
 
-## To add the sample custom content:
+## To add the sample mod:
 Before installing, the sample content does have some content that could be considered adult. So be warned if you want to import it.
 
-- Install and run the Jackbox Custom Content executable at least once.
+- Install and run CustomBox.
 - Download this repository and extract the "Sample Content" folder somewhere.
 - You can either select: File->Import Mod and select the Sample Content folder, or:
-  - Find the mods folder in the same folder as the Jackbox Custom Content executable
+  - Find the mods folder in the same folder as CustomBox
   - Extract the "Sample Content" folder to the mods folder.
 - The content should show up in the mods side pane now.
 
-Just so you know, the sample custom content is meant to be played with other content in the mix (there isn't enough sample custom content to last a full game with 8 players).
+Just so you know, the sample mod is meant to be played with other content in the mix (there isn't enough sample content to last a full game with 8 players).
 
 ## Common things to watch out for:
 ### Tags
@@ -68,15 +68,11 @@ If you've made changes to content, but you want to save those changes to a new p
 
 ## Importing content and/or Sharing Content
 
-If you copy the external_content.json file that appears in the same folder as jppc.py or Jackbox Party Pack Custom.exe and send those files to someone else, they can then import that content, using the "Import/Reimport Content" option.
+You can zip your mod stored in the `mods` folder, and share it as a download to share it with anyone else. All they have to do is put it in their own `mods` directory.
 
-The import content feature will only import certain custom files like .JPGs or .OGGs if those files are stored in the folder ./external content/, if that folder is in the same location as jppc.py or Jackbox Party Pack Custom.exe. 
+## Using only mods in a game
 
-Additionally, you may have to edit imported content for Champ'd Up, since certain prompts are connected to other prompts with specific IDs, which may be changed on import. 
-
-## Using only custom content in a game
-
-This is not at all recommended. If you have less than a certain amount of content for the game to pull from, the game will not continue. It's better to mix in your custom content with the existing content. If you still want to only use custom content for your game, you can use the "Only Use Custom Content" option from the main menu to delete all existing game content.
+This is not at all recommended. If you have less than a certain amount of content for the game to pull from, the game will not continue. It's better to mix in your mods with the existing content. There currently isn't an option to enable this, but there will be! Sometime soon.
 
 This option isn't recommended for any game unless that game has at least the number of content described here:
 - Blather 'Round - At least 36 Words. 12 Words of "easy" difficulty, 12 of "medium" difficulty, and 12 of "hard" difficulty.
@@ -97,18 +93,14 @@ On Windows at least, you can recover from the Recycle Bin. Not sure about other 
 
 You can delete any content you make with Edit->Delete Content.
 
-## HELP, EVERYTHING IS BROKEN AND/OR I REMOVED ALL NON-CUSTOM CONTENT AND CAN'T GET IT BACK
+## HELP, EVERYTHING IS BROKEN AND/OR I REMOVED ALL NON-MODS AND CAN'T GET IT BACK
 
 If you're using Steam, go to the Jackbox Party Pack 7 in your Steam Library. Right click on the game's icon or name, click "Properties".
 In the popup window, click on "Local Files". Then click "Verify integrity of game files..." That should fix everything.
 
 ### Important note if you've clicked "verify integrity of game files..."
 
-That means all your custom prompts have been removed from the game. To get your custom prompts back, you'll have to follow a couple of steps.
-1. Use the "Import/Reimport" option available in the menu
-2. Select "custom_content.json" from the file browser.
-3. Import.
-
+That means all your custom prompts have been removed from the game. To get your mods back, you'll have to run CustomBox and start the merge process again.
 ## EVERYTHING'S STILL BROKEN
 
 Uninstall and reinstall the Jackbox Party Pack 7

@@ -9,7 +9,7 @@ mod content;
 mod mod_manager;
 mod util;
 
-const APP_ID : &str = "com.ambiguousname.JackboxCustomContent";
+const APP_ID : &str = "com.ambiguousname.CustomBox";
 
 // const GLOBAL_CSS : &str = "";
 

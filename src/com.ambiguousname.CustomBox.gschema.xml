@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <schemalist>
-    <schema id="com.ambiguousname.JackboxCustomContent" path="/com/ambiguousname/JackboxCustomContent/">
+    <schema id="com.ambiguousname.CustomBox" path="/com/ambiguousname/CustomBox/">
         <key name="game-folder" type="s">
             <default>""</default>
             <summary>Jackbox Party Pack 7 Folder</summary>

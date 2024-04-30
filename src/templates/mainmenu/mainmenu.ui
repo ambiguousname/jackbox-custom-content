@@ -53,8 +53,8 @@
 			</section>
 		</submenu>
 	</menu>
-	<template class="JCCMainMenuWindow" parent="GtkApplicationWindow">
-		<property name="title" translatable="yes">Jackbox Custom Content</property>
+	<template class="CustomBoxMainMenuWindow" parent="GtkApplicationWindow">
+		<property name="title" translatable="yes">CustomBox</property>
 		<child type="titlebar">
 			<object class="GtkHeaderBar">
 				<child>

@@ -26,7 +26,7 @@ mod imp {
 
 	#[glib::object_subclass]
 	impl ObjectSubclass for GameListItem {
-		const NAME: &'static str = "JCCGameListItem";
+		const NAME: &'static str = "CustomBoxGameListItem";
 		type Type = super::GameListItem;
 		type ParentType = Object;
 	}

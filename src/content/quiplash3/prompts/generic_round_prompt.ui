@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-    <template class="JCCQuiplashGenericRoundPrompt" parent="GtkBox">
+    <template class="CustomBoxQuiplashGenericRoundPrompt" parent="GtkBox">
         <property name="margin-start">10</property>
         <property name="margin-end">10</property>
         <property name="margin-bottom">10</property>
         <property name="margin-top">10</property>
         <child>
-            <object class="JCCFormManager" id="form_manager">
+            <object class="CustomBoxFormManager" id="form_manager">
                 <child>
                     <object class="GtkGrid">
                         <property name="column-spacing">20</property>
                         <property name="row-spacing">20</property>
                         <child>
-                            <object class="JCCLabelledBox">
+                            <object class="CustomBoxLabelledBox">
                                 <layout>
                                     <property name="row">0</property>
                                     <property name="column-span">2</property>
@@ -31,7 +31,7 @@
                             </object>
                         </child>
                         <child>
-                            <object class="JCCLabelledBox">
+                            <object class="CustomBoxLabelledBox">
                                 <layout>
                                     <property name="row">1</property>
                                     <property name="column">0</property>
@@ -40,7 +40,7 @@
                                 <property name="label" translatable="yes">Safety Quips</property>
                                 <property name="value-property">items</property>
                                 <child>
-                                    <object class="JCCEditableList" id="response_filter">
+                                    <object class="CustomBoxEditableList" id="response_filter">
                                         <property name="hexpand">true</property>
                                     </object>
                                 </child>
@@ -54,24 +54,24 @@
                                 </layout>
                                 <property name="orientation">vertical</property>
                                 <child>
-                                    <object class="JCCFormCheckbox">
+                                    <object class="CustomBoxFormCheckbox">
                                         <property name="label" translatable="yes">Includes Player Name</property>
                                     </object>
                                 </child>
                                 <child>
-                                    <object class="JCCFormCheckbox">
+                                    <object class="CustomBoxFormCheckbox">
                                         <property name="label" translatable="yes">Contains Adult Content</property>
                                     </object>
                                 </child>
                                 <child>
-                                    <object class="JCCFormCheckbox">
+                                    <object class="CustomBoxFormCheckbox">
                                         <property name="label" translatable="yes">Content is US-Specific</property>
                                     </object>
                                 </child>
                             </object>
                         </child>
                         <child>
-                            <object class="JCCFormFilebrowse">
+                            <object class="CustomBoxFormFilebrowse">
                                 <layout>
                                     <property name="row">2</property>
                                     <property name="column">0</property>
@@ -94,7 +94,7 @@
                             </object>
                         </child>
                         <child>
-                            <object class="JCCLabelledBox" id="filter_text">
+                            <object class="CustomBoxLabelledBox" id="filter_text">
                                 <layout>
                                     <property name="row">3</property>
                                     <property name="column">0</property>
@@ -103,14 +103,14 @@
                                 <property name="label">Response text filter</property>
                                 <property name="value-property">items</property>
                                 <child>
-                                    <object class="JCCEditableList" id="safety_quips">
+                                    <object class="CustomBoxEditableList" id="safety_quips">
                                         <property name="hexpand">true</property>
                                     </object>
                                 </child>
                             </object>
                         </child>
                         <child>
-                            <object class="JCCFormFilebrowse" id="filter_ogg">
+                            <object class="CustomBoxFormFilebrowse" id="filter_ogg">
                                 <layout>
                                     <property name="row">3</property>
                                     <property name="column">1</property>
@@ -132,7 +132,7 @@
                             </object>
                         </child>
                         <child>
-                            <object class="JCCLabelledBox" id="filter_transcript">
+                            <object class="CustomBoxLabelledBox" id="filter_transcript">
                                 <layout>
                                     <property name="row">4</property>
                                     <property name="column">0</property>

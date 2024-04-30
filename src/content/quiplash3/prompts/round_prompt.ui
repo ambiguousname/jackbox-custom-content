@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-    <template class="JCCQuiplashRoundPrompt" parent="JCCContentWindow">
+    <template class="CustomBoxQuiplashRoundPrompt" parent="CustomBoxContentWindow">
 		<property name="title" translatable="yes">Quiplash 3 Round Prompt</property>
         <property name="default-width">500</property>
         <child type="titlebar">
@@ -17,7 +17,7 @@
         <child>
             <object class="GtkNotebook" id="round_select">
                 <child>
-                    <object class="JCCQuiplashGenericRoundPrompt">
+                    <object class="CustomBoxQuiplashGenericRoundPrompt">
                     </object>
                 </child>
                 <child type="tab">
@@ -26,7 +26,7 @@
                     </object>
                 </child>
                 <child>
-                    <object class="JCCQuiplashGenericRoundPrompt">
+                    <object class="CustomBoxQuiplashGenericRoundPrompt">
                     </object>
                 </child>
                 <child type="tab">
@@ -35,7 +35,7 @@
                     </object>
                 </child>
                 <child>
-                    <object class="JCCQuiplashGenericRoundPrompt">
+                    <object class="CustomBoxQuiplashGenericRoundPrompt">
                         <property name="final-round">true</property>
                     </object>
                 </child>

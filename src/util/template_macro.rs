@@ -27,7 +27,7 @@ macro_rules! full_object {
 
             #[glib::object_subclass]
             impl ObjectSubclass for $name {
-                const NAME : &'static str = concat!("JCC", stringify!($name));
+                const NAME : &'static str = concat!("CustomBox", stringify!($name));
                 type Type = super::$name;
                 type ParentType = $widget_type;
                 

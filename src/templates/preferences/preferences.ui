@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-	<template class="JCCPreferencesWindow" parent="GtkWindow">
+	<template class="CustomBoxPreferencesWindow" parent="GtkWindow">
 		<property name="title" translatable="yes">Preferences</property>
 		<property name="width-request">400</property>
 		<child type="titlebar">

@@ -4,7 +4,7 @@
 		<property name="child">
 			<object class="GtkLabel">
 				<binding name="label">
-					<lookup name="title" type="JCCContent">
+					<lookup name="title" type="CustomBoxContent">
 						<lookup name="item">GtkListItem</lookup>
 					</lookup>
 				</binding>

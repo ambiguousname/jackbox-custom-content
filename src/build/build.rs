@@ -14,7 +14,7 @@ fn compile(out_path : PathBuf) {
 	let o = Command::new("glib-compile-schemas").arg("./src").arg(target_dir).output().unwrap();
 	assert!(o.status.success(), "glib-compile-schemas failed with {} and stderr: {}\n", o.status, String::from_utf8_lossy(&o.stderr));
 
-	println!("cargo:rerun-if-changed=src/com.ambiguousname.JackboxCustomContent.gschema.xml");
+	println!("cargo:rerun-if-changed=src/com.ambiguousname.CustomBox.gschema.xml");
 
 	glib_build_tools::compile_resources(&["src/templates/", "src/content/", "src/mod_manager"], "src/resources.gresource.xml", "resources.gresource");
 }

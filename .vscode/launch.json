@@ -7,15 +7,15 @@
 		{
 			"type": "lldb",
 			"request": "launch",
-			"name": "Debug executable 'jackbox-custom-content'",
+			"name": "Debug executable 'custom-box'",
 			"cargo": {
 				"args": [
 					"build",
-					"--bin=jackbox-custom-content",
-					"--package=jackbox-custom-content"
+					"--bin=custom-box",
+					"--package=custom-box"
 				],
 				"filter": {
-					"name": "jackbox-custom-content",
+					"name": "custom-box",
 					"kind": "bin"
 				}
 			},
@@ -25,16 +25,16 @@
 		{
 			"type": "lldb",
 			"request": "launch",
-			"name": "Debug unit tests in executable 'jackbox-custom-content'",
+			"name": "Debug unit tests in executable 'custom-box'",
 			"cargo": {
 				"args": [
 					"test",
 					"--no-run",
-					"--bin=jackbox-custom-content",
-					"--package=jackbox-custom-content"
+					"--bin=custom-box",
+					"--package=custom-box"
 				],
 				"filter": {
-					"name": "jackbox-custom-content",
+					"name": "custom-box",
 					"kind": "bin"
 				}
 			},

@@ -44,7 +44,7 @@ mod imp {
 
 	#[glib::object_subclass]
 	impl ObjectSubclass for ContentData {
-		const NAME: &'static str = "JCCContentData";
+		const NAME: &'static str = "CustomBoxContentData";
 		type Type = super::ContentData;
 	}
 

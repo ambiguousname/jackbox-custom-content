@@ -2,21 +2,21 @@
 <interface>
 	<!-- Loaded in templates/mainmenu/content_creation/game_list.rs -->
 	<object class="GListStore" id="content_list">
-		<property name="item-type">JCCGameListItem</property>
+		<property name="item-type">CustomBoxGameListItem</property>
 		<child>
-			<object class="JCCGameListItem">
+			<object class="CustomBoxGameListItem">
 				<property name="title">Jackbox Party Pack 7</property>
 				<property name="children">
 					<object class="GListStore">
-						<property name="item-type">JCCGameListItem</property>
+						<property name="item-type">CustomBoxGameListItem</property>
 						<child>
-							<object class="JCCGameListItem">
+							<object class="CustomBoxGameListItem">
 								<property name="title">Quiplash 3</property>
 								<property name="content">
 									<object class="GListStore">
-										<property name="item-type">JCCContent</property>
+										<property name="item-type">CustomBoxContent</property>
 										<child>
-											<object class="JCCContent">
+											<object class="CustomBoxContent">
 												<property name="title">Round Prompt</property>
 												<!-- build/content_list.rs uses a regex search to find the xml-definition.
 

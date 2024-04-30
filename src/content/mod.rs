@@ -37,7 +37,7 @@ mod imp {
 
     #[glib::object_subclass]
 	impl ObjectSubclass for Content {
-		const NAME: &'static str = "JCCContent";
+		const NAME: &'static str = "CustomBoxContent";
 		type Type = super::Content;
 		type ParentType = Object;
 	}
@@ -107,7 +107,7 @@ mod content_window_imp {
 
     #[glib::object_subclass]
     impl ObjectSubclass for ContentWindow {
-        const NAME: &'static str = "JCCContentWindow";
+        const NAME: &'static str = "CustomBoxContentWindow";
         type Type = super::ContentWindow;
         type ParentType = gtk::Window;
         type Class = ContentWindowClass<Self>;

@@ -24,7 +24,7 @@ mod imp {
 
 	#[glib::object_subclass]
 	impl ObjectSubclass for ModManager {
-		const NAME: &'static str = "JCCModManager";
+		const NAME: &'static str = "CustomBoxModManager";
 		type Type = super::ModManager;
 	}
 

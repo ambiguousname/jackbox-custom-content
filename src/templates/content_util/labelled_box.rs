@@ -63,7 +63,7 @@ mod imp {
 
 	#[glib::object_subclass]
     impl ObjectSubclass for LabelledBox {
-        const NAME: &'static str = "JCCLabelledBox";
+        const NAME: &'static str = "CustomBoxLabelledBox";
         type Type = super::LabelledBox;
         type ParentType = gtk::Box;
         type Interfaces = (FormObject,);

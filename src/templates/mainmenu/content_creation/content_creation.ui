@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-    <template class="JCCContentCreationDialog" parent="GtkWindow">
+    <template class="CustomBoxContentCreationDialog" parent="GtkWindow">
 		<property name="title" translatable="yes">Add New Content</property>
         <child type="titlebar">
 			<object class="GtkHeaderBar">

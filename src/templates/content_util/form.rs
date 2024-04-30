@@ -46,7 +46,7 @@ mod imp {
 
 	#[glib::object_interface]
 	unsafe impl ObjectInterface for FormObject {
-		const NAME : &'static str = "JCCFormObject";
+		const NAME : &'static str = "CustomBoxFormObject";
 
 		fn properties() -> &'static [ParamSpec] {
 			static PROPERTIES : OnceLock<Vec<ParamSpec>> = OnceLock::new(); 

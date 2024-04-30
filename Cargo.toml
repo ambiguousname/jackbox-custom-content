@@ -1,7 +1,7 @@
 [package]
-name = "jackbox-custom-content"
+name = "custom-box"
 version = "2.0.0"
-description = "Mod creation for Jackbox Party Pack 7"
+description = "Content creation for Jackbox Party Pack 7"
 edition = "2021"
 build = "src/build/build.rs"
 readme = "README"

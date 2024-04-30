@@ -1,50 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-	<template class="JCCLabelledBox" parent="GtkBox">
+	<template class="CustomBoxLabelledBox" parent="GtkBox">
 		<property name="label-valign">3</property>
 		<child>
 			<object class="GtkLabel" id="label_child">
 				<!-- Property to change: -->
 				<binding name="label">
 					<!-- The name of the property on the object we want to associate, as well as that object's type: -->
-					<lookup name="label" type="JCCLabelledBox">
+					<lookup name="label" type="CustomBoxLabelledBox">
 						<!-- The object itself (identify by ID or type) -->
-						JCCLabelledBox
+						CustomBoxLabelledBox
 					</lookup>
 				</binding>
 				<binding name="hexpand">
-					<lookup name="label-hexpand" type="JCCLabelledBox">
-						JCCLabelledBox
+					<lookup name="label-hexpand" type="CustomBoxLabelledBox">
+						CustomBoxLabelledBox
 					</lookup>
 				</binding>
 				<binding name="halign">
-					<lookup name="label-halign" type="JCCLabelledBox">
-						JCCLabelledBox
+					<lookup name="label-halign" type="CustomBoxLabelledBox">
+						CustomBoxLabelledBox
 					</lookup>
 				</binding>
 				<binding name="valign">
-					<lookup name="label-valign" type="JCCLabelledBox">
-						JCCLabelledBox
+					<lookup name="label-valign" type="CustomBoxLabelledBox">
+						CustomBoxLabelledBox
 					</lookup>
 				</binding>
 				<binding name="vexpand">
-					<lookup name="label-vexpand" type="JCCLabelledBox">
-						JCCLabelledBox
+					<lookup name="label-vexpand" type="CustomBoxLabelledBox">
+						CustomBoxLabelledBox
 					</lookup>
 				</binding>
 				<binding name="xalign">
-					<lookup name="label-xalign" type="JCCLabelledBox">
-						JCCLabelledBox
+					<lookup name="label-xalign" type="CustomBoxLabelledBox">
+						CustomBoxLabelledBox
 					</lookup>
 				</binding>
 				<binding name="yalign">
-					<lookup name="label-yalign" type="JCCLabelledBox">
-						JCCLabelledBox
+					<lookup name="label-yalign" type="CustomBoxLabelledBox">
+						CustomBoxLabelledBox
 					</lookup>
 				</binding>
 				<binding name="mnemonic-widget">
-					<lookup name="label-mnemonic-widget" type="JCCLabelledBox">
-						JCCLabelledBox
+					<lookup name="label-mnemonic-widget" type="CustomBoxLabelledBox">
+						CustomBoxLabelledBox
 					</lookup>
 				</binding>
 				<property name="margin-end">5</property>

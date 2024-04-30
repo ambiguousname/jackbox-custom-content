@@ -39,7 +39,7 @@ quick_template!(PreferencesWindow, "/templates/preferences/preferences.ui", Wind
 //     }
 //     #[glib::object_subclass]
 //     impl ObjectSubclass for PreferencesWindow {
-//         const NAME: &'static str = "JCCPreferencesWindow";
+//         const NAME: &'static str = "CustomBoxPreferencesWindow";
 //         type Type = super::PreferencesWindow;
 //         type ParentType = Window;
 //         fn class_init(klass: &mut Self::Class) {
