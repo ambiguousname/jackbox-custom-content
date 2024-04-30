@@ -433,22 +433,19 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 	}
 
 	/// Skip over characters on our current depth level until we find a node of a certain type.
-	fn skip_node(&mut self, node_type : ManifestNode) -> Result<(), ManifestError> {
+	/// We use depth_offset for the caller to let us know what relative depth we should be looking for.
+	/// Like if we've already opened an ObjectOpen or ArrayOpen node, and so the depth is affected because of that.
+	fn skip_node(&mut self, node_type : ManifestNode, depth_offset : isize) -> Result<ManifestNode, ManifestError> {
 		let mut prev_writer = WriteTo::None;
 		std::mem::swap(&mut prev_writer, &mut self.active_writer);
-		let mut curr_depth = self.curr_path.len();
-
-		// If we're a closing node, our depth will be closed when we read it: 
-		if node_type == ManifestNode::ObjectClose || node_type == ManifestNode::ArrayClose {
-			curr_depth -= 1;
-		}
+		let curr_depth = self.curr_path.len().checked_add_signed(depth_offset).expect("depth_offset provided to skip_node leads to overflow.");
 
 		loop {
 			let node = self.parse_node()?;
 
 			if node_type == node && curr_depth == self.curr_path.len() {
 				self.active_writer = prev_writer;
-				return Ok(());
+				return Ok(node);
 			}
 		}
 	}
@@ -472,7 +469,6 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 	fn write_insert(&mut self, written_val : &mut bool, value : &serde_json::Value) -> Result<(), ManifestError> {
 		let buf = map_err!(serde, serde_json::to_vec(value))?;
 		map_err!(self.write(&buf))?;
-		map_err!(self.write(b",\n"))?;
 
 		*written_val = true;
 		Ok(())
@@ -495,12 +491,22 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 			}
 
 			if ManifestNode::Key(key.clone()) == node {
-				// FIXME: This doesn't work if we haven't even started on an object yet.
-				// Or what if we're on a string?
-				self.skip_node(ManifestNode::ObjectClose)?;
+				let mut prev_writer= WriteTo::None;
+				std::mem::swap(&mut prev_writer, &mut self.active_writer);
+				
+				let next_value = self.parse_node()?;
+
+				self.active_writer = prev_writer;
+
+				if next_value == ManifestNode::ObjectStart {
+					self.skip_node(ManifestNode::ObjectClose, -1)?;
+				} else if next_value == ManifestNode::ArrayStart {
+					self.skip_node(ManifestNode::ArrayClose, -1)?;
+				}
 				
 				if !written_values {
 					self.write_insert(&mut written_values, &value)?;
+					map_err!(self.write(b","))?;
 				}
 			}
 
@@ -516,7 +522,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 					self.write_insert(&mut written_values, &value)?;
 					
 					// And re-write the end of the object we just exited:
-					map_err!(self.writer.write(b"}"))?;
+					map_err!(self.writer.write(b"\n}"))?;
 				}
 				return Ok(());
 			}
@@ -589,7 +595,7 @@ mod tests {
 
 	use std::path::PathBuf;
 
-use super::*;
+	use super::*;
 
 	struct TestFile {
 		pub file : File,
@@ -666,8 +672,8 @@ use super::*;
 		self::write_something(path, br#"
 {
 	"test": 0,
-	"three": "four",
 	"five": null,
+	"three": "four"
 }"#);
 		
 		{
@@ -684,8 +690,8 @@ use super::*;
 		assert_file_matches(path, String::from(r#"
 {
 	"test": 0,
-	"three": "four",
-	"five": [],
+	"five":[],
+	"three": "four"
 }"#));
 	}
 }
