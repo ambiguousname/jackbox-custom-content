@@ -1,9 +1,13 @@
-- Add sample content.
-- Automate ContentCol.rs to handle creation, find one place to be able to define the columns.
-- Is there a way to replace clone! macros with something better?
+Current priorities:
+- Check against current tests.
+- Fix bugs with adding multiple items to the manifest.
+- Finishing manifest writer utility
+- Merging JSON/manifest files together.
+- Show content summary on mod list page.
+- Add support for images/image folders.
+- Finish Quiplash3 form.
+- Test if multiple mods work with everything.
 
-Planned Features:
-- Mod List for easy export/import
+Future priorities:
+- Add sample content back in.
 - Support for all the games again (minus Everyday)
-- Better UI design
-- Safer file handling
