@@ -728,4 +728,50 @@ use super::*;
 			}
 		}
 	}
+
+	#[test]
+	fn test_custom_output() {
+		let path = Path::new("custom_output.json");
+		let file = TestFile::create(path);
+		let out_str =
+br#"
+{
+	"some": {
+		"body": []
+	},
+	"once": {
+		"told me": "the world was gonna roll me"
+	},
+	"I": [ "a", 1, "nt" ],
+	"the": 5,
+	"harp3st": {
+		"tool": {
+			"in": {
+				"the": "shed."
+			}
+		}
+	}
+}"#;
+		self::write_something(path, out_str);
+		{
+			let out = std::io::Cursor::new(Vec::new());
+			let mut manifest = get_manifest::<std::io::Cursor<Vec<u8>>>(path);
+			manifest.active_writer = WriteTo::CustomWriter(out);
+			loop {
+				let n = manifest.parse_node();
+				if n.is_ok_and(|v| v == ManifestNode::EOF) {
+					break;
+				}
+			}
+			let mut string = String::new();
+			match &mut manifest.active_writer {
+				WriteTo::CustomWriter(o) => {
+					let res = o.read_to_string(&mut string);
+					assert!(res.is_ok(), "{:?}", res.unwrap_err());
+				},
+				_ => unreachable!()
+			}
+			assert_eq!(out_str, string.as_bytes());
+		}
+	}
 }
