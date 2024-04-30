@@ -436,7 +436,13 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 	fn skip_node(&mut self, node_type : ManifestNode) -> Result<(), ManifestError> {
 		let mut prev_writer = WriteTo::None;
 		std::mem::swap(&mut prev_writer, &mut self.active_writer);
-		let curr_depth = self.curr_path.len();
+		let mut curr_depth = self.curr_path.len();
+
+		// If we're a closing node, our depth will be closed when we read it: 
+		if node_type == ManifestNode::ObjectClose || node_type == ManifestNode::ArrayClose {
+			curr_depth -= 1;
+		}
+
 		loop {
 			let node = self.parse_node()?;
 
