@@ -556,9 +556,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 		}
 		let curr_depth = self.curr_path.len();
 		loop {
-			let mut c = Cursor::new(vec![]);
-			c.seek(SeekFrom::Current(1)).expect("Could not seek forward from initial buffer.");
-			let mut buf = WriteTo::Buffer(c);
+			let mut buf = WriteTo::Buffer(Cursor::new(vec![]));
 			std::mem::swap(&mut buf, &mut self.active_writer);
 
 			let node_result = self.parse_node();
@@ -566,36 +564,54 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 				return Some(node_result.map(|_v| {serde_json::Value::Null}))
 			}
 
-			std::mem::swap(&mut self.active_writer, &mut buf);
-
 			let node = node_result.expect("Could not unwrap ManifestNode.");
-			match node {
-				ManifestNode::EOF => return Some(Err(ManifestError::UnexpectedEOF())),
-				ManifestNode::ArrayClose => if curr_depth - 1 == self.curr_path.len() { 
-					match &mut buf {
-						WriteTo::Buffer(b) => {
+			let out = match node {
+				ManifestNode::EOF => Some(Err(ManifestError::UnexpectedEOF())),
+				ManifestNode::ArrayClose => {if curr_depth - 1 == self.curr_path.len() {
+					match &mut self.active_writer {
+						WriteTo::Buffer(b) => 'bufwrite: {
 							let mut bytes = Vec::<u8>::new();
 							b.set_position(0);
 							let read_res = b.read_to_end(&mut bytes);
-							if read_res.is_err() { return Some(Err(map_err!(read_res).unwrap_err())); }
+							if read_res.is_err() { break 'bufwrite Some(Err(map_err!(read_res).unwrap_err())); }
 							let write_res = self.write(&bytes);
-							if write_res.is_err() { return Some(Err(map_err!(write_res).unwrap_err())); }
-							return None;
+							if write_res.is_err() { break 'bufwrite Some(Err(map_err!(write_res).unwrap_err())); }
+							None
 						},
 						_ => unreachable!(),
+					} 	
+				} else { unreachable!("Found a closing array at the wrong depth level. This should not be reachable."); }},
+				ManifestNode::Value(v) => { Some(Ok(serde_json::from_str::<serde_json::Value>(&v).expect(&format!("Could not parse given serde_json value {}", v)))) },
+				ManifestNode::Key(k) => { Some(Err(ManifestError::UnexpectedValue(format!("Found a key {k} inside an array.")))) },
+				ManifestNode::ObjectClose => { Some(Err(ManifestError::UnexpectedValue(format!("Found a closing object }} inside an array.")))) },
+				ManifestNode::ObjectStart => 'objstart: {
+					// Flush the buffer to the current write, minus the { we just read:
+					let mut flush_buf = Vec::<u8>::new();
+					match &mut self.active_writer {
+						WriteTo::Buffer(b) => {
+							b.set_position(0);
+							let read_err = b.read_to_end(&mut flush_buf);
+							if read_err.is_err() { break 'objstart Some(Err(map_err!(read_err).unwrap_err())); }
+							flush_buf.pop();
+
+							b.get_mut().clear();
+							b.get_mut().push(b'{');
+							b.set_position(1);
+						}
+						_ => unreachable!(),
 					}
-				},
-				ManifestNode::Value(v) => { return Some(Ok(serde_json::from_str::<serde_json::Value>(&v).expect(&format!("Could not parse given serde_json value {}", v)))) },
-				ManifestNode::Key(k) => { return Some(Err(ManifestError::UnexpectedValue(format!("Found a key {k} inside an array.")))) },
-				ManifestNode::ObjectClose => { return Some(Err(ManifestError::UnexpectedValue(format!("Found a closing object }} inside an array.")))) },
-				ManifestNode::ObjectStart => {
+					let write_err = self.write_to_outfile(&flush_buf);
+					if write_err.is_err() { break 'objstart Some(Err(map_err!(write_err).unwrap_err())); }
+
+					// Make a new buffer:
+
 					let read = self.read_until_node(ManifestNode::ObjectClose, -1);
 					
 					if read.is_err() {
-						return Some(Err(read.unwrap_err()));
+						break 'objstart Some(Err(read.unwrap_err()));
 					}
 
-					return match &mut buf {
+					match &mut self.active_writer {
 						WriteTo::Buffer(b) => {
 							b.set_position(0);
 							let val : serde_json::Result<serde_json::Value> = serde_json::from_reader(b);
@@ -603,16 +619,34 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 							Some(map_err!(serde, val))
 						},
 						_ => unreachable!(),
-					};
+					}
 				},
-				ManifestNode::ArrayStart => {
+				ManifestNode::ArrayStart => 'arraystart: {
+					// Flush the buffer to the current write, minus the [ we just read:
+					let mut flush_buf = Vec::<u8>::new();
+					match &mut self.active_writer {
+						WriteTo::Buffer(b) => {
+							b.set_position(0);
+							let read_err = b.read_to_end(&mut flush_buf);
+							if read_err.is_err() { break 'arraystart Some(Err(map_err!(read_err).unwrap_err())); }
+							flush_buf.pop();
+
+							b.get_mut().clear();
+							b.get_mut().push(b'[');
+							b.set_position(1);
+						}
+						_ => unreachable!(),
+					}
+					let write_err = self.write_to_outfile(&flush_buf);
+					if write_err.is_err() { break 'arraystart Some(Err(map_err!(write_err).unwrap_err())); }
+
 					let read = self.read_until_node(ManifestNode::ArrayClose, -1);
 
 					if read.is_err() {
 						return Some(Err(read.unwrap_err()));
 					}
 
-					return match &mut buf {
+					match &mut self.active_writer {
 						WriteTo::Buffer(b) => {
 							b.set_position(0);
 							let val : serde_json::Result<serde_json::Value> = serde_json::from_reader(b);
@@ -622,6 +656,9 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 					}
 				},
 			};
+			std::mem::swap(&mut self.active_writer, &mut buf);
+
+			return out;
 		}
 	}
 
