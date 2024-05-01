@@ -1,6 +1,6 @@
 [package]
 name = "custom-box"
-version = "2.0.0"
+version = "2.0.0-alpha.0"
 description = "Content creation for the Jackbox Party Pack 7. \n With much gratitude to Jackbox Games and the developers of the Jackbox Party Pack 7. \n Made with Rust 2021, GTK 4.12 (gtk-rs 0.8.2), Serde 1.0, and open 5.0.1"
 edition = "2021"
 build = "src/build/build.rs"
