@@ -92,10 +92,13 @@ impl FormFilebrowse {
 		}
 		let file_chooser = file_chooser.build();
 		let parent = self.ancestor(Window::static_type()).and_downcast::<Window>().unwrap();
-		file_chooser.open(Some(&parent), None::<&Cancellable>, clone!(@weak self as f => move |res| {
-			f.imp().file.replace(res.ok());
-			f.update_inscription();
-		}));
+		file_chooser.open(Some(&parent), None::<&Cancellable>, clone!(
+			#[weak(rename_to = f)] self,
+			move |res| {
+				f.imp().file.replace(res.ok());
+				f.update_inscription();
+			}
+		));
 	}
 
 	#[template_callback]

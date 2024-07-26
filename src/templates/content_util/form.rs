@@ -19,13 +19,21 @@ mod imp {
 
 	#[derive(Clone, Copy)]
 	#[repr(C)]
-	pub struct FormObject {
+	pub struct FormObjectClass {
 		parent : glib::gobject_ffi::GTypeInterface,
 		// Create the list of functions to be stored by our Interface definition in GTK GObject stuff:
 		pub is_valid : fn(&super::FormObject) -> bool,
 		pub value : fn(&super::FormObject) -> Value,
 		pub set_value : fn(&super::FormObject, Value),
 		pub display_error : fn(&super::FormObject, Option<FormError>),
+	}
+
+	unsafe impl InterfaceStruct for FormObjectClass {
+		type Type = FormObject;
+	}
+
+	pub struct FormObject {
+
 	}
 	
 	// Default functions:
@@ -45,8 +53,9 @@ mod imp {
 	}
 
 	#[glib::object_interface]
-	unsafe impl ObjectInterface for FormObject {
+	impl ObjectInterface for FormObject {
 		const NAME : &'static str = "CustomBoxFormObject";
+		type Interface = FormObjectClass;
 
 		fn properties() -> &'static [ParamSpec] {
 			static PROPERTIES : OnceLock<Vec<ParamSpec>> = OnceLock::new(); 
@@ -56,11 +65,11 @@ mod imp {
 			})
 		}
 
-		fn interface_init(&mut self) {
-			self.is_valid = FormObject::is_valid;
-			self.value = FormObject::value;
-			self.set_value = FormObject::set_value;
-			self.display_error = FormObject::display_error;
+		fn interface_init(klass : &mut Self::Interface) {
+			klass.is_valid = FormObject::is_valid;
+			klass.value = FormObject::value;
+			klass.set_value = FormObject::set_value;
+			klass.display_error = FormObject::display_error;
 		}
 	}
 }

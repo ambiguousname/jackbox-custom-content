@@ -79,11 +79,14 @@ impl ModManager {
 			.build();
 			grid.attach(&submit, 0, 1, 1, 1);
 	
-			submit.connect_clicked(clone!(@weak self as m => move |but| {
-				m.mod_creation_finish(entry.text().to_string());
-				but.ancestor(gtk::Window::static_type()).and_downcast::<gtk::Window>().unwrap().close();
-				entry.set_text("");
-			}));
+			submit.connect_clicked(clone!(
+				#[weak(rename_to = m)] self,
+				move |but| {
+					m.mod_creation_finish(entry.text().to_string());
+					but.ancestor(gtk::Window::static_type()).and_downcast::<gtk::Window>().unwrap().close();
+					entry.set_text("");
+				}
+			));
 	
 			let cancel = gtk::Button::builder()
 			.label("Cancel")
@@ -178,12 +181,15 @@ impl ModManager {
 		.detail("This action cannot be undone.")
 		.build();
 
-		warn.choose(Some(main_menu), Some(&Cancellable::new()), clone!(@weak self as w => move |result| {
-			let option = result.expect("Could not get warn option.");
-			if option == 0 {
-				w.delete_mod(mod_name);
+		warn.choose(Some(main_menu), Some(&Cancellable::new()), clone!(
+			#[weak(rename_to = w)] self,
+			move |result| {
+				let option = result.expect("Could not get warn option.");
+				if option == 0 {
+					w.delete_mod(mod_name);
+				}
 			}
-		}));
+		));
 	}
 
 	fn delete_mod(&self, mod_name : String) {
@@ -219,11 +225,14 @@ impl ModManager {
 
 		content.create_content({ // I never knew {} is also a closure. This solves SO MANY problems.
 			let xml_def_str = xml_def_str.clone();
-			clone!(@weak self as m => move |content_type, subcontent| {
+			clone!(
+				#[weak(rename_to = m)] self,
+				move |content_type, subcontent| {
 					let store = m.imp().mods.borrow();
 					let mod_item = store.get(&mod_name).expect("Could not get mod of name.");
 					mod_item.add_content(xml_def_str.to_string(), content_type, subcontent);
-			})
+				}
+			)
 		});
 	}
 	// endregion

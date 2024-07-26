@@ -102,9 +102,12 @@ impl MainMenuWindow {
 
     pub(super) fn setup_folder_selection(&self) {
 
-        self.imp().folder_choose.connect_clicked(clone!(@weak self as window => move |_|{
-            window.show_folder_selection(&window, None::<fn(String)>);
-        }));
+        self.imp().folder_choose.connect_clicked(clone!(
+            #[weak(rename_to = window)] self,
+            move |_|{
+                window.show_folder_selection(&window, None::<fn(String)>);
+            }
+        ));
 
         let folder_option = self.config().string("game-folder");
         let folder_path = PathBuf::from(folder_option);

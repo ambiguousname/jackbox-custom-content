@@ -72,9 +72,12 @@ impl ContentCreationDialog {
 
     fn setup_switch(&self) {
         let game_select = self.imp().game_select_model.clone();
-        game_select.connect_selection_changed(clone!(@weak self as window => move |selection, _, _| {
-            window.switch(selection);
-        }));
+        game_select.connect_selection_changed(clone!(
+            #[weak(rename_to = window)] self,
+                move |selection, _, _| {
+                window.switch(selection);
+            }
+        ));
     }
 
     fn switch(&self, selection : &SingleSelection) {

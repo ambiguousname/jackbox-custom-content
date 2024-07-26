@@ -123,8 +123,11 @@ impl PreferencesWindow {
 	fn handle_folder_set(&self) {
 		let parent : MainMenuWindow = self.transient_for().and_downcast().expect("Could not get parent.");
 
-		parent.show_folder_selection(self, Some(glib::clone!(@weak self as window => move |result : String| {
-			window.update_folder_label(result);
-		})));
+		parent.show_folder_selection(self, Some(glib::clone!(
+			#[weak(rename_to = window)] self,
+			move |result : String| {
+				window.update_folder_label(result);
+			}
+		)));
 	}
 }
