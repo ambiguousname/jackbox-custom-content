@@ -68,9 +68,10 @@ impl MainMenuWindow {
         }
     }
 
-    pub fn show_folder_selection<F : FnOnce(String) + 'static>(&self, parent: &impl IsA<Window>, callback : Option<F>) {
+    pub fn show_folder_selection<F : FnOnce(String) + 'static>(&self, parent: &impl IsA<Window>, initial_folder : gio::File, callback : Option<F>) {
         let file_chooser = FileDialog::builder()
         .title("Select the folder for the Jackbox Party Pack 7")
+        .initial_folder(&initial_folder)
         .build();
     
         let cancel = Cancellable::new();
@@ -104,11 +105,10 @@ impl MainMenuWindow {
     }
 
     pub(super) fn setup_folder_selection(&self) {
-
         self.imp().folder_choose.connect_clicked(clone!(
             #[weak(rename_to = window)] self,
             move |_|{
-                window.show_folder_selection(&window, None::<fn(String)>);
+                window.show_folder_selection(&window, gtk::gio::File::for_path(std::path::Path::new("./")), None::<fn(String)>);
             }
         ));
 

@@ -1,5 +1,5 @@
 
-use gtk::{Window, gio::Settings, glib::derived_properties, Switch, AlertDialog};
+use gtk::{gio::{self, Settings}, glib::{clone, derived_properties}, AlertDialog, DialogError, FileDialog, Switch, Window};
 
 use std::cell::OnceCell;
 
@@ -134,25 +134,83 @@ impl PreferencesWindow {
 	fn handle_folder_set(&self) {
 		let parent : MainMenuWindow = self.transient_for().and_downcast().expect("Could not get parent.");
 
-		parent.show_folder_selection(self, Some(glib::clone!(
+		let mut game_folder_str = self.settings().string("game-folder");
+		if game_folder_str.is_empty() {
+			game_folder_str = glib::GString::from_string_checked("./".into()).unwrap();
+		}
+
+		let game_folder = gtk::gio::File::for_path(game_folder_str);
+
+		parent.show_folder_selection(self, game_folder, Some(glib::clone!(
 			#[weak(rename_to = window)] self,
 			move |result : String| {
-				window.settings().set_string("game-folder", &result).unwrap();
 				window.update_folder_label(result);
 			}
 		)));
 	}
 
+	fn set_mod_folder(&self, result : Result<gio::File, glib::Error>) -> Result<String, String> {
+        if result.is_ok() {
+            let folder : gtk::gio::File = result.expect("Could not get file.");
+
+			let path = folder.path().expect("Could not get folder pathname.");
+			if (!path.has_root()) {
+				return Err("Path does not contain root.".to_string());
+			}
+
+			if (!path.exists()) {
+				return Err("Path does not exist.".to_string());
+			}
+
+            let folder_set = self.settings().set_string("mods-folder", path.to_str().expect("Could not get folder string."));
+
+            if folder_set.is_err() {
+                return Err(folder_set.err().unwrap().to_string());
+            }
+
+            Ok(path.to_str().unwrap().to_string())
+        } else {
+            return Err(result.err().unwrap().to_string());
+        }
+    }
+
+	fn mod_folder_selection(&self, initial_folder : gio::File) {
+		let folder_chooser = FileDialog::builder()
+        .title("Select the folder to store mods in.")
+        .initial_folder(&initial_folder)
+        .build();
+
+		let cancel = gio::Cancellable::new();
+        folder_chooser.select_folder(Some(self), Some(&cancel), clone!(
+            #[weak(rename_to = window)] self,
+            move |r| {
+            if r.is_err() {
+                let err = r.clone().err().unwrap().kind::<DialogError>();
+                if err.is_some() {
+                    let err_code = err.unwrap();
+                    if err_code == DialogError::Cancelled || err_code == DialogError::Dismissed {
+                        return;
+                    }
+                }
+            }
+            let result = window.set_mod_folder(r);
+            if result.is_err() {
+                let dlg = AlertDialog::builder()
+                .message("Could not set folder for mods.")
+                .detail(result.clone().err().unwrap())
+                .build();
+
+                dlg.show(Some(&window));
+            } else {
+				window.update_mod_folder_label(result.unwrap());
+            }
+        }));
+	}
+
 	#[template_callback]
 	fn handle_mod_folder_set(&self) {
-		let parent : MainMenuWindow = self.transient_for().and_downcast().expect("Could not get parent.");
+		let mods_folder = gtk::gio::File::for_path(self.settings().string("mods-folder"));
 
-		parent.show_folder_selection(self, Some(glib::clone!(
-			#[weak(rename_to = window)] self,
-			move |result: String| {
-				window.settings().set_string("mods-folder", &result).unwrap();
-				window.update_mod_folder_label(result);
-			}
-		)))
+		self.mod_folder_selection(mods_folder);
 	}
 }
