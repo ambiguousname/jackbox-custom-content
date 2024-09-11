@@ -121,14 +121,6 @@ impl Subcontent for ManifestItem {
 
             // Then write our values:
             manifest.active_writer = WriteTo::OutFile;
-            manifest
-                .write_search_seek(std::io::SeekFrom::Current(-1))
-                .map_err(|e| {
-                    if let ManifestError::StdErr(err) = e {
-                        return err;
-                    }
-                    std::io::Error::new(ErrorKind::Other, e.to_string())
-                })?;
             manifest.write(&serde_out)?;
             manifest.write(b"]")?;
         }
