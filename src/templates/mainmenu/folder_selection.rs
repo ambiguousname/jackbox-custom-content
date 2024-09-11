@@ -74,7 +74,10 @@ impl MainMenuWindow {
         .build();
     
         let cancel = Cancellable::new();
-        file_chooser.select_folder(Some(parent), Some(&cancel), clone!(@weak self as window, @strong parent as p => move |r| {
+        file_chooser.select_folder(Some(parent), Some(&cancel), clone!(
+            #[weak(rename_to = window)] self,
+            #[strong(rename_to = p)] parent,
+            move |r| {
             if r.is_err() {
                 let err = r.clone().err().unwrap().kind::<DialogError>();
                 if err.is_some() {

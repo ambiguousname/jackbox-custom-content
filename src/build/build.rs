@@ -5,7 +5,7 @@ use std::{fs, env, path::PathBuf};
 fn compile(out_path : PathBuf) {
 	let new_path = out_path.join("share/glib-2.0/schemas");
 	if !new_path.exists() {
-		let creation = fs::create_dir_all(new_path.clone().as_path().clone());
+		let creation = fs::create_dir_all(new_path.clone().as_path());
 		assert!(creation.is_ok(), "Could not create directories: {}", creation.err().unwrap());
 	}
 
