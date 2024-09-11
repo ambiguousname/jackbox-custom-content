@@ -1,10 +1,21 @@
-pub mod mod_store;
 mod content_data;
 mod data_serializer;
+pub mod mod_store;
 
-use std::{cell::RefCell, collections::HashMap, fs::{self, DirEntry}, path::{Path, PathBuf}, sync::OnceLock};
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+    fs::{self, DirEntry},
+    path::{Path, PathBuf},
+    sync::OnceLock,
+};
 
-use gtk::{gio::Cancellable, glib::{self, clone, subclass::prelude::*, Object}, prelude::*, AlertDialog, Window};
+use gtk::{
+    gio::Cancellable,
+    glib::{self, clone, subclass::prelude::*, Object},
+    prelude::*,
+    AlertDialog, Window,
+};
 
 use crate::templates::mainmenu::MainMenuWindow;
 
@@ -13,142 +24,150 @@ use self::{content_data::ContentData, mod_store::ModStore};
 // This would be really nice as its own Rust structure, but Glib annoyances (like proper signal connectivity) means that this will have to do.
 
 mod imp {
-	use std::path::PathBuf;
+    use std::path::PathBuf;
 
-	use super::*;
+    use super::*;
 
-	#[derive(Default)]
-	pub struct ModManager {
-		pub mod_creation : OnceLock<Window>,
-		pub main_menu : OnceLock<MainMenuWindow>,
-		pub mods : RefCell<HashMap<String, ModStore>>,
-	}
+    #[derive(Default)]
+    pub struct ModManager {
+        pub mod_creation: OnceLock<Window>,
+        pub main_menu: OnceLock<MainMenuWindow>,
+        pub mods: RefCell<HashMap<String, ModStore>>,
+    }
 
-	#[glib::object_subclass]
-	impl ObjectSubclass for ModManager {
-		const NAME: &'static str = "CustomBoxModManager";
-		type Type = super::ModManager;
-	}
+    #[glib::object_subclass]
+    impl ObjectSubclass for ModManager {
+        const NAME: &'static str = "CustomBoxModManager";
+        type Type = super::ModManager;
+    }
 
-	impl ObjectImpl for ModManager {}
+    impl ObjectImpl for ModManager {}
 }
 
-glib::wrapper!{
-	pub struct ModManager(ObjectSubclass<imp::ModManager>);
+glib::wrapper! {
+    pub struct ModManager(ObjectSubclass<imp::ModManager>);
 }
 
 impl ModManager {
-	pub fn new(main_menu : MainMenuWindow) -> Self {
-		ModStore::ensure_type();
-		ContentData::ensure_type();
-		let manager : Self = Object::new();
-		manager.imp().main_menu.get_or_init(|| {
-			main_menu
-		});
-		manager
-		// let manager =  ModManager {
-		// 	// Need to set up a callback before adding the window:
-		// 	mod_creation: None,
-		// 	main_menu: Some(main_menu),
-		// 	mods: HashMap::new(),
-		// };
-		// manager.setup_mod_creation_dialog();
-		// manager
-	}
+    pub fn new(main_menu: MainMenuWindow) -> Self {
+        ModStore::ensure_type();
+        ContentData::ensure_type();
+        let manager: Self = Object::new();
+        manager.imp().main_menu.get_or_init(|| main_menu);
+        manager
+        // let manager =  ModManager {
+        // 	// Need to set up a callback before adding the window:
+        // 	mod_creation: None,
+        // 	main_menu: Some(main_menu),
+        // 	mods: HashMap::new(),
+        // };
+        // manager.setup_mod_creation_dialog();
+        // manager
+    }
 
-	// region: Getters
-	fn main_menu(&self) -> &MainMenuWindow {
-		self.imp().main_menu.get().unwrap()
-	}
+    // region: Getters
+    fn main_menu(&self) -> &MainMenuWindow {
+        self.imp().main_menu.get().unwrap()
+    }
 
-	fn mod_creation(&self) -> &Window {
-		self.imp().mod_creation.get_or_init(|| {
-			let grid = gtk::Grid::builder()
-			.build();
-	
-			let entry = gtk::Entry::builder()
-			.hexpand(true)
-			.vexpand(true)
-			.placeholder_text("Mod Name")
-			.build();
-			grid.attach(&entry, 0, 0, 2, 1);
-	
-			let submit = gtk::Button::builder()
-			.hexpand(true)
-			.vexpand(true)
-			.label("Ok")
-			.build();
-			grid.attach(&submit, 0, 1, 1, 1);
-	
-			submit.connect_clicked(clone!(
-				#[weak(rename_to = m)] self,
-				move |but| {
-					m.mod_creation_finish(entry.text().to_string());
-					but.ancestor(gtk::Window::static_type()).and_downcast::<gtk::Window>().unwrap().close();
-					entry.set_text("");
-				}
-			));
-	
-			let cancel = gtk::Button::builder()
-			.label("Cancel")
-			.build();
-			grid.attach(&cancel, 1, 1, 1, 1);
-			
-			cancel.connect_clicked(|this| {
-				this.ancestor(Window::static_type()).and_downcast::<Window>().expect("Could not get window.").close();
-			});
-	
-			Window::builder()
-			.name("Mod Creation Dialog")
-			.child(&grid)
-			.hide_on_close(true)
-			.build()
-		})
-	}
+    fn mod_creation(&self) -> &Window {
+        self.imp().mod_creation.get_or_init(|| {
+            let grid = gtk::Grid::builder().build();
 
-	pub fn get_mod(&self, mod_name : String) -> Option<ModStore> {
-		let store = self.imp().mods.borrow();
-		store.get(&mod_name).and_then(|val| {Some(val.clone())})
-	}
-	// endregion
+            let entry = gtk::Entry::builder()
+                .hexpand(true)
+                .vexpand(true)
+                .placeholder_text("Mod Name")
+                .build();
+            grid.attach(&entry, 0, 0, 2, 1);
 
-	// region: Add Mods
-	fn add_mod(&self, mod_store : ModStore) {
-		self.imp().mods.borrow_mut().insert(mod_store.name(), mod_store.clone());
-		self.main_menu().add_mod_to_stack(mod_store.name(), &mod_store);
-	}
+            let submit = gtk::Button::builder()
+                .hexpand(true)
+                .vexpand(true)
+                .label("Ok")
+                .build();
+            grid.attach(&submit, 0, 1, 1, 1);
 
-	pub(super) fn new_mod(&self) {
-		self.mod_creation().present();
-	}
+            submit.connect_clicked(clone!(
+                #[weak(rename_to = m)]
+                self,
+                move |but| {
+                    m.mod_creation_finish(entry.text().to_string());
+                    but.ancestor(gtk::Window::static_type())
+                        .and_downcast::<gtk::Window>()
+                        .unwrap()
+                        .close();
+                    entry.set_text("");
+                }
+            ));
 
-	fn mod_creation_finish(&self, name : String) {
-		let folder = self.main_menu().config().string("mods-folder");
-		let mods_path = Path::new(&folder);
-		// Create new ModStore:
-		let result = ModStore::new_folder(mods_path, name.clone());
-		if result.is_err() {
-			let error = result.err().unwrap();
-			AlertDialog::builder()
-			.message("Could not create mod folder.")
-			.detail(error.to_string()).build().show(Some(self.main_menu()));
-			return;
-		}
+            let cancel = gtk::Button::builder().label("Cancel").build();
+            grid.attach(&cancel, 1, 1, 1, 1);
 
-		let mod_store = result.unwrap();
-		self.add_mod(mod_store);
-	}
+            cancel.connect_clicked(|this| {
+                this.ancestor(Window::static_type())
+                    .and_downcast::<Window>()
+                    .expect("Could not get window.")
+                    .close();
+            });
 
-	pub(crate) fn clear_mods(&self) {
-		self.imp().mods.borrow_mut().clear();
-		self.main_menu().clear_mods_stack();
-	}
+            Window::builder()
+                .name("Mod Creation Dialog")
+                .child(&grid)
+                .hide_on_close(true)
+                .build()
+        })
+    }
 
-	pub(crate) fn load_mods(&self) {
-		// TODO: Make an "All" content list that doesn't use traditional mod loading.
-		// self.add_mod("All".to_string());
-		let folder = self.main_menu().config().string("mods-folder");
-		let mods_folder = Path::new(&folder);
+    pub fn get_mod(&self, mod_name: String) -> Option<ModStore> {
+        let store = self.imp().mods.borrow();
+        store.get(&mod_name).and_then(|val| Some(val.clone()))
+    }
+    // endregion
+
+    // region: Add Mods
+    fn add_mod(&self, mod_store: ModStore) {
+        self.imp()
+            .mods
+            .borrow_mut()
+            .insert(mod_store.name(), mod_store.clone());
+        self.main_menu()
+            .add_mod_to_stack(mod_store.name(), &mod_store);
+    }
+
+    pub(super) fn new_mod(&self) {
+        self.mod_creation().present();
+    }
+
+    fn mod_creation_finish(&self, name: String) {
+        let folder = self.main_menu().config().string("mods-folder");
+        let mods_path = Path::new(&folder);
+        // Create new ModStore:
+        let result = ModStore::new_folder(mods_path, name.clone());
+        if result.is_err() {
+            let error = result.err().unwrap();
+            AlertDialog::builder()
+                .message("Could not create mod folder.")
+                .detail(error.to_string())
+                .build()
+                .show(Some(self.main_menu()));
+            return;
+        }
+
+        let mod_store = result.unwrap();
+        self.add_mod(mod_store);
+    }
+
+    pub(crate) fn clear_mods(&self) {
+        self.imp().mods.borrow_mut().clear();
+        self.main_menu().clear_mods_stack();
+    }
+
+    pub(crate) fn load_mods(&self) {
+        // TODO: Make an "All" content list that doesn't use traditional mod loading.
+        // self.add_mod("All".to_string());
+        let folder = self.main_menu().config().string("mods-folder");
+        let mods_folder = Path::new(&folder);
 
         if !mods_folder.exists() {
             let result = fs::create_dir(mods_folder);
@@ -159,96 +178,106 @@ impl ModManager {
 
         for directory in fs::read_dir(mods_folder).unwrap() {
             let dir = directory.expect("Could not get child directory.");
-			let dirname = dir.file_name().into_string().expect("Could not get directory string.");
+            let dirname = dir
+                .file_name()
+                .into_string()
+                .expect("Could not get directory string.");
 
-			let mod_path = mods_folder.join(dir.path());
+            let mod_path = mods_folder.join(dir.path());
 
-			if mod_path.exists() && mod_path.is_dir() {
-				self.load_mod_from_dir(dirname, mod_path);
-			}
+            if mod_path.exists() && mod_path.is_dir() {
+                self.load_mod_from_dir(dirname, mod_path);
+            }
         }
-		// let gesture = &self.imp().sidebar_gesture;
-		// gesture.set_property("widget", self.imp().mod_stack_sidebar.to_value());
-	}
+        // let gesture = &self.imp().sidebar_gesture;
+        // gesture.set_property("widget", self.imp().mod_stack_sidebar.to_value());
+    }
 
-	fn load_mod_from_dir(&self, dirname : String, mod_path : PathBuf) {
-		let result = ModStore::from_folder(dirname, mod_path);
-		let mod_store = result.unwrap();
-		self.add_mod(mod_store);
-	}
+    fn load_mod_from_dir(&self, dirname: String, mod_path: PathBuf) {
+        let result = ModStore::from_folder(dirname, mod_path);
+        let mod_store = result.unwrap();
+        self.add_mod(mod_store);
+    }
 
-	// endregion
+    // endregion
 
-	// region: Mod Deletion
+    // region: Mod Deletion
 
-	pub(super) fn start_mod_deletion(&self) {
-		let main_menu = self.main_menu();
-		let visible_child = main_menu.visible_mod_stack_name();
-		if visible_child.is_none() {
-			return;
-		}
-		let mod_name : String = visible_child.unwrap().to_string();
-		let msg = format!("Are you sure you want to delete {mod_name}?");
+    pub(super) fn start_mod_deletion(&self) {
+        let main_menu = self.main_menu();
+        let visible_child = main_menu.visible_mod_stack_name();
+        if visible_child.is_none() {
+            return;
+        }
+        let mod_name: String = visible_child.unwrap().to_string();
+        let msg = format!("Are you sure you want to delete {mod_name}?");
 
-		let warn = AlertDialog::builder()
-		.buttons(["Yes", "No"])
-		.message(msg)
-		.detail("This action cannot be undone.")
-		.build();
+        let warn = AlertDialog::builder()
+            .buttons(["Yes", "No"])
+            .message(msg)
+            .detail("This action cannot be undone.")
+            .build();
 
-		warn.choose(Some(main_menu), Some(&Cancellable::new()), clone!(
-			#[weak(rename_to = w)] self,
-			move |result| {
-				let option = result.expect("Could not get warn option.");
-				if option == 0 {
-					w.delete_mod(mod_name);
-				}
-			}
-		));
-	}
+        warn.choose(
+            Some(main_menu),
+            Some(&Cancellable::new()),
+            clone!(
+                #[weak(rename_to = w)]
+                self,
+                move |result| {
+                    let option = result.expect("Could not get warn option.");
+                    if option == 0 {
+                        w.delete_mod(mod_name);
+                    }
+                }
+            ),
+        );
+    }
 
-	fn delete_mod(&self, mod_name : String) {
-		let mods_folder = Path::new("./mods");
-		let mod_folder = mods_folder.join(mod_name.clone());
-		
-		let result = fs::remove_dir_all(mod_folder);
+    fn delete_mod(&self, mod_name: String) {
+        let mods_folder = Path::new("./mods");
+        let mod_folder = mods_folder.join(mod_name.clone());
 
-		if result.is_err() {
-			let msg = format!("Could not delete mod {mod_name}");
-			let err = AlertDialog::builder()
-			.message(msg)
-			.detail(result.err().unwrap().to_string())
-			.build();
+        let result = fs::remove_dir_all(mod_folder);
 
-			err.show(Some(self.main_menu()));
-			return;
-		}
+        if result.is_err() {
+            let msg = format!("Could not delete mod {mod_name}");
+            let err = AlertDialog::builder()
+                .message(msg)
+                .detail(result.err().unwrap().to_string())
+                .build();
 
-		self.imp().mods.borrow_mut().remove(&mod_name.clone());
-		let main_menu = self.main_menu();
-		main_menu.remove_mod_from_stack(mod_name);
-	}
+            err.show(Some(self.main_menu()));
+            return;
+        }
 
-	// endregion
+        self.imp().mods.borrow_mut().remove(&mod_name.clone());
+        let main_menu = self.main_menu();
+        main_menu.remove_mod_from_stack(mod_name);
+    }
 
-	// region: Editing Mods
+    // endregion
 
-	/// Launches a dialog with the content's attached window to attempt to make content.
-	/// Try to add content to a [`ModStore`] of a given name. Called by [`crate::templates::mainmenu::MainMenuWindow::add_content_to_mod`] (i.e., clicking the `+` button).
-	pub fn add_content_to_mod(&self, mod_name : String, content : crate::content::Content) {
-		let xml_def_str = content.xml_definition();
+    // region: Editing Mods
 
-		content.create_content({ // I never knew {} is also a closure. This solves SO MANY problems.
-			let xml_def_str = xml_def_str.clone();
-			clone!(
-				#[weak(rename_to = m)] self,
-				move |content_type, subcontent| {
-					let store = m.imp().mods.borrow();
-					let mod_item = store.get(&mod_name).expect("Could not get mod of name.");
-					mod_item.add_content(xml_def_str.to_string(), content_type, subcontent);
-				}
-			)
-		});
-	}
-	// endregion
+    /// Launches a dialog with the content's attached window to attempt to make content.
+    /// Try to add content to a [`ModStore`] of a given name. Called by [`crate::templates::mainmenu::MainMenuWindow::add_content_to_mod`] (i.e., clicking the `+` button).
+    pub fn add_content_to_mod(&self, mod_name: String, content: crate::content::Content) {
+        let xml_def_str = content.xml_definition();
+
+        content.create_content({
+            // I never knew {} is also a closure. This solves SO MANY problems.
+            let xml_def_str = xml_def_str.clone();
+            clone!(
+                #[weak(rename_to = m)]
+                self,
+                move |content_type, subcontent| {
+                    let store = m.imp().mods.borrow();
+                    let mod_item = store.get(&mod_name).expect("Could not get mod of name.");
+                    mod_item.add_content(xml_def_str.to_string(), content_type, subcontent);
+                }
+            )
+        });
+    }
+    // endregion
 }

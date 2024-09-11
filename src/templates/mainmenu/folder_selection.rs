@@ -3,16 +3,16 @@ use std::path::PathBuf;
 
 use gtk::gio::Cancellable;
 use gtk::subclass::prelude::*;
-use gtk::{prelude::*, Window, DialogError};
-use gtk::{FileDialog, AlertDialog};
+use gtk::{prelude::*, DialogError, Window};
+use gtk::{AlertDialog, FileDialog};
 
-use gtk::{glib, gio};
 use glib::clone;
+use gtk::{gio, glib};
 
 use crate::MainMenuWindow;
 
 impl MainMenuWindow {
-    fn verify_folder(&self, folder_opt : gtk::gio::File) -> Result<gtk::gio::File, String> {
+    fn verify_folder(&self, folder_opt: gtk::gio::File) -> Result<gtk::gio::File, String> {
         let mut folder = folder_opt;
         // First, verify base path.
         let mut path = folder.path().expect("Could not get folder pathname.");
@@ -37,7 +37,10 @@ impl MainMenuWindow {
                 return Err("games subdirectory not in Jackbox Party Pack 7 folder.".to_string());
             }
         } else {
-            let msg = format!("Could not find Jackbox Party Pack 7 directory at:\n{}", path.to_str().unwrap());
+            let msg = format!(
+                "Could not find Jackbox Party Pack 7 directory at:\n{}",
+                path.to_str().unwrap()
+            );
             return Err(msg);
         }
 
@@ -46,13 +49,16 @@ impl MainMenuWindow {
         Ok(folder)
     }
 
-    fn set_folder(&self, result : Result<gio::File, glib::Error>) -> Result<String, String> {
+    fn set_folder(&self, result: Result<gio::File, glib::Error>) -> Result<String, String> {
         if result.is_ok() {
-            let folder : gtk::gio::File = result.expect("Could not get file.");
+            let folder: gtk::gio::File = result.expect("Could not get file.");
             let verified_folder = self.verify_folder(folder)?;
 
             let path = verified_folder.path().expect("Could not get folder path.");
-            let folder_set = self.config().set_string("game-folder", path.to_str().expect("Could not get folder string."));
+            let folder_set = self.config().set_string(
+                "game-folder",
+                path.to_str().expect("Could not get folder string."),
+            );
 
             if folder_set.is_err() {
                 return Err(folder_set.err().unwrap().to_string());
@@ -68,47 +74,66 @@ impl MainMenuWindow {
         }
     }
 
-    pub fn show_folder_selection<F : FnOnce(String) + 'static>(&self, parent: &impl IsA<Window>, initial_folder : gio::File, callback : Option<F>) {
+    pub fn show_folder_selection<F: FnOnce(String) + 'static>(
+        &self,
+        parent: &impl IsA<Window>,
+        initial_folder: gio::File,
+        callback: Option<F>,
+    ) {
         let file_chooser = FileDialog::builder()
-        .title("Select the folder for the Jackbox Party Pack 7")
-        .initial_folder(&initial_folder)
-        .build();
-    
+            .title("Select the folder for the Jackbox Party Pack 7")
+            .initial_folder(&initial_folder)
+            .build();
+
         let cancel = Cancellable::new();
-        file_chooser.select_folder(Some(parent), Some(&cancel), clone!(
-            #[weak(rename_to = window)] self,
-            #[strong(rename_to = p)] parent,
-            move |r| {
-            if r.is_err() {
-                let err = r.clone().err().unwrap().kind::<DialogError>();
-                if err.is_some() {
-                    let err_code = err.unwrap();
-                    if err_code == DialogError::Cancelled || err_code == DialogError::Dismissed {
-                        return;
+        file_chooser.select_folder(
+            Some(parent),
+            Some(&cancel),
+            clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[strong(rename_to = p)]
+                parent,
+                move |r| {
+                    if r.is_err() {
+                        let err = r.clone().err().unwrap().kind::<DialogError>();
+                        if err.is_some() {
+                            let err_code = err.unwrap();
+                            if err_code == DialogError::Cancelled
+                                || err_code == DialogError::Dismissed
+                            {
+                                return;
+                            }
+                        }
+                    }
+                    let result = window.set_folder(r);
+                    if result.is_err() {
+                        let dlg = AlertDialog::builder()
+                            .message("Could not set folder for Jackbox Party Pack 7")
+                            .detail(result.clone().err().unwrap())
+                            .build();
+
+                        dlg.show(Some(&p));
+                    } else {
+                        if callback.is_some() {
+                            callback.unwrap()(result.unwrap());
+                        }
                     }
                 }
-            }
-            let result = window.set_folder(r);
-            if result.is_err() {
-                let dlg = AlertDialog::builder()
-                .message("Could not set folder for Jackbox Party Pack 7")
-                .detail(result.clone().err().unwrap())
-                .build();
-
-                dlg.show(Some(&p));
-            } else {
-                if callback.is_some() {
-                    callback.unwrap()(result.unwrap());
-                }
-            }
-        }));
+            ),
+        );
     }
 
     pub(super) fn setup_folder_selection(&self) {
         self.imp().folder_choose.connect_clicked(clone!(
-            #[weak(rename_to = window)] self,
-            move |_|{
-                window.show_folder_selection(&window, gtk::gio::File::for_path(std::path::Path::new("./")), None::<fn(String)>);
+            #[weak(rename_to = window)]
+            self,
+            move |_| {
+                window.show_folder_selection(
+                    &window,
+                    gtk::gio::File::for_path(std::path::Path::new("./")),
+                    None::<fn(String)>,
+                );
             }
         ));
 
@@ -116,7 +141,7 @@ impl MainMenuWindow {
         let folder_path = PathBuf::from(folder_option);
 
         let mut is_valid = folder_path.exists();
-        
+
         if is_valid {
             let folder = gio::File::for_path(folder_path);
             is_valid = self.verify_folder(folder).is_ok();

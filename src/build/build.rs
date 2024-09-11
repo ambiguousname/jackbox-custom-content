@@ -1,22 +1,42 @@
 use std::process::Command;
-use std::{fs, env, path::PathBuf};
+use std::{env, fs, path::PathBuf};
 
 // Tries to make a distribution as close to https://www.gtk.org/docs/installations/windows/#building-and-distributing-your-application as possible.
-fn compile(out_path : PathBuf) {
-	let new_path = out_path.join("share/glib-2.0/schemas");
-	if !new_path.exists() {
-		let creation = fs::create_dir_all(new_path.clone().as_path());
-		assert!(creation.is_ok(), "Could not create directories: {}", creation.err().unwrap());
-	}
+fn compile(out_path: PathBuf) {
+    let new_path = out_path.join("share/glib-2.0/schemas");
+    if !new_path.exists() {
+        let creation = fs::create_dir_all(new_path.clone().as_path());
+        assert!(
+            creation.is_ok(),
+            "Could not create directories: {}",
+            creation.err().unwrap()
+        );
+    }
 
-	let target_dir = format!("--targetdir={}", new_path.as_path().to_str().expect("Could not get path str"));
+    let target_dir = format!(
+        "--targetdir={}",
+        new_path.as_path().to_str().expect("Could not get path str")
+    );
 
-	let o = Command::new("glib-compile-schemas").arg("./src").arg(target_dir).output().unwrap();
-	assert!(o.status.success(), "glib-compile-schemas failed with {} and stderr: {}\n", o.status, String::from_utf8_lossy(&o.stderr));
+    let o = Command::new("glib-compile-schemas")
+        .arg("./src")
+        .arg(target_dir)
+        .output()
+        .unwrap();
+    assert!(
+        o.status.success(),
+        "glib-compile-schemas failed with {} and stderr: {}\n",
+        o.status,
+        String::from_utf8_lossy(&o.stderr)
+    );
 
-	println!("cargo:rerun-if-changed=src/com.ambiguousname.CustomBox.gschema.xml");
+    println!("cargo:rerun-if-changed=src/com.ambiguousname.CustomBox.gschema.xml");
 
-	glib_build_tools::compile_resources(&["src/templates/", "src/content/", "src/mod_manager"], "src/resources.gresource.xml", "resources.gresource");
+    glib_build_tools::compile_resources(
+        &["src/templates/", "src/content/", "src/mod_manager"],
+        "src/resources.gresource.xml",
+        "resources.gresource",
+    );
 }
 
 // From https://stackoverflow.com/questions/26958489/how-to-copy-a-folder-recursively-in-rust
@@ -67,12 +87,14 @@ use content_list::compile_content_list;
 
 #[allow(unused_parens)]
 fn main() {
-	let out_path = PathBuf::from(env::var_os("OUT_DIR").expect("Could not get OUT_DIR environment variable.")).join("../../../");
-	
-	compile(out_path.clone());
-	compile_content_list();	
-	// install_theme(out_path.clone());
-	// install_settings(out_path.clone());
+    let out_path =
+        PathBuf::from(env::var_os("OUT_DIR").expect("Could not get OUT_DIR environment variable."))
+            .join("../../../");
 
-	println!("cargo:rerun-if-changed=src/build/build.rs");
+    compile(out_path.clone());
+    compile_content_list();
+    // install_theme(out_path.clone());
+    // install_settings(out_path.clone());
+
+    println!("cargo:rerun-if-changed=src/build/build.rs");
 }

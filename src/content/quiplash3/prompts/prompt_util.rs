@@ -1,6 +1,12 @@
 use std::{cell::Cell, collections::HashMap};
 
-use crate::{quick_template, templates::{editable_list::EditableList, content_util::{labelled_box::LabelledBox, form_manager::FormManager}}};
+use crate::{
+    quick_template,
+    templates::{
+        content_util::{form_manager::FormManager, labelled_box::LabelledBox},
+        editable_list::EditableList,
+    },
+};
 use glib::{derived_properties, Properties};
 
 quick_template!(QuiplashGenericRoundPrompt, "/content/quiplash3/prompts/generic_round_prompt.ui", gtk::Box, (gtk::Widget), (),
@@ -32,9 +38,22 @@ impl ObjectImpl for imp::QuiplashGenericRoundPrompt {
 
         let obj = self.obj();
 
-        obj.bind_property::<gtk::Box>("final-round", obj.imp().filter_ogg.as_ref(), "visible").invert_boolean().sync_create().build();
-        obj.bind_property::<gtk::Box>("final-round", obj.imp().filter_text.as_ref(), "visible").invert_boolean().sync_create().build();
-        obj.bind_property::<gtk::Box>("final-round", obj.imp().filter_transcript.as_ref(), "visible").invert_boolean().sync_create().build();
+        obj.bind_property::<gtk::Box>("final-round", obj.imp().filter_ogg.as_ref(), "visible")
+            .invert_boolean()
+            .sync_create()
+            .build();
+        obj.bind_property::<gtk::Box>("final-round", obj.imp().filter_text.as_ref(), "visible")
+            .invert_boolean()
+            .sync_create()
+            .build();
+        obj.bind_property::<gtk::Box>(
+            "final-round",
+            obj.imp().filter_transcript.as_ref(),
+            "visible",
+        )
+        .invert_boolean()
+        .sync_create()
+        .build();
 
         // Would be nice to have, but currently not supported by GtkEntry.
         // self.prompt_text_entry.connect_notify(Some("text"), |entry, _| {
@@ -45,7 +64,7 @@ impl ObjectImpl for imp::QuiplashGenericRoundPrompt {
         // });
 
         // let final_round = self.final_round.get();
-        
+
         // let is_final = final_round.is_some_and(|b| *b);
         // println!("{} {}", is_final, final_round.is_some());
         // if is_final {
@@ -65,7 +84,7 @@ impl QuiplashGenericRoundPrompt {
         QuiplashGenericRoundPrompt::ensure_type();
     }
 
-    pub fn update_form(&self, values : HashMap<String, glib::Value>) {
+    pub fn update_form(&self, values: HashMap<String, glib::Value>) {
         self.imp().form_manager.update_values(values);
     }
 

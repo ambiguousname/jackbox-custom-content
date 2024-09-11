@@ -1,9 +1,12 @@
-use gtk::{gio::{self, ListStore}, Button, Window, SingleSelection, TreeListRow, AlertDialog};
 use glib::{clone, Object};
+use gtk::{
+    gio::{self, ListStore},
+    AlertDialog, Button, SingleSelection, TreeListRow, Window,
+};
 
 use std::cell::OnceCell;
 
-use crate::{quick_template, content::Content};
+use crate::{content::Content, quick_template};
 
 mod game_list;
 
@@ -42,11 +45,11 @@ impl WindowImpl for imp::ContentCreationDialog {}
 #[gtk::template_callbacks]
 impl ContentCreationDialog {
     pub fn new(parent: &impl IsA<Window>) -> Self {
-		ContentCreationDialog::ensure_all_types();
-        let this : Self = Object::builder()
-        .property("transient-for", parent)
-        .property("hide-on-close", true)
-        .build();
+        ContentCreationDialog::ensure_all_types();
+        let this: Self = Object::builder()
+            .property("transient-for", parent)
+            .property("hide-on-close", true)
+            .build();
         this
     }
 
@@ -57,53 +60,74 @@ impl ContentCreationDialog {
     }
 
     fn setup_model(&self) {
-		let data : ListStore = gtk::Builder::from_resource("/content/content_list.ui").object("content_list").expect("Could not get store.");
-		let tree = gtk::TreeListModel::new(data, false, true, |item| {
-			let party_pack : GameListItem = item.clone().downcast().expect("Could not get party pack item.");
+        let data: ListStore = gtk::Builder::from_resource("/content/content_list.ui")
+            .object("content_list")
+            .expect("Could not get store.");
+        let tree = gtk::TreeListModel::new(data, false, true, |item| {
+            let party_pack: GameListItem = item
+                .clone()
+                .downcast()
+                .expect("Could not get party pack item.");
 
-			if party_pack.children().is_some() {
-				party_pack.children()
-			} else {
-				None
-			}
-		});
-		self.imp().game_select_model.set_model(Some(&tree));
-	}
+            if party_pack.children().is_some() {
+                party_pack.children()
+            } else {
+                None
+            }
+        });
+        self.imp().game_select_model.set_model(Some(&tree));
+    }
 
     fn setup_switch(&self) {
         let game_select = self.imp().game_select_model.clone();
         game_select.connect_selection_changed(clone!(
-            #[weak(rename_to = window)] self,
-                move |selection, _, _| {
+            #[weak(rename_to = window)]
+            self,
+            move |selection, _, _| {
                 window.switch(selection);
             }
         ));
     }
 
-    fn switch(&self, selection : &SingleSelection) {
-        let row : TreeListRow = selection.selected_item().and_downcast().expect("Could not get TreeListRow.");
-        let item : GameListItem = row.item().and_downcast().expect("Could not get GameListItem");
+    fn switch(&self, selection: &SingleSelection) {
+        let row: TreeListRow = selection
+            .selected_item()
+            .and_downcast()
+            .expect("Could not get TreeListRow.");
+        let item: GameListItem = row
+            .item()
+            .and_downcast()
+            .expect("Could not get GameListItem");
         if item.content().is_some() {
-            self.imp().content_select_model.set_model(Some(&item.content().unwrap()));
+            self.imp()
+                .content_select_model
+                .set_model(Some(&item.content().unwrap()));
         } else {
-            self.imp().content_select_model.set_model(None::<& gio::ListModel>);
+            self.imp()
+                .content_select_model
+                .set_model(None::<&gio::ListModel>);
         }
     }
 
-	#[template_callback]
-    fn handle_create_clicked(&self, _button : &Button) {
+    #[template_callback]
+    fn handle_create_clicked(&self, _button: &Button) {
         let current_option = self.imp().content_select_model.selected_item();
         if current_option.is_none() {
             let dlg = AlertDialog::builder()
-            .message("Could not create content.")
-            .detail("Try selecting a game from the left.")
-            .build();
+                .message("Could not create content.")
+                .detail("Try selecting a game from the left.")
+                .build();
             dlg.show(Some(self));
             return;
         }
 
-        let current_selection : Content = current_option.and_downcast().expect("Could not get selected.");
-        let main_menu = self.transient_for().and_downcast::<MainMenuWindow>().unwrap();
+        let current_selection: Content = current_option
+            .and_downcast()
+            .expect("Could not get selected.");
+        let main_menu = self
+            .transient_for()
+            .and_downcast::<MainMenuWindow>()
+            .unwrap();
         main_menu.add_content_to_mod(current_selection);
     }
 }

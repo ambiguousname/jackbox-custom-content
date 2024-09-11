@@ -1,4 +1,4 @@
-use gtk::{prelude::*, Application, glib::ExitCode};
+use gtk::{glib::ExitCode, prelude::*, Application};
 // mod util;
 // mod content;
 #[allow(unused_parens)]
@@ -9,7 +9,7 @@ mod content;
 mod mod_manager;
 mod util;
 
-const APP_ID : &str = "com.ambiguousname.CustomBox";
+const APP_ID: &str = "com.ambiguousname.CustomBox";
 
 // const GLOBAL_CSS : &str = "";
 
@@ -24,9 +24,7 @@ const APP_ID : &str = "com.ambiguousname.CustomBox";
 #[allow(unused_parens)]
 fn main() -> ExitCode {
     templates::load_resources();
-    let app = Application::builder()
-        .application_id(APP_ID)
-        .build();
+    let app = Application::builder().application_id(APP_ID).build();
 
     app.connect_activate(build_window);
 
@@ -42,7 +40,7 @@ fn build_window(app: &Application) {
         println!("DEBUG SLEEP");
         std::thread::sleep(std::time::Duration::from_millis(10));
     }
-    
+
     // We create the main window.
     let win = MainMenuWindow::new(app);
     // println!("Window created.");

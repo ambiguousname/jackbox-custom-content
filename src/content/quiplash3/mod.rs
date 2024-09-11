@@ -1,2 +1,2 @@
-pub mod safety_quip;
 pub mod prompts;
+pub mod safety_quip;

@@ -1,5 +1,3 @@
-
-
 /* TODO:
 * Maybe some way to grab what we need to automatically @implements and @extends?
 * Add options for Properties, Signals, Callbacks?
@@ -30,7 +28,7 @@ macro_rules! full_object {
                 const NAME : &'static str = concat!("CustomBox", stringify!($name));
                 type Type = super::$name;
                 type ParentType = $widget_type;
-                
+
                 $($subclass_stmt)*
             }
         }
@@ -62,7 +60,7 @@ macro_rules! full_template {
                 klass.bind_template();
                 $($crate::call_func!(klass, $instance_callbacks);)?
             }
-        
+
             fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
                 obj.init_template();
             }
@@ -73,7 +71,7 @@ macro_rules! full_template {
 /*
 Usage: quick_template!(ClassName, "path/to/template.ui", WidgetType (e.g., gtk::ScrolledWindow), (gtk::ExtendedWidgetsLike, gtk::Window, gtk::Widget; CustomInterface1; CustomInterface2), (gtk::ImplementedObjectsLike, gtk::Native, gtk::Root, gio::ShortcutMap), [props] [handlers] struct {
     structure definition here
-    
+
     props or handlers may be inserted before the struct definition for:
 
     props - Allow custom properties (like #[property(get, set)])

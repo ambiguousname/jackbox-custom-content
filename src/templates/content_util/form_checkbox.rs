@@ -1,54 +1,67 @@
-use gtk::glib::{Properties, derived_properties};
+use gtk::glib::{derived_properties, Properties};
 
-use crate::quick_object;
 use super::form::{FormObject, FormObjectExt, FormObjectImpl};
+use crate::quick_object;
 
 use std::cell::RefCell;
 
 quick_object!(FormCheckbox, gtk::CheckButton, (gtk::Widget), (gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget; FormObject),
-	#[derive(Default, Properties)]
-	#[properties(wrapper_type=super::FormCheckbox)]
-	struct {
-		#[property(get, set)]
-		pub required : RefCell<bool>,
-	}
+    #[derive(Default, Properties)]
+    #[properties(wrapper_type=super::FormCheckbox)]
+    struct {
+        #[property(get, set)]
+        pub required : RefCell<bool>,
+    }
 );
 
 #[derived_properties]
 impl ObjectImpl for imp::FormCheckbox {}
 impl WidgetImpl for imp::FormCheckbox {
-	fn realize(&self) {
-		self.parent_realize();
-		
-		self.obj().construct_form_obj();
-	}
+    fn realize(&self) {
+        self.parent_realize();
+
+        self.obj().construct_form_obj();
+    }
 }
 impl CheckButtonImpl for imp::FormCheckbox {}
 impl FormObjectImpl for imp::FormCheckbox {
-	fn display_error(&self, error : Option<super::form::FormError>) {
-		match error {
-			Some(super::form::FormError::INVALID) => self.obj().child().unwrap().next_sibling().unwrap().add_css_class("error"),
-			_ => self.obj().child().unwrap().next_sibling().unwrap().remove_css_class("error"),
-		};
-	}
+    fn display_error(&self, error: Option<super::form::FormError>) {
+        match error {
+            Some(super::form::FormError::INVALID) => self
+                .obj()
+                .child()
+                .unwrap()
+                .next_sibling()
+                .unwrap()
+                .add_css_class("error"),
+            _ => self
+                .obj()
+                .child()
+                .unwrap()
+                .next_sibling()
+                .unwrap()
+                .remove_css_class("error"),
+        };
+    }
 
-	/// is_valid should only be called if required is set to true.
-	/// If required is true, then we make the assumption that the checkbox value must be set to true (like an "I acknowledge" checkbox).
-	fn is_valid(&self) -> bool {
-		self.value().get().unwrap()
-	}
+    /// is_valid should only be called if required is set to true.
+    /// If required is true, then we make the assumption that the checkbox value must be set to true (like an "I acknowledge" checkbox).
+    fn is_valid(&self) -> bool {
+        self.value().get().unwrap()
+    }
 
-	fn value(&self) -> glib::Value {
-		self.obj().is_active().to_value()
-	}
+    fn value(&self) -> glib::Value {
+        self.obj().is_active().to_value()
+    }
 
-	fn set_value(&self, value: glib::Value) {
-		self.obj().set_active(value.get().expect("Could not get bool for set_value."));
-	}
+    fn set_value(&self, value: glib::Value) {
+        self.obj()
+            .set_active(value.get().expect("Could not get bool for set_value."));
+    }
 }
 
 impl FormCheckbox {
-	pub fn ensure_all_types() {
-		FormCheckbox::ensure_type();
-	}
+    pub fn ensure_all_types() {
+        FormCheckbox::ensure_type();
+    }
 }

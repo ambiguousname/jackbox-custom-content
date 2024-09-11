@@ -1,2 +1,2 @@
-mod template_macro;
 pub mod manifest_writer;
+mod template_macro;
