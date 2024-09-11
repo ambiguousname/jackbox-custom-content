@@ -13,6 +13,8 @@ use self::{content_data::ContentData, mod_store::ModStore};
 // This would be really nice as its own Rust structure, but Glib annoyances (like proper signal connectivity) means that this will have to do.
 
 mod imp {
+	use std::path::PathBuf;
+
 	use super::*;
 
 	#[derive(Default)]
@@ -122,8 +124,10 @@ impl ModManager {
 	}
 
 	fn mod_creation_finish(&self, name : String) {
+		let folder = self.main_menu().config().string("mods-folder");
+		let mods_path = Path::new(&folder);
 		// Create new ModStore:
-		let result = ModStore::new_folder(name.clone());
+		let result = ModStore::new_folder(mods_path, name.clone());
 		if result.is_err() {
 			let error = result.err().unwrap();
 			AlertDialog::builder()
@@ -157,7 +161,10 @@ impl ModManager {
 	}
 
 	fn load_mod_from_dir(&self, dir : DirEntry) {
-		let result = ModStore::from_folder(dir);
+		let folder = self.main_menu().config().string("mods-folder");
+		let mods_path = Path::new(&folder);
+
+		let result = ModStore::from_folder(mods_path, dir);
 		let mod_store = result.unwrap();
 		self.add_mod(mod_store);
 	}

@@ -1,7 +1,7 @@
 mod content_creation;
 mod folder_selection;
 
-use std::{sync::OnceLock, vec::Vec};
+use std::{fs, sync::OnceLock, vec::Vec};
 
 // Template construction:
 use gtk::{gio::{self, ActionEntry, Settings}, glib::clone, AboutDialog, AlertDialog, Application, Box, Button, Stack, StackSwitcher};
@@ -230,15 +230,23 @@ impl MainMenuWindow {
 	// endregion
 
 	// region: Settings config
-	fn config(&self) -> &Settings {
-		self.imp().config.get_or_init(|| {
+	pub(crate) fn config(&self) -> &Settings {
+		let conf = self.imp().config.get_or_init(|| {
 			Settings::new(crate::APP_ID)
-		})
+		});
+
+		if conf.string("mods-folder") == "" {
+			conf.set_string("mods-folder", std::env::current_dir().expect("Could not get local file path.").as_path().to_str().unwrap()).unwrap();
+		}
+
+		conf
 	}
 
 	// Remove the _ if this ends up getting used.
 	fn _reset_config(&self) {
 		self.config().reset("game-folder");
+		self.config().reset("mods-folder");
+		self.config().reset("dark-mode");
 	}
 
 	fn preferences_window(&self) -> &PreferencesWindow {

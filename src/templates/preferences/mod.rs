@@ -20,6 +20,9 @@ quick_template!(PreferencesWindow, "/templates/preferences/preferences.ui", Wind
 
 		#[template_child(id="folder_label")]
 		pub folder_label : TemplateChild<gtk::Inscription>,
+
+		#[template_child(id = "mod_folder_label")]
+		pub mod_folder_label : TemplateChild<gtk::Inscription>,
 	}
 );
 
@@ -84,8 +87,13 @@ impl PreferencesWindow {
 	}
 
 	fn update_folder_label(&self, string: String) {
-		self.imp().folder_label.set_text(Some(string.as_str()));
+		self.imp().folder_label.set_text(Some(&string));
 		self.imp().folder_label.set_tooltip_text(Some(&string));
+	}
+
+	fn update_mod_folder_label(&self, string: String) {
+		self.imp().mod_folder_label.set_text(Some(&string));
+		self.imp().mod_folder_label.set_tooltip_text(Some(&string));
 	}
 
 	fn init_prefs(&self) {
@@ -97,6 +105,9 @@ impl PreferencesWindow {
 
 		let folder_str = settings.string("game-folder");
 		self.update_folder_label(folder_str.to_string());
+
+		let mod_folder_str = settings.string("mods-folder");
+		self.update_mod_folder_label(mod_folder_str.to_string());
 	}
 
 	#[template_callback]
@@ -126,8 +137,22 @@ impl PreferencesWindow {
 		parent.show_folder_selection(self, Some(glib::clone!(
 			#[weak(rename_to = window)] self,
 			move |result : String| {
+				window.settings().set_string("game-folder", &result).unwrap();
 				window.update_folder_label(result);
 			}
 		)));
+	}
+
+	#[template_callback]
+	fn handle_mod_folder_set(&self) {
+		let parent : MainMenuWindow = self.transient_for().and_downcast().expect("Could not get parent.");
+
+		parent.show_folder_selection(self, Some(glib::clone!(
+			#[weak(rename_to = window)] self,
+			move |result: String| {
+				window.settings().set_string("mods-folder", &result).unwrap();
+				window.update_mod_folder_label(result);
+			}
+		)))
 	}
 }

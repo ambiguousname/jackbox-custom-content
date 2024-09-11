@@ -5,6 +5,10 @@
             <default>""</default>
             <summary>Jackbox Party Pack 7 Folder</summary>
         </key>
+        <key name="mods-folder" type="s">
+            <default>""</default>
+            <summary>Mods Directory</summary>
+        </key>
         <key name="dark-mode" type="b">
             <default>true</default>
             <summary>Use Dark Mode</summary>

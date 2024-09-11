@@ -97,12 +97,9 @@ impl ModStore {
 		content_data.append(&new_content_data);
 	}
 
-	const MODS_FOLDER : &'static str = "./mods";
-
-	pub fn new_folder(name : String) -> Result<Self, Error> {
-		
+	pub fn new_folder(base_mods_folder : &Path, name : String) -> Result<Self, Error> {
 		// Create mod folder:
-		let mod_dir = PathBuf::from_iter(vec![ModStore::MODS_FOLDER, &name]);
+		let mod_dir = base_mods_folder.join(&name);
 		if mod_dir.exists() {
 			let msg = format!("Folder {name} already exists.");
 			return Err(Error::new(std::io::ErrorKind::Other, msg));
@@ -115,10 +112,10 @@ impl ModStore {
 		ModStore::new(name, mod_dir)
 	}
 
-	pub fn from_folder(dir : DirEntry) -> Result<Self, Error> {
+	pub fn from_folder(base_mods_folder : &Path, dir : DirEntry) -> Result<Self, Error> {
 		// TODO: Load subcontent.
 		let dirname = dir.file_name().into_string().expect("Could not get directory string.");
-		let mod_dir = PathBuf::from_iter(vec![ModStore::MODS_FOLDER, &dirname]);
+		let mod_dir = base_mods_folder.join(&dirname);
 		ModStore::new(dirname, mod_dir)
 	}
 
