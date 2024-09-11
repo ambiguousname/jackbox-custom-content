@@ -133,3 +133,63 @@ impl Subcontent for ManifestItem {
         todo!()
     }
 }
+
+mod tests {
+    use std::{fs::File, io::Read, path::{Path, PathBuf}};
+
+    use crate::content::subcontent::Subcontent;
+
+    use super::ManifestItem;
+
+    struct TestManifest {
+        pub m: ManifestItem,
+        path : PathBuf
+    }
+
+    impl TestManifest {
+        pub fn create(val : &'static str, folder : PathBuf) -> Self {
+            let m = ManifestItem::new(serde_json::to_value(val).unwrap());
+            TestManifest {
+                m,
+                path: folder
+            }
+        }
+    }
+
+    impl Drop for TestManifest {
+        fn drop(&mut self) {
+            if self.path.exists() {
+                std::fs::remove_file(self.path.clone())
+                    .expect(format!("Could not remove {}", &self.path.display()).as_str());
+            }
+        }
+    }
+
+    fn assert_file_matches(path: &Path, buf: String) {
+        assert!(path.exists());
+        let read = File::open(path);
+        assert!(read.is_ok(), "{}", read.err().unwrap());
+
+        let mut reader = read.unwrap();
+        let mut out_str = String::new();
+        let write = reader.read_to_string(&mut out_str);
+        assert!(write.is_ok(), "{}", write.err().unwrap());
+        assert_eq!(out_str, buf);
+    }
+
+    #[test]
+    fn write_single_manifest_item() {
+        let p = Path::new("manifest-write-test.json");
+        let v = TestManifest::create(r#"
+{
+    "id": "test"        
+}"#, p.into());
+
+
+        v.m.write_to_mod("0".into(), p, vec![p.to_str().unwrap()]).unwrap();
+
+        assert_file_matches(p, String::from("[]"));
+
+        drop(v);
+    }
+}
