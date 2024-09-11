@@ -2,7 +2,7 @@ pub mod mod_store;
 mod content_data;
 mod data_serializer;
 
-use std::{collections::HashMap, fs::{self, DirEntry}, cell::RefCell, sync::OnceLock, path::Path};
+use std::{cell::RefCell, collections::HashMap, fs::{self, DirEntry}, path::{Path, PathBuf}, sync::OnceLock};
 
 use gtk::{gio::Cancellable, glib::{self, clone, subclass::prelude::*, Object}, prelude::*, AlertDialog, Window};
 
@@ -45,7 +45,6 @@ impl ModManager {
 		manager.imp().main_menu.get_or_init(|| {
 			main_menu
 		});
-		manager.load_mods();
 		manager
 		// let manager =  ModManager {
 		// 	// Need to set up a callback before adding the window:
@@ -140,31 +139,40 @@ impl ModManager {
 		self.add_mod(mod_store);
 	}
 
-	fn load_mods(&self) {
+	pub(crate) fn clear_mods(&self) {
+		self.imp().mods.borrow_mut().clear();
+		self.main_menu().clear_mods_stack();
+	}
+
+	pub(crate) fn load_mods(&self) {
 		// TODO: Make an "All" content list that doesn't use traditional mod loading.
 		// self.add_mod("All".to_string());
-		let mods_folder = Path::new("./mods");
+		let folder = self.main_menu().config().string("mods-folder");
+		let mods_folder = Path::new(&folder);
 
         if !mods_folder.exists() {
             let result = fs::create_dir(mods_folder);
             if result.is_err() {
-                eprintln!("Could not create ./mods directory.");
+                eprintln!("Could not create mods directory.");
             }
         }
 
         for directory in fs::read_dir(mods_folder).unwrap() {
             let dir = directory.expect("Could not get child directory.");
-            self.load_mod_from_dir(dir);
+			let dirname = dir.file_name().into_string().expect("Could not get directory string.");
+
+			let mod_path = mods_folder.join(dir.path());
+
+			if mod_path.exists() && mod_path.is_dir() {
+				self.load_mod_from_dir(dirname, mod_path);
+			}
         }
 		// let gesture = &self.imp().sidebar_gesture;
 		// gesture.set_property("widget", self.imp().mod_stack_sidebar.to_value());
 	}
 
-	fn load_mod_from_dir(&self, dir : DirEntry) {
-		let folder = self.main_menu().config().string("mods-folder");
-		let mods_path = Path::new(&folder);
-
-		let result = ModStore::from_folder(mods_path, dir);
+	fn load_mod_from_dir(&self, dirname : String, mod_path : PathBuf) {
+		let result = ModStore::from_folder(dirname, mod_path);
 		let mod_store = result.unwrap();
 		self.add_mod(mod_store);
 	}

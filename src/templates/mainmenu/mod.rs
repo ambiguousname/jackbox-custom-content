@@ -65,6 +65,7 @@ impl ObjectImpl for imp::MainMenuWindow {
 
 		// Same with mod manager:
 		obj.mod_manager();
+		obj.reload_mods();
 
 		obj.setup_folder_selection();
 	}
@@ -170,6 +171,11 @@ impl MainMenuWindow {
 		})
 	}
 
+	pub(crate) fn reload_mods(&self) {
+		self.mod_manager().clear_mods();
+		self.mod_manager().load_mods();
+	}
+
 	fn setup_stack(&self) {
 		self.imp().mod_stack.connect_notify(Some("visible-child"), |this, _| { MainMenuWindow::stack_changed(this); });
 		MainMenuWindow::stack_changed(&self.imp().mod_stack);
@@ -193,6 +199,17 @@ impl MainMenuWindow {
 		// For now the program still runs.
 		self.imp().mod_stack.remove(&child);
 		MainMenuWindow::stack_changed(&self.imp().mod_stack);
+	}
+
+	pub fn clear_mods_stack(&self) {
+		let mut c = self.imp().mod_stack.first_child();
+		while c.is_some() {
+			let w = c.unwrap();
+			
+			c = w.next_sibling();
+			
+			self.imp().mod_stack.remove(&w);
+		}
 	}
 
 	pub fn visible_mod_stack_name(&self) -> Option<glib::GString> {

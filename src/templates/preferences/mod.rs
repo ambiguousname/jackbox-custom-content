@@ -203,6 +203,9 @@ impl PreferencesWindow {
                 dlg.show(Some(&window));
             } else {
 				window.update_mod_folder_label(result.unwrap());
+
+				// Reload the current mods:
+				window.transient_for().and_downcast::<MainMenuWindow>().unwrap().reload_mods();
             }
         }));
 	}

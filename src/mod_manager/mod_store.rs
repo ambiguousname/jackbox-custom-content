@@ -112,11 +112,9 @@ impl ModStore {
 		ModStore::new(name, mod_dir)
 	}
 
-	pub fn from_folder(base_mods_folder : &Path, dir : DirEntry) -> Result<Self, Error> {
+	pub fn from_folder(store_name : String, mod_dir : PathBuf) -> Result<Self, Error> {
 		// TODO: Load subcontent.
-		let dirname = dir.file_name().into_string().expect("Could not get directory string.");
-		let mod_dir = base_mods_folder.join(&dirname);
-		ModStore::new(dirname, mod_dir)
+		ModStore::new(store_name, mod_dir)
 	}
 
 	fn string_to_id(string : String) -> String {
