@@ -135,33 +135,21 @@ impl Subcontent for ManifestItem {
 }
 
 mod tests {
-    use std::{fs::File, io::Read, path::{Path, PathBuf}};
+    use std::{fs::File, io::Read, path::Path};
+
+    use serde_json::json;
 
     use crate::content::subcontent::Subcontent;
 
     use super::ManifestItem;
 
-    struct TestManifest {
-        pub m: ManifestItem,
-        path : PathBuf
+    struct TestManifest<'a> {
+        path : &'a Path
     }
 
-    impl TestManifest {
-        pub fn create(val : &'static str, folder : PathBuf) -> Self {
-            let m = ManifestItem::new(serde_json::to_value(val).unwrap());
-            TestManifest {
-                m,
-                path: folder
-            }
-        }
-    }
-
-    impl Drop for TestManifest {
+    impl Drop for TestManifest<'_> {
         fn drop(&mut self) {
-            if self.path.exists() {
-                std::fs::remove_file(self.path.clone())
-                    .expect(format!("Could not remove {}", &self.path.display()).as_str());
-            }
+            std::fs::remove_file(self.path).expect(format!("Could not remove {}", self.path.display()).as_str());
         }
     }
 
@@ -180,16 +168,43 @@ mod tests {
     #[test]
     fn write_single_manifest_item() {
         let p = Path::new("manifest-write-test.json");
-        let v = TestManifest::create(r#"
-{
-    "id": "test"        
-}"#, p.into());
 
+        let _test = TestManifest {
+            path: p
+        };
 
-        v.m.write_to_mod("0".into(), p, vec![p.to_str().unwrap()]).unwrap();
+        let v = ManifestItem::new(
+            json!({
+                "value": "test"
+            })
+        );
 
-        assert_file_matches(p, String::from("[]"));
+        v.write_to_mod("0".into(), Path::new("./"), vec![p.to_str().unwrap()]).unwrap();
 
-        drop(v);
+        assert_file_matches(p, String::from(r#"[{"id":"0","value":"test"}]"#));
+    }
+
+    #[test]
+    fn write_multiple_manifest_items() {
+        let p = Path::new("multi-manifest-write.json");
+
+        let _test = TestManifest {
+            path: p
+        };
+
+        let mut values : Vec<String> = Vec::new();
+        for i in 0..5 {
+            let v = ManifestItem::new(
+                json!({
+                    "value": "testing"
+                })
+            );
+
+            v.write_to_mod(i.to_string(), Path::new("./"), vec![p.to_str().unwrap()]).unwrap();
+
+            values.push(format!(r#"{{"id":"{i}","value":"testing"}}"#).into());
+
+            assert_file_matches(p, format!("[{}]", values.join(",")));
+        }
     }
 }
