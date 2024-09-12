@@ -79,11 +79,13 @@ impl Subcontent for ManifestItem {
         let serde_out = serde_json::to_vec(&to_insert)
             .map_err(|e| std::io::Error::new(ErrorKind::InvalidData, e.to_string()))?;
 
-        manifest.active_writer = WriteTo::Buffer(Cursor::new(Vec::new()));
+        // manifest.active_writer = WriteTo::Buffer(Cursor::new(Vec::new()));
 
+        let mut array_nonzero = false;
         let mut written_values = false;
         // Now update our manifest value:
         while let Some(array_value) = manifest.read_array_item() {
+
             let val = array_value.map_err(|e| {
                 if let ManifestError::StdErr(err) = e {
                     return err;
@@ -91,36 +93,46 @@ impl Subcontent for ManifestItem {
                 std::io::Error::new(ErrorKind::Other, e.to_string())
             })?;
 
+            
+            println!("{val}");
+
             let test_id = val.as_object().and_then(|o| o.get("id"));
 
-            if !written_values && test_id.is_some() {
+            if test_id.is_some() {
                 if test_id.unwrap().to_string() == id {
-                    manifest.active_writer = WriteTo::OutFile;
-
+                    // manifest.active_writer = WriteTo::OutFile;
                     manifest.write(&serde_out)?;
-                    manifest.write(b",")?;
                     written_values = true;
                 } else {
                     manifest.write(val.to_string().as_bytes())?;
                 }
             }
+
+            array_nonzero = true;
         }
         // If we've reached the end of the array with no out values, then we need to go back right before the array ends and write our value.
         if !written_values {
             // Flush our buffer first:
             let mut str = String::new();
-            match &mut manifest.active_writer {
-                WriteTo::Buffer(w) => {
-                    w.set_position(0);
-                    w.read_to_string(&mut str)?;
-                    w.get_mut().clear();
-                }
-                _ => unreachable!("Unrecognized writer."),
-            };
-            manifest.write_to_outfile(str.as_bytes())?;
+
+            // match &mut manifest.active_writer {
+            //     WriteTo::Buffer(w) => {
+            //         w.set_position(0);
+            //         w.read_to_string(&mut str)?;
+            //         w.get_mut().clear();
+            //     }
+            //     _ => unreachable!("Unrecognized writer."),
+            // };
+            // manifest.write_to_outfile(str.as_bytes())?;
 
             // Then write our values:
             manifest.active_writer = WriteTo::OutFile;
+
+            // If there are items before this, we need to add a comma.
+            if array_nonzero {
+                manifest.write(b",")?;
+            }
+
             manifest.write(&serde_out)?;
             manifest.write(b"]")?;
         }
@@ -206,5 +218,44 @@ mod tests {
 
             assert_file_matches(p, format!("[{}]", values.join(",")));
         }
+    }
+
+    #[test]
+    fn edit_manifest_items() {
+        let p = Path::new("manifest-edit.json");
+
+        let _test = TestManifest {
+            path: p
+        };
+        
+        let mut values : Vec<String> = Vec::new();
+        for i in 0..5 {
+            let v = ManifestItem::new(
+                json!({
+                    "value": "testing"
+                })
+            );
+
+            let id = match i {
+                0 | 3 => 0,
+                _ => i
+            };
+
+            v.write_to_mod(id.to_string(), Path::new("./"), vec![p.to_str().unwrap()]).unwrap();
+
+            values.push(format!(r#"{{"id":"{id}","value":"testing"}}"#).into());
+
+            assert_file_matches(p, format!("[{}]", values.join(",")));
+        }
+
+        let edit = ManifestItem::new(json!({"otherValue": "test"}));
+        
+        edit.write_to_mod("0".into(), Path::new("./"), vec![p.to_str().unwrap()]).unwrap();
+
+
+        values[0] = format!(r#"{{"id":"0","otherValue":"test"}}"#);
+        values[3] = format!(r#"{{"id":"0","otherValue":"test"}}"#);
+
+        assert_file_matches(p, format!("[{}]", values.join(",")))
     }
 }
