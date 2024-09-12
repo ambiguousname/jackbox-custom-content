@@ -93,9 +93,6 @@ impl Subcontent for ManifestItem {
                 std::io::Error::new(ErrorKind::Other, e.to_string())
             })?;
 
-            
-            println!("{val}");
-
             let test_id = val.as_object().and_then(|o| o.get("id"));
 
             if test_id.is_some() {
