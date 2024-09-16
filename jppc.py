@@ -1417,7 +1417,7 @@ content_type_mapping = { #Used in editing content to change data.
     }
 }
 
-if os.path.realpath("../games") == os.getcwd() and os.path.exists("./PartyPack") and os.path.exists("./Everyday"): #Checks to see if we're in the right folder.
+if os.path.realpath("../games") == os.getcwd() and os.path.exists("./Quiplash3") and os.path.exists("./Everyday"): #Checks to see if we're in the right folder.
     main_window.run()
 else:
     sg.Popup("File not in The Jackbox Party Pack 7/games folder. Please see the installation instructions of the Readme for folder location.")
