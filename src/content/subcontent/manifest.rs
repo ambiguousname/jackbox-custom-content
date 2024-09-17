@@ -127,7 +127,7 @@ impl Subcontent for ManifestItem {
 }
 
 mod tests {
-    use std::{fs::File, io::Read, path::Path};
+    use std::{fs::{self, File}, io::Read, path::Path};
 
     use serde_json::json;
 
@@ -201,7 +201,7 @@ mod tests {
     }
 
     #[test]
-    fn edit_manifest_items() {
+    fn edit_manifest_item() {
         let p = Path::new("manifest-edit.json");
 
         let _test = TestManifest {
@@ -230,5 +230,38 @@ mod tests {
         values[3] = format!(r#"{{"id":"3","otherValue":"test"}}"#);
 
         assert_file_matches(p, format!("[{}]", values.join(",")))
+    }
+
+    #[test]
+    fn edit_existing_items() {
+        let p = Path::new("manifest-existing-edit.json");
+
+        let _test = TestManifest {
+            path: p
+        };
+
+        fs::write(p, format!(
+r#"[{{ "id": "0", "value": "test"
+}}, {{
+"id": "1", "value": "item"
+}},
+{{
+"id": "2", "value": "item"
+}},
+{{
+"id": "1", "value": "a"
+}}]"#)).unwrap();
+
+        let edit = ManifestItem::new(json!({"newValue": "testing"}));
+
+        edit.write_to_mod("1".into(), Path::new("./"), vec![p.to_str().unwrap()]).unwrap();
+
+        assert_file_matches(p, format!(
+r#"[{{ "id": "0", "value": "test"
+}}, {{"id":"1","newValue":"testing"}},
+{{
+"id": "2", "value": "item"
+}},
+{{"id":"1","newValue":"testing"}}]"#));
     }
 }
