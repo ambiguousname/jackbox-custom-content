@@ -104,7 +104,7 @@ impl Subcontent for ManifestItem {
                 manifest.write_to_outfile(&buf)?;
             }
         }
-        
+
         // If we've reached the end of the array with no out values, then we need to go back right before the array ends and write our value.
         if !written_values {
             // If there are items before this, we need to add a comma.
@@ -114,7 +114,7 @@ impl Subcontent for ManifestItem {
 
             manifest.write(&serde_out)?;
         }
-        
+
         manifest.write(b"]")?;
         manifest.flush()?;
 
@@ -127,7 +127,11 @@ impl Subcontent for ManifestItem {
 }
 
 mod tests {
-    use std::{fs::{self, File}, io::Read, path::Path};
+    use std::{
+        fs::{self, File},
+        io::Read,
+        path::Path,
+    };
 
     use serde_json::json;
 
@@ -136,12 +140,13 @@ mod tests {
     use super::ManifestItem;
 
     struct TestManifest<'a> {
-        path : &'a Path
+        path: &'a Path,
     }
 
     impl Drop for TestManifest<'_> {
         fn drop(&mut self) {
-            std::fs::remove_file(self.path).expect(format!("Could not remove {}", self.path.display()).as_str());
+            std::fs::remove_file(self.path)
+                .expect(format!("Could not remove {}", self.path.display()).as_str());
         }
     }
 
@@ -161,17 +166,14 @@ mod tests {
     fn write_single_manifest_item() {
         let p = Path::new("manifest-write-test.json");
 
-        let _test = TestManifest {
-            path: p
-        };
+        let _test = TestManifest { path: p };
 
-        let v = ManifestItem::new(
-            json!({
-                "value": "test"
-            })
-        );
+        let v = ManifestItem::new(json!({
+            "value": "test"
+        }));
 
-        v.write_to_mod("0".into(), Path::new("./"), vec![p.to_str().unwrap()]).unwrap();
+        v.write_to_mod("0".into(), Path::new("./"), vec![p.to_str().unwrap()])
+            .unwrap();
 
         assert_file_matches(p, String::from(r#"[{"id":"0","value":"test"}]"#));
     }
@@ -180,19 +182,16 @@ mod tests {
     fn write_multiple_manifest_items() {
         let p = Path::new("multi-manifest-write.json");
 
-        let _test = TestManifest {
-            path: p
-        };
+        let _test = TestManifest { path: p };
 
-        let mut values : Vec<String> = Vec::new();
+        let mut values: Vec<String> = Vec::new();
         for i in 0..5 {
-            let v = ManifestItem::new(
-                json!({
-                    "value": "testing"
-                })
-            );
+            let v = ManifestItem::new(json!({
+                "value": "testing"
+            }));
 
-            v.write_to_mod(i.to_string(), Path::new("./"), vec![p.to_str().unwrap()]).unwrap();
+            v.write_to_mod(i.to_string(), Path::new("./"), vec![p.to_str().unwrap()])
+                .unwrap();
 
             values.push(format!(r#"{{"id":"{i}","value":"testing"}}"#).into());
 
@@ -204,19 +203,16 @@ mod tests {
     fn edit_manifest_item() {
         let p = Path::new("manifest-edit.json");
 
-        let _test = TestManifest {
-            path: p
-        };
-        
-        let mut values : Vec<String> = Vec::new();
-        for i in 0..5 {
-            let v = ManifestItem::new(
-                json!({
-                    "value": "testing"
-                })
-            );
+        let _test = TestManifest { path: p };
 
-            v.write_to_mod(i.to_string(), Path::new("./"), vec![p.to_str().unwrap()]).unwrap();
+        let mut values: Vec<String> = Vec::new();
+        for i in 0..5 {
+            let v = ManifestItem::new(json!({
+                "value": "testing"
+            }));
+
+            v.write_to_mod(i.to_string(), Path::new("./"), vec![p.to_str().unwrap()])
+                .unwrap();
 
             values.push(format!(r#"{{"id":"{i}","value":"testing"}}"#).into());
 
@@ -224,8 +220,9 @@ mod tests {
         }
 
         let edit = ManifestItem::new(json!({"otherValue": "test"}));
-        
-        edit.write_to_mod("3".into(), Path::new("./"), vec![p.to_str().unwrap()]).unwrap();
+
+        edit.write_to_mod("3".into(), Path::new("./"), vec![p.to_str().unwrap()])
+            .unwrap();
 
         values[3] = format!(r#"{{"id":"3","otherValue":"test"}}"#);
 
@@ -236,12 +233,12 @@ mod tests {
     fn edit_existing_items() {
         let p = Path::new("manifest-existing-edit.json");
 
-        let _test = TestManifest {
-            path: p
-        };
+        let _test = TestManifest { path: p };
 
-        fs::write(p, format!(
-r#"[{{ "id": "0", "value": "test"
+        fs::write(
+            p,
+            format!(
+                r#"[{{ "id": "0", "value": "test"
 }}, {{
 "id": "1", "value": "item"
 }},
@@ -250,18 +247,26 @@ r#"[{{ "id": "0", "value": "test"
 }},
 {{
 "id": "1", "value": "a"
-}}]"#)).unwrap();
+}}]"#
+            ),
+        )
+        .unwrap();
 
         let edit = ManifestItem::new(json!({"newValue": "testing"}));
 
-        edit.write_to_mod("1".into(), Path::new("./"), vec![p.to_str().unwrap()]).unwrap();
+        edit.write_to_mod("1".into(), Path::new("./"), vec![p.to_str().unwrap()])
+            .unwrap();
 
-        assert_file_matches(p, format!(
-r#"[{{ "id": "0", "value": "test"
+        assert_file_matches(
+            p,
+            format!(
+                r#"[{{ "id": "0", "value": "test"
 }}, {{"id":"1","newValue":"testing"}},
 {{
 "id": "2", "value": "item"
 }},
-{{"id":"1","newValue":"testing"}}]"#));
+{{"id":"1","newValue":"testing"}}]"#
+            ),
+        );
     }
 }

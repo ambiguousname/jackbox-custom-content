@@ -584,18 +584,23 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
     /// `buf` represents the full string read for this item.
     /// The value returned will NOT be written to the active_writer. You need to write `buf` back to the active writer.
     /// Will return [`None`] when finished.
-    pub fn read_array_item(&mut self) -> (Vec<u8>, Option<Result<serde_json::Value, ManifestError>>) {
+    pub fn read_array_item(
+        &mut self,
+    ) -> (Vec<u8>, Option<Result<serde_json::Value, ManifestError>>) {
         if self.parse_state.last() != Some(&ManifestParseState::ArrayParse) {
-            return (Vec::default(), Some(Err(ManifestError::UnexpectedState(String::from(
-                "Could not parse array item, Manifest is not in an array.",
-            )))));
+            return (
+                Vec::default(),
+                Some(Err(ManifestError::UnexpectedState(String::from(
+                    "Could not parse array item, Manifest is not in an array.",
+                )))),
+            );
         }
         let curr_depth = self.curr_path.len();
 
-        let get_buf = |buf : &WriteTo<T>| -> Vec<u8> {
+        let get_buf = |buf: &WriteTo<T>| -> Vec<u8> {
             match buf {
                 WriteTo::Buffer(w) => w.get_ref().clone(),
-                _ => unreachable!()
+                _ => unreachable!(),
             }
         };
 
@@ -605,7 +610,10 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 
             let node_result = self.parse_node();
             if node_result.is_err() {
-                return (get_buf(&self.active_writer), Some(node_result.map(|_v| serde_json::Value::Null)));
+                return (
+                    get_buf(&self.active_writer),
+                    Some(node_result.map(|_v| serde_json::Value::Null)),
+                );
             }
 
             let node = node_result.expect("Could not unwrap ManifestNode.");
@@ -638,7 +646,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
                 )))),
                 ManifestNode::ObjectStart => 'objstart: {
                     // Flush the buffer to the current write, minus the { we just read:
-                    let mut flush_buf : Vec<u8>;
+                    let mut flush_buf: Vec<u8>;
                     match &mut self.active_writer {
                         WriteTo::Buffer(b) => {
                             flush_buf = b.get_ref().clone();
@@ -1020,8 +1028,11 @@ mod tests {
             assert!(init_res.is_ok(), "{:?}", init_res.unwrap_err());
             let (buf, array_read) = manifest.read_array_item();
             assert!(array_read.is_some(), "Read array value is none.");
-            assert_eq!(str::from_utf8(&buf).unwrap(), r#"{"id":"test_0",
-"includesPlayerName":false,"prompt":"Was","safetyQuips":[  ],"us":  false,"x": false}"#);
+            assert_eq!(
+                str::from_utf8(&buf).unwrap(),
+                r#"{"id":"test_0",
+"includesPlayerName":false,"prompt":"Was","safetyQuips":[  ],"us":  false,"x": false}"#
+            );
             let res = array_read.unwrap();
             assert!(res.is_ok(), "{:?}", res.unwrap_err());
         }
