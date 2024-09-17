@@ -1,5 +1,4 @@
 mod content_data;
-mod data_serializer;
 pub mod mod_store;
 
 use std::{

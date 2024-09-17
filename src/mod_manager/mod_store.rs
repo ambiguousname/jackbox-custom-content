@@ -14,7 +14,7 @@ use std::{
 };
 
 use super::ContentData;
-use crate::{content::SubcontentBox, quick_template};
+use crate::{content::{subcontent::manifest::ManifestItem, SubcontentBox}, quick_template};
 
 quick_template!(ModStore, "/mod_manager/mod_store.ui", gtk::Box, (gtk::Widget), (gtk::Orientable),
     #[derive(Default, CompositeTemplate, Properties)]
@@ -119,6 +119,10 @@ impl ModStore {
             dlg.show(None::<&gtk::Window>);
             return;
         }
+        // endregion
+
+        // region: Add relevant information to the mod manifest
+        // TODO:
         // endregion
 
         // Finally, push it to the ModStore:
