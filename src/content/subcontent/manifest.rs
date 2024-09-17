@@ -101,7 +101,7 @@ impl Subcontent for ManifestItem {
 
             let test_id = val.as_object().and_then(|o| o.get("id"));
 
-            if test_id.is_some() && test_id.unwrap().to_string() == id {
+            if test_id.is_some() && test_id.unwrap().to_string() == format!(r#""{id}""#) {
                 // manifest.active_writer = WriteTo::OutFile;
                 manifest.write_to_outfile(&serde_out)?;
                 just_wrote_item = true;
