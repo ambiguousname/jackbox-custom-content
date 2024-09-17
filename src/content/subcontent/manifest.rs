@@ -82,15 +82,10 @@ impl Subcontent for ManifestItem {
         let mut array_nonzero = false;
 
         let mut written_values = false;
-        let mut just_wrote_item = false;
+
         // Now update our manifest value:
         while let (buf, Some(array_value)) = manifest.read_array_item() {
             array_nonzero = true;
-
-            if just_wrote_item {
-                manifest.write(b",").unwrap();
-                just_wrote_item = false;
-            }
 
             let val = array_value.map_err(|e| {
                 if let ManifestError::StdErr(err) = e {
@@ -104,7 +99,6 @@ impl Subcontent for ManifestItem {
             if test_id.is_some() && test_id.unwrap().to_string() == format!(r#""{id}""#) {
                 // manifest.active_writer = WriteTo::OutFile;
                 manifest.write_to_outfile(&serde_out)?;
-                just_wrote_item = true;
                 written_values = true;
             } else {
                 manifest.write_to_outfile(&buf)?;
@@ -119,8 +113,9 @@ impl Subcontent for ManifestItem {
             }
 
             manifest.write(&serde_out)?;
-            manifest.write(b"]")?;
         }
+        
+        manifest.write(b"]")?;
         manifest.flush()?;
 
         Ok(())
@@ -221,25 +216,18 @@ mod tests {
                 })
             );
 
-            let id = match i {
-                0 | 3 => 0,
-                _ => i
-            };
+            v.write_to_mod(i.to_string(), Path::new("./"), vec![p.to_str().unwrap()]).unwrap();
 
-            v.write_to_mod(id.to_string(), Path::new("./"), vec![p.to_str().unwrap()]).unwrap();
-
-            values.push(format!(r#"{{"id":"{id}","value":"testing"}}"#).into());
+            values.push(format!(r#"{{"id":"{i}","value":"testing"}}"#).into());
 
             assert_file_matches(p, format!("[{}]", values.join(",")));
         }
 
         let edit = ManifestItem::new(json!({"otherValue": "test"}));
         
-        edit.write_to_mod("0".into(), Path::new("./"), vec![p.to_str().unwrap()]).unwrap();
+        edit.write_to_mod("3".into(), Path::new("./"), vec![p.to_str().unwrap()]).unwrap();
 
-
-        values[0] = format!(r#"{{"id":"0","otherValue":"test"}}"#);
-        values[3] = format!(r#"{{"id":"0","otherValue":"test"}}"#);
+        values[3] = format!(r#"{{"id":"3","otherValue":"test"}}"#);
 
         assert_file_matches(p, format!("[{}]", values.join(",")))
     }
