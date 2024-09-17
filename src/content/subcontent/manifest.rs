@@ -79,12 +79,18 @@ impl Subcontent for ManifestItem {
         let serde_out = serde_json::to_vec(&to_insert)
             .map_err(|e| std::io::Error::new(ErrorKind::InvalidData, e.to_string()))?;
 
-        // manifest.active_writer = WriteTo::Buffer(Cursor::new(Vec::new()));
-
         let mut array_nonzero = false;
+
         let mut written_values = false;
+        let mut just_wrote_item = false;
         // Now update our manifest value:
-        while let Some(array_value) = manifest.read_array_item() {
+        while let (buf, Some(array_value)) = manifest.read_array_item() {
+            array_nonzero = true;
+
+            if just_wrote_item {
+                manifest.write(b",").unwrap();
+                just_wrote_item = false;
+            }
 
             let val = array_value.map_err(|e| {
                 if let ManifestError::StdErr(err) = e {
@@ -95,36 +101,18 @@ impl Subcontent for ManifestItem {
 
             let test_id = val.as_object().and_then(|o| o.get("id"));
 
-            if test_id.is_some() {
-                if test_id.unwrap().to_string() == id {
-                    // manifest.active_writer = WriteTo::OutFile;
-                    manifest.write(&serde_out)?;
-                    written_values = true;
-                } else {
-                    manifest.write(val.to_string().as_bytes())?;
-                }
+            if test_id.is_some() && test_id.unwrap().to_string() == id {
+                // manifest.active_writer = WriteTo::OutFile;
+                manifest.write_to_outfile(&serde_out)?;
+                just_wrote_item = true;
+                written_values = true;
+            } else {
+                manifest.write_to_outfile(&buf)?;
             }
-
-            array_nonzero = true;
         }
+        
         // If we've reached the end of the array with no out values, then we need to go back right before the array ends and write our value.
         if !written_values {
-            // Flush our buffer first:
-            let mut str = String::new();
-
-            // match &mut manifest.active_writer {
-            //     WriteTo::Buffer(w) => {
-            //         w.set_position(0);
-            //         w.read_to_string(&mut str)?;
-            //         w.get_mut().clear();
-            //     }
-            //     _ => unreachable!("Unrecognized writer."),
-            // };
-            // manifest.write_to_outfile(str.as_bytes())?;
-
-            // Then write our values:
-            manifest.active_writer = WriteTo::OutFile;
-
             // If there are items before this, we need to add a comma.
             if array_nonzero {
                 manifest.write(b",")?;
