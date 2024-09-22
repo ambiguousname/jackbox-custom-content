@@ -10,6 +10,8 @@ use glib::Object;
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize, Serializer};
 
+use crate::content::subcontent::manifest::ManifestItem;
+use crate::content::subcontent::Subcontent;
 use crate::content::SubcontentBox;
 
 mod imp {
@@ -26,12 +28,12 @@ mod imp {
 
         /// The ID for this particular piece of content.
         #[property(get, set)]
-        #[serde(skip_serializing)]
+        #[serde(serialize_with = "get_ref")]
         pub full_id: RefCell<String>,
 
         /// The number for this piece of content.
         #[property(get, set)]
-        #[serde(skip_serializing)]
+        #[serde(serialize_with = "get_ref")]
         pub id: RefCell<u32>,
 
         #[property(get, set)]
@@ -41,7 +43,7 @@ mod imp {
 
         /// The particular type of this content, set in the xml definition for a ContentWindow.
         #[property(get, set)]
-        #[serde(skip_serializing)]
+        #[serde(serialize_with = "get_ref")]
         pub content_type: RefCell<String>,
 
         /// Store for [`crate::content::Subcontent`], used to invoke various Subcontent functions for writing to and loading from disk.
@@ -61,15 +63,6 @@ mod imp {
 
     #[glib::derived_properties]
     impl ObjectImpl for ContentData {}
-}
-
-fn get_ref<T : Copy, S : Serializer>(t : RefCell<T>, serializer : S) -> Result<S::Ok, S::Error> {
-    ref_serialize(t.borrow().clone(), serializer)
-}
-
-// TODO: needs to be a trait
-fn ref_serialize<S: Serializer>(v : String, serializer: S) -> Result<S::Ok, S::Error> {
-    serializer.serialize_str(v.as_str())
 }
 
 glib::wrapper! {
@@ -106,7 +99,12 @@ impl ContentData {
         for i in 0..subcontent.len() {
             subcontent[i].write_to_mod(self.full_id(), pth.as_path(), args[i].clone())?;
         }
+
         Ok(())
+    }
+
+    pub fn json_value(&self) -> Result<serde_json::Value, serde_json::Error> {
+        serde_json::to_value(self.imp())
     }
 
     pub fn write_to_game(&self) {
@@ -114,5 +112,31 @@ impl ContentData {
         for d in subcontent.iter() {
             d.write_to_game();
         }
+    }
+}
+
+fn get_ref<T : Clone + RefSerialization<S>, S : Serializer>(t : &RefCell<T>, serializer : S) -> Result<S::Ok, S::Error> {
+    T::serialize(&t.borrow().clone(), serializer)
+}
+
+pub trait RefSerialization<S: Serializer> {
+    fn serialize(&self, serializer : S) -> Result<S::Ok, S::Error>;
+}
+
+impl<S : Serializer> RefSerialization<S> for String {
+    fn serialize(&self, serializer : S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self)
+    }
+}
+
+impl <S: Serializer> RefSerialization<S> for bool {
+    fn serialize(&self, serializer : S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> {
+        serializer.serialize_bool(*self)
+    }
+}
+
+impl <S: Serializer> RefSerialization<S> for u32 {
+    fn serialize(&self, serializer : S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> {
+        serializer.serialize_u32(*self)
     }
 }

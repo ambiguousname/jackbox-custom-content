@@ -14,7 +14,7 @@ use std::{
 };
 
 use super::ContentData;
-use crate::{content::{subcontent::manifest::ManifestItem, SubcontentBox}, quick_template};
+use crate::{content::{subcontent::{manifest::ManifestItem, Subcontent}, Content, SubcontentBox}, quick_template};
 
 quick_template!(ModStore, "/mod_manager/mod_store.ui", gtk::Box, (gtk::Widget), (gtk::Orientable),
     #[derive(Default, CompositeTemplate, Properties)]
@@ -26,8 +26,6 @@ quick_template!(ModStore, "/mod_manager/mod_store.ui", gtk::Box, (gtk::Widget), 
         /// Store of [`ContentData`]
         #[template_child(id="store")]
         pub store : TemplateChild<ListStore>,
-
-        // TODO: Need some way to write the list store to JSON.
 
         #[property(get)]
         pub name : OnceCell<String>,
@@ -122,7 +120,15 @@ impl ModStore {
         // endregion
 
         // region: Add relevant information to the mod manifest
-        // TODO:
+        let res = self.write_to_manifest(&new_content_data);
+        if res.is_err() {
+            let dlg = AlertDialog::builder()
+                .message("Could not write content to manifest.json")
+                .detail(format!("Write operations failed: {}", res.unwrap_err()))
+                .build();
+            dlg.show(None::<&gtk::Window>);
+            return;
+        }
         // endregion
 
         // Finally, push it to the ModStore:
@@ -138,9 +144,6 @@ impl ModStore {
         }
         fs::create_dir(&mod_dir)?;
 
-        let mut json = fs::File::create(mod_dir.join("manifest.json"))?;
-        json.write(b"{}")?;
-
         ModStore::new(name, mod_dir)
     }
 
@@ -151,5 +154,19 @@ impl ModStore {
 
     fn string_to_id(string: String) -> String {
         string.to_ascii_lowercase().replace(" ", "_")
+    }
+
+    pub fn write_to_manifest(&self, data : &ContentData) -> Result<(), Error> {
+        let mod_folder = self.imp().mod_folder.borrow();
+        let json_pth = mod_folder.join("manifest.json");
+        let str = json_pth.to_str();
+
+        if str.is_none() {
+            return Err(std::io::Error::new(std::io::ErrorKind::Other, "Could not get valid manifest.json path"));
+        }
+
+        let item = ManifestItem::new(data.json_value()?);
+
+        item.write_item(data.full_id(), &mod_folder, str.unwrap())
     }
 }

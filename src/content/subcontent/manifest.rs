@@ -37,24 +37,8 @@ impl ManifestItem {
         manifest.write(b"[\n]")?;
         Ok(())
     }
-}
 
-impl Subcontent for ManifestItem {
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    fn write_to_game(&self) {
-        todo!()
-    }
-
-    fn write_to_mod(
-        &self,
-        id: String,
-        relative_path: &Path,
-        args: Vec<&'static str>,
-    ) -> std::io::Result<()> {
-        let file_to_write = args[0];
+    pub fn write_item(&self, id : String, relative_path : &Path, file_to_write : &str) -> std::io::Result<()> {
         let file_path_buf = relative_path.join(file_to_write);
         let file_path = file_path_buf.as_path();
 
@@ -119,6 +103,26 @@ impl Subcontent for ManifestItem {
         manifest.flush()?;
 
         Ok(())
+    }
+}
+
+impl Subcontent for ManifestItem {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn write_to_game(&self) {
+        todo!()
+    }
+
+    fn write_to_mod(
+        &self,
+        id: String,
+        relative_path: &Path,
+        args: Vec<&'static str>,
+    ) -> std::io::Result<()> {
+        let file_to_write = args[0];
+        self.write_item(id, relative_path, file_to_write)
     }
 
     fn load_from_dir(&self) {
