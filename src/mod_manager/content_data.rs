@@ -33,7 +33,7 @@ mod imp {
 
         /// The number for this piece of content.
         #[property(get, set)]
-        #[serde(serialize_with = "get_ref")]
+        #[serde(serialize_with = "get_ref", rename="num_id")]
         pub id: RefCell<u32>,
 
         #[property(get, set)]
