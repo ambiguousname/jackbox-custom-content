@@ -103,7 +103,8 @@ impl MainMenuWindow {
 
         let open_action = ActionEntry::builder("dir")
             .activate(|window: &MainMenuWindow, _, _| {
-                let result = open::that("mods");
+                let mods_folder = window.config().string("mods-folder");
+                let result = open::that(mods_folder);
                 if result.is_err() {
                     let dlg = AlertDialog::builder()
                         .message("Could not open mods directory.")
@@ -294,12 +295,15 @@ impl MainMenuWindow {
             .get_or_init(|| Settings::new(crate::APP_ID));
 
         if conf.string("mods-folder") == "" {
+            let dir = std::env::current_dir()
+                .expect("Could not get local file path.")
+                .join("mods");
+            
+            fs::create_dir_all(dir.clone()).unwrap();
+
             conf.set_string(
                 "mods-folder",
-                std::env::current_dir()
-                    .expect("Could not get local file path.")
-                    .as_path()
-                    .to_str()
+                    dir.to_str()
                     .unwrap(),
             )
             .unwrap();
