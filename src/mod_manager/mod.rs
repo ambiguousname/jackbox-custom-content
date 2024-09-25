@@ -234,7 +234,8 @@ impl ModManager {
     }
 
     fn delete_mod(&self, mod_name: String) {
-        let mods_folder = Path::new("./mods");
+        let mods_folder_str = self.main_menu().config().string("mods-folder");
+        let mods_folder = Path::new(&mods_folder_str);
         let mod_folder = mods_folder.join(mod_name.clone());
 
         let result = fs::remove_dir_all(mod_folder);
