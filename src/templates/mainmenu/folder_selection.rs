@@ -74,11 +74,10 @@ impl MainMenuWindow {
         }
     }
 
-    pub fn show_folder_selection<F: FnOnce(String) + 'static>(
+    pub fn show_folder_selection(
         &self,
         parent: &impl IsA<Window>,
-        initial_folder: gio::File,
-        callback: Option<F>,
+        initial_folder: gio::File
     ) {
         let file_chooser = FileDialog::builder()
             .title("Select the folder for the Jackbox Party Pack 7")
@@ -115,9 +114,7 @@ impl MainMenuWindow {
 
                         dlg.show(Some(&p));
                     } else {
-                        if callback.is_some() {
-                            callback.unwrap()(result.unwrap());
-                        }
+                        window.preferences_window().update_folder_label(result.unwrap());
                     }
                 }
             ),
@@ -131,8 +128,7 @@ impl MainMenuWindow {
             move |_| {
                 window.show_folder_selection(
                     &window,
-                    gtk::gio::File::for_path(std::path::Path::new("./")),
-                    None::<fn(String)>,
+                    gtk::gio::File::for_path(std::path::Path::new("./"))
                 );
             }
         ));

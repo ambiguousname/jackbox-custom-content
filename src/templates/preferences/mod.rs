@@ -91,7 +91,7 @@ impl PreferencesWindow {
         gtk::Settings::default().expect("Could not get default settings.")
     }
 
-    fn update_folder_label(&self, string: String) {
+    pub(super) fn update_folder_label(&self, string: String) {
         self.imp().folder_label.set_text(Some(&string));
         self.imp().folder_label.set_tooltip_text(Some(&string));
     }
@@ -152,14 +152,7 @@ impl PreferencesWindow {
 
         parent.show_folder_selection(
             self,
-            game_folder,
-            Some(glib::clone!(
-                #[weak(rename_to = window)]
-                self,
-                move |result: String| {
-                    window.update_folder_label(result);
-                }
-            )),
+            game_folder
         );
     }
 
