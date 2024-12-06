@@ -130,6 +130,7 @@ impl Subcontent for ManifestItem {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use std::{
         fs::{self, File},
