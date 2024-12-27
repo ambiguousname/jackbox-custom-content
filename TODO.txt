@@ -1,4 +1,5 @@
 Current priorities:
+- Fix current tests to use BufReader
 - Fix bugs with adding multiple items to the manifest (manifest.json specifically)
 - Finishing manifest writer utility
 - Merging JSON/manifest files together.
