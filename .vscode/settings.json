@@ -2,5 +2,8 @@
     "rust-analyzer.linkedProjects": [
         ".\\Cargo.toml"
     ],
+    "rust-analyzer.cargo.extraEnv": {
+        "CARGO_TARGET_DIR": "${workspaceFolder}/target/vscode",
+    },
     "cmake.configureOnOpen": false
 }
