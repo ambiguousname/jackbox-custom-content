@@ -273,6 +273,8 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
                 // Are we closing an array? Right now our parser can't rewind reading, even though this is a valid JSON format.
                 // So return an error.
                 return Err(ManifestError::UnexpectedValue(format!("Closing ] while reading a number. This is valid, but the parser does not support reading this right now. Try inserting a whitespace to avoid these errors.")));
+            } else if ch == '}' {
+                return Err(ManifestError::UnexpectedValue(format!("Closing }} while reading a number. This is valid, but the parser does not support reading this right now.")))
             } else {
                 return Err(ManifestError::UnexpectedValue(format!(
                     "Expected a digit, whitespace, or `,` got `{ch}`"
