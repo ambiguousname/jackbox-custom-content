@@ -1,6 +1,7 @@
 use std::{
     fs::File, io::{BufRead, BufReader, BufWriter, Cursor, Error, Read, Seek, SeekFrom, Write}, iter::Peekable, path::Path, vec::IntoIter
 };
+use core::str;
 
 #[derive(Debug)]
 pub enum ManifestError {
@@ -126,17 +127,17 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
     }
 
     pub fn next(&mut self) -> Result<char, ManifestError> {
-        let mut buf : [u8; size_of::<char>()] = [0; size_of::<char>()];
+        let mut buf : [u8; 1] = [0; 1];
         let char = self.read_iter.read_exact(&mut buf);
 
         if let Err(e) = char {
             return Err(ManifestError::StdErr(e));
         }
 
-        if let Some(c) = char::from_u32(u32::from_ne_bytes(buf)) {
+        if let Some(c) = char::from_u32(buf[0] as u32) {
             Ok(c)
         } else {
-            Err(ManifestError::UnexpectedValue(format!("Could not read {buf:?} as a 32-bit character.")))
+            Err(ManifestError::UnexpectedValue(format!("Could not read {buf:?} as ASCII character.")))
         }
     }
 
