@@ -1,8 +1,5 @@
 use std::{
-    fs::File,
-    io::{BufRead, BufReader, BufWriter, Cursor, Error, Read, Seek, SeekFrom, Write},
-    path::Path,
-    vec::IntoIter,
+    fs::File, io::{BufRead, BufReader, BufWriter, Cursor, Error, Read, Seek, SeekFrom, Write}, iter::Peekable, path::Path, vec::IntoIter
 };
 
 #[derive(Debug)]
@@ -29,60 +26,6 @@ impl ManifestError {
             }
             Self::UnexpectedEOF() => String::from("Unexpected end of file when reading manifest."),
             Self::UnexpectedState(s) | Self::UnexpectedValue(s) => s.to_string(),
-        }
-    }
-}
-
-struct CharFileIter {
-    // From https://stackoverflow.com/questions/47193584/is-there-an-owned-version-of-stringchars
-    line: Option<IntoIter<char>>,
-    reader: BufReader<File>,
-}
-
-impl CharFileIter {
-    fn get_line(&mut self) -> Option<<CharFileIter as Iterator>::Item> {
-        let mut line = String::new();
-
-        let line_read = self.reader.read_line(&mut line);
-        if line_read.is_err() {
-            return Some(Err(line_read.err().unwrap()));
-        }
-        let bytes_read = line_read.unwrap();
-
-        if bytes_read > 0 {
-            self.line = Some(line.chars().collect::<Vec<_>>().into_iter());
-
-            let chars = self.line.as_mut().unwrap();
-            let char = chars.next();
-            return Some(Ok(char.unwrap()));
-        } else {
-            return None;
-        }
-    }
-
-    fn read_to_end(&mut self, buf: &mut Vec<u8>) -> std::io::Result<()> {
-        let string: String = self.line.as_mut().unwrap().collect();
-        buf.write_all(string.as_bytes())?;
-        self.reader.read_to_end(buf)?;
-        Ok(())
-    }
-}
-
-impl<'a> Iterator for CharFileIter {
-    type Item = std::io::Result<char>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.line.is_none() {
-            return self.get_line();
-        }
-
-        let chars = self.line.as_mut().unwrap();
-
-        let next_char = chars.next();
-        if next_char.is_none() {
-            return self.get_line();
-        } else {
-            Some(Ok(next_char.unwrap()))
         }
     }
 }
@@ -120,7 +63,7 @@ pub enum WriteTo<T: Write> {
 ///
 /// `T` Represents something we might want to use when not directly outputting to the writer.
 pub struct ManifestWriter<'a, T: Write> {
-    read_iter: CharFileIter,
+    read_iter: BufReader<File>,
     read_path: &'a Path,
 
     writer: BufWriter<File>,
@@ -171,10 +114,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 
         Ok(ManifestWriter {
             read_path: path,
-            read_iter: CharFileIter {
-                line: None,
-                reader: BufReader::new(read),
-            },
+            read_iter: BufReader::new(read),
 
             writer: BufWriter::new(write),
             active_writer: WriteTo::OutFile,
@@ -186,18 +126,24 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
     }
 
     pub fn next(&mut self) -> Result<char, ManifestError> {
-        let char = self.read_iter.next();
+        let mut buf : [u8; size_of::<char>()] = [0; size_of::<char>()];
+        let char = self.read_iter.read_exact(&mut buf);
 
-        if char.is_some() {
-            return map_err!(char.unwrap()).and_then(|c| {
-                let mut out_bytes = vec![0];
-                c.encode_utf8(&mut out_bytes);
-                map_err!(self.write(&out_bytes))?;
-                Ok(c)
-            });
+        if let Err(e) = char {
+            return Err(ManifestError::StdErr(e));
         }
 
-        Err(ManifestError::UnexpectedEOF())
+        if let Some(c) = char::from_u32(u32::from_ne_bytes(buf)) {
+            Ok(c)
+        } else {
+            Err(ManifestError::UnexpectedValue(format!("Could not read {buf:?} as a 32-bit character.")))
+        }
+    }
+
+    pub fn peek(&mut self) -> Result<char, ManifestError> {
+        let c = self.next();
+        map_err!(self.read_iter.seek_relative(-1))?;
+        c
     }
 
     fn start_object(&mut self) -> ManifestNode {
@@ -263,21 +209,18 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
     fn get_numeric(&mut self) -> Result<ManifestNode, ManifestError> {
         let mut number_val = String::new();
         loop {
-            let ch = self.next()?;
+            let next = self.peek()?;
 
-            if ch.is_numeric() {
-                number_val.push(ch);
-            } else if ch == ',' || ch.is_whitespace() {
+            if next.is_numeric() {
+                number_val.push(self.next()?);
+            } else if next == ',' || next.is_whitespace() || next == ']' || next == '}' {
+                if next != ']' && next != '}' {
+                    self.next()?;
+                }
                 return Ok(ManifestNode::Value(number_val));
-            } else if ch == ']' {
-                // Are we closing an array? Right now our parser can't rewind reading, even though this is a valid JSON format.
-                // So return an error.
-                return Err(ManifestError::UnexpectedValue(format!("Closing ] while reading a number. This is valid, but the parser does not support reading this right now. Try inserting a whitespace to avoid these errors.")));
-            } else if ch == '}' {
-                return Err(ManifestError::UnexpectedValue(format!("Closing }} while reading a number. This is valid, but the parser does not support reading this right now.")))
             } else {
                 return Err(ManifestError::UnexpectedValue(format!(
-                    "Expected a digit, whitespace, or `,` got `{ch}`"
+                    "Expected a digit, whitespace, or `,` got `{next}`"
                 )));
             }
         }
@@ -1037,6 +980,34 @@ mod tests {
             );
             let res = array_read.unwrap();
             assert!(res.is_ok(), "{:?}", res.unwrap_err());
+        }
+        drop(file);
+    }
+
+    #[test]
+    fn test_read_number_at_array_end() {
+        let path = Path::new("array_number_end.json");
+        let file = TestFile::create(path);
+        write_something(path, br#"[0, 1, 2]"#);
+        {
+            let mut manifest = get_manifest::<std::io::Empty>(path);
+            let init_res = manifest.initialize();
+            assert!(init_res.is_ok(), "{:?}", init_res.unwrap_err());
+            let (buf, array_read) = manifest.read_array_item();
+            assert!(array_read.is_some(), "Read array value is none.");
+            assert_eq!(
+                str::from_utf8(&buf).unwrap(),
+                r#"0"#
+            );
+            assert_eq!(array_read.unwrap().unwrap(), serde_json::json!(0));
+            
+            let (buf, array_read) = manifest.read_array_item();
+            assert_eq!(str::from_utf8(&buf).unwrap(), r#"1"#);
+            assert_eq!(array_read.unwrap().unwrap(), serde_json::json!(1));
+            
+            let (buf, array_read) = manifest.read_array_item();
+            assert_eq!(str::from_utf8(&buf).unwrap(), r#"2"#);
+            assert_eq!(array_read.unwrap().unwrap(), serde_json::json!(2));
         }
         drop(file);
     }
