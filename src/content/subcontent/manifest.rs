@@ -38,6 +38,13 @@ impl ManifestItem {
         Ok(())
     }
 
+    /// Write the [`ManifestItem`] to the given manifest.
+    /// 
+    /// `id` - ID of the [`ManifestItem`].
+    /// 
+    /// `relative_path` - Relative path to the manifest file.
+    /// 
+    /// `file_to_write` - The file to actually write to, relative to `relative_path`.
     pub fn write_item(&self, id : String, relative_path : &Path, file_to_write : &str) -> std::io::Result<()> {
         let file_path_buf = relative_path.join(file_to_write);
         let file_path = file_path_buf.as_path();

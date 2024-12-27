@@ -158,15 +158,9 @@ impl ModStore {
 
     pub fn write_to_manifest(&self, data : &ContentData) -> Result<(), Error> {
         let mod_folder = self.imp().mod_folder.borrow();
-        let json_pth = mod_folder.join("manifest.json");
-        let str = json_pth.to_str();
-
-        if str.is_none() {
-            return Err(std::io::Error::new(std::io::ErrorKind::Other, "Could not get valid manifest.json path"));
-        }
 
         let item = ManifestItem::new(data.json_value()?);
 
-        item.write_item(data.full_id(), &mod_folder, str.unwrap())
+        item.write_item(data.full_id(), &mod_folder, "manifest.json")
     }
 }
