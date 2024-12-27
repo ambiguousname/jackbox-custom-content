@@ -1,6 +1,5 @@
 Current priorities:
-- Check against current tests.
-- Fix bugs with adding multiple items to the manifest.
+- Fix bugs with adding multiple items to the manifest (manifest.json specifically)
 - Finishing manifest writer utility
 - Merging JSON/manifest files together.
 - Show content summary on mod list page.
