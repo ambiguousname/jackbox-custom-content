@@ -1,9 +1,7 @@
-use std::borrow::BorrowMut;
-use std::cell::{RefCell, RefMut};
-use std::io::BufWriter;
+use std::cell::RefCell;
 use std::path::{Path, PathBuf};
 
-use gtk::glib::{self, Properties};
+use gtk::glib;
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 
@@ -15,7 +13,7 @@ use crate::content::SubcontentBox;
 mod imp {
     use std::sync::OnceLock;
 
-    use glib::{property::PropertySet, ParamSpec, ParamSpecBoolean, ParamSpecString};
+    use glib::{ParamSpec, ParamSpecBoolean, ParamSpecString};
 
     use super::*;
 
@@ -38,16 +36,14 @@ mod imp {
 
     /// Data for how to write a given [`crate::content::Content`] type to disk.
     /// Serialized mostly for `manifest.json` that [`crate::mod_manager::mod_store::ModStore`] writes to.
-    #[derive(Default, Serialize, Deserialize)]
+    #[derive(Default)]
     pub struct ContentData {
         pub(super) data_inner : RefCell<ContentDataInner>,
 
         /// Store for [`crate::content::Subcontent`], used to invoke various Subcontent functions for writing to and loading from disk.
-        #[serde(skip)]
         pub subcontent: RefCell<Vec<SubcontentBox>>,
 
         /// The arguments used when calling `subcontent` functions.
-        #[serde(skip)]
         pub subcontent_args: RefCell<Vec<Vec<&'static str>>>,
     }
 
@@ -145,7 +141,7 @@ impl ContentData {
         let subcontent = self.imp().subcontent.borrow();
         let args = self.imp().subcontent_args.borrow();
         let relative_pth = self.relative_path();
-        
+
         let full_path = mod_dir_full_pth.join(relative_pth);
 
         
@@ -161,7 +157,7 @@ impl ContentData {
     }
 
     pub fn json_value(&self) -> Result<serde_json::Value, serde_json::Error> {
-        serde_json::to_value(self.imp())
+        serde_json::to_value(self.imp().data_inner.borrow().clone())
     }
 
     pub fn write_to_game(&self) {
