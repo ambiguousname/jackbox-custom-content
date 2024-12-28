@@ -90,7 +90,6 @@ glib::wrapper! {
 }
 
 impl ContentData {
-    // TODO: Write ContentData on creation or modification to a manifest.
     pub fn new(id: u32, full_id: String, relative_path: PathBuf) -> Self {
         let this : Self = Object::new();
 

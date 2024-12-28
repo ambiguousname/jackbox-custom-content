@@ -185,17 +185,26 @@ impl ModManager {
             let mod_path = mods_folder.join(dir.path());
 
             if mod_path.exists() && mod_path.is_dir() {
-                self.load_mod_from_dir(dirname, mod_path);
+                let result = self.load_mod_from_dir(dirname.clone(), mod_path);
+                if result.is_err() {
+                    let error = result.err().unwrap();
+                    AlertDialog::builder()
+                        .message(format!("Could not load mod {dirname}"))
+                        .detail(error.to_string())
+                        .build()
+                        .show(Some(self.main_menu()));
+                    return;
+                }
             }
         }
         // let gesture = &self.imp().sidebar_gesture;
         // gesture.set_property("widget", self.imp().mod_stack_sidebar.to_value());
     }
 
-    fn load_mod_from_dir(&self, dirname: String, mod_path: PathBuf) {
-        let result = ModStore::from_folder(dirname, mod_path);
-        let mod_store = result.unwrap();
+    fn load_mod_from_dir(&self, dirname: String, mod_path: PathBuf) -> std::io::Result<()> {
+        let mod_store = ModStore::from_folder(dirname, mod_path)?;
         self.add_mod(mod_store);
+        Ok(())
     }
 
     // endregion
