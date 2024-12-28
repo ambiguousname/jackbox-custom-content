@@ -1,21 +1,19 @@
 use gtk::{
-    gio::{ListModel, ListStore},
-    glib::{clone, derived_properties, Object, Properties},
+    gio::ListStore,
+    glib::{derived_properties, Object, Properties},
     AlertDialog, ColumnView,
 };
 use serde_json::Value;
 
 use std::{
-    borrow::Borrow,
     cell::{OnceCell, RefCell},
-    collections::HashMap,
-    fs::{self, DirEntry, File},
-    io::{Error, ErrorKind, Write},
+    fs::{self, File},
+    io::{Error, ErrorKind},
     path::{Path, PathBuf},
 };
 
 use super::ContentData;
-use crate::{content::{subcontent::{manifest::ManifestItem, Subcontent}, Content, SubcontentBox}, quick_template, util::manifest_writer::{ManifestError, ManifestWriter}};
+use crate::{content::{subcontent::manifest::ManifestItem, SubcontentBox}, quick_template};
 
 quick_template!(ModStore, "/mod_manager/mod_store.ui", gtk::Box, (gtk::Widget), (gtk::Orientable),
     #[derive(Default, CompositeTemplate, Properties)]
@@ -144,7 +142,8 @@ impl ModStore {
         string.to_ascii_lowercase().replace(" ", "_")
     }
 
-    pub fn read_manifest_content(&self, content_data : ContentData) -> std::io::Result<()> {
+    pub fn read_manifest_content(&self, dat : &ContentData) -> std::io::Result<()> {
+        self.imp().store.append(dat);
         Ok(())
     }
 
@@ -171,7 +170,7 @@ impl ModStore {
         let arr = arr.unwrap();
         for val in arr {
             let dat = ContentData::deserialize(val.clone())?;
-            self.read_manifest_content(dat)?;
+            self.read_manifest_content(&dat)?;
         }
 
         Ok(())
