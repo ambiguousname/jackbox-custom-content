@@ -1004,16 +1004,16 @@ mod tests {
             assert!(array_read.is_some(), "Read array value is none.");
             assert_eq!(
                 str::from_utf8(&buf).unwrap(),
-                r#"0"#
+                r#"0,"#
             );
             assert_eq!(array_read.unwrap().unwrap(), serde_json::json!(0));
             
             let (buf, array_read) = manifest.read_array_item();
-            assert_eq!(str::from_utf8(&buf).unwrap(), r#"1"#);
+            assert_eq!(str::from_utf8(&buf).unwrap(), r#" 1,"#);
             assert_eq!(array_read.unwrap().unwrap(), serde_json::json!(1));
             
             let (buf, array_read) = manifest.read_array_item();
-            assert_eq!(str::from_utf8(&buf).unwrap(), r#"2"#);
+            assert_eq!(str::from_utf8(&buf).unwrap(), r#" 2"#);
             assert_eq!(array_read.unwrap().unwrap(), serde_json::json!(2));
         }
         drop(file);
