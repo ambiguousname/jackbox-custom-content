@@ -1,5 +1,8 @@
 Current priorities:
-- Editing manifest from mod list page (just allow enable/disable and deletion)
+- Editing manifest
+	- Allow enabling/disabling
+	- Allow deletion
+	- Mark manifest as dirty (so mass enabling/disabling/deleting can be done all at once instead of through multiple read/writes) instead of changing things instantly.
 - Double click mod list entry to edit.
 - Finishing manifest writer utility
 - Merging JSON/manifest files together.
