@@ -128,10 +128,14 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
 
     fn read_next(&mut self) -> Result<(u8, char), ManifestError> {
         let mut buf : [u8; 1] = [0; 1];
-        let char = self.read_iter.read_exact(&mut buf);
+        let char = self.read_iter.read(&mut buf);
 
         if let Err(e) = char {
             return Err(ManifestError::StdErr(e));
+        }
+
+        if let Ok(0) = char {
+            return Err(ManifestError::UnexpectedEOF());
         }
 
         if let Some(c) = char::from_u32(buf[0] as u32) {
