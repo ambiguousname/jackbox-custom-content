@@ -126,7 +126,7 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
         })
     }
 
-    pub fn next(&mut self) -> Result<char, ManifestError> {
+    fn read_next(&mut self) -> Result<(u8, char), ManifestError> {
         let mut buf : [u8; 1] = [0; 1];
         let char = self.read_iter.read_exact(&mut buf);
 
@@ -135,16 +135,22 @@ impl<'a, T: Write> ManifestWriter<'a, T> {
         }
 
         if let Some(c) = char::from_u32(buf[0] as u32) {
-            Ok(c)
+            Ok((buf[0] as u8, c))
         } else {
             Err(ManifestError::UnexpectedValue(format!("Could not read {buf:?} as ASCII character.")))
         }
     }
 
+    pub fn next(&mut self) -> Result<char, ManifestError> {
+        let (out_bytes, c) = self.read_next()?;
+        map_err!(self.write(&[out_bytes]))?;
+        Ok(c)
+    }
+
     pub fn peek(&mut self) -> Result<char, ManifestError> {
-        let c = self.next();
+        let (_, c) = self.read_next()?;
         map_err!(self.read_iter.seek_relative(-1))?;
-        c
+        Ok(c)
     }
 
     fn start_object(&mut self) -> ManifestNode {
