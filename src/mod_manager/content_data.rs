@@ -7,8 +7,7 @@ use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 
 use glib::Object;
-use serde::ser::SerializeStruct;
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::content::subcontent::manifest::ManifestItem;
 use crate::content::subcontent::Subcontent;
@@ -19,39 +18,36 @@ mod imp {
 
     /// Data for how to write a given [`crate::content::Content`] type to disk.
     /// Serialized mostly for `manifest.json` that [`crate::mod_manager::mod_store::ModStore`] writes to.
-    #[derive(Default, Serialize, Properties)]
+    #[derive(Default, Serialize, Deserialize, Properties)]
     #[properties(wrapper_type=super::ContentData)]
     pub struct ContentData {
         #[property(get, set)]
-        #[serde(serialize_with = "get_ref")]
         pub enabled: RefCell<bool>,
 
         /// The ID for this particular piece of content.
         #[property(get, set)]
-        #[serde(serialize_with = "get_ref")]
         pub full_id: RefCell<String>,
 
         /// The number for this piece of content.
         #[property(get, set)]
-        #[serde(serialize_with = "get_ref", rename="num_id")]
+        #[serde(rename="num_id")]
         pub id: RefCell<u32>,
 
         #[property(get, set)]
-        #[serde(skip_serializing)]
+        #[serde(skip)]
         /// The relative path where this content is stored.
         pub relative_path: RefCell<PathBuf>,
 
         /// The particular type of this content, set in the xml definition for a ContentWindow.
         #[property(get, set)]
-        #[serde(serialize_with = "get_ref")]
         pub content_type: RefCell<String>,
 
         /// Store for [`crate::content::Subcontent`], used to invoke various Subcontent functions for writing to and loading from disk.
-        #[serde(skip_serializing)]
+        #[serde(skip)]
         pub subcontent: RefCell<Vec<SubcontentBox>>,
 
         /// The arguments used when calling `subcontent` functions.
-        #[serde(skip_serializing)]
+        #[serde(skip)]
         pub subcontent_args: RefCell<Vec<Vec<&'static str>>>,
     }
 
@@ -112,31 +108,5 @@ impl ContentData {
         for d in subcontent.iter() {
             d.write_to_game();
         }
-    }
-}
-
-fn get_ref<T : Clone + RefSerialization<S>, S : Serializer>(t : &RefCell<T>, serializer : S) -> Result<S::Ok, S::Error> {
-    T::serialize(&t.borrow().clone(), serializer)
-}
-
-pub trait RefSerialization<S: Serializer> {
-    fn serialize(&self, serializer : S) -> Result<S::Ok, S::Error>;
-}
-
-impl<S : Serializer> RefSerialization<S> for String {
-    fn serialize(&self, serializer : S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_str(self)
-    }
-}
-
-impl <S: Serializer> RefSerialization<S> for bool {
-    fn serialize(&self, serializer : S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> {
-        serializer.serialize_bool(*self)
-    }
-}
-
-impl <S: Serializer> RefSerialization<S> for u32 {
-    fn serialize(&self, serializer : S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> {
-        serializer.serialize_u32(*self)
     }
 }
