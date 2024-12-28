@@ -1,5 +1,6 @@
 Current priorities:
-- Editing manifest from mod list page
+- Editing manifest from mod list page (just allow enable/disable and deletion)
+- Double click mod list entry to edit.
 - Finishing manifest writer utility
 - Merging JSON/manifest files together.
 - Add support for images/image folders.
