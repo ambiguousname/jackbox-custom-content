@@ -3,6 +3,7 @@ use gtk::{
     glib::{clone, derived_properties, Object, Properties},
     AlertDialog, ColumnView,
 };
+use serde_json::Value;
 
 use std::{
     borrow::Borrow,
@@ -156,22 +157,21 @@ impl ModStore {
             return Ok(());
         }
 
-        let mut manifest = ManifestWriter::<std::io::Empty>::open(&manifest_path)?;
+        let file = File::open(manifest_path)?;
 
-        let _ = manifest.initialize().map_err(|e| {
-            if let ManifestError::StdErr(err) = e {
-                return err;
-            }
-            std::io::Error::new(ErrorKind::Other, e.to_string())
-        });
+        // We need to read the whole manifest, so we use Serde:
+        let val : Value = serde_json::from_reader(file)?;
 
-        while let (_, Some(array_value)) = manifest.read_array_item() {
-            if let Ok(val) = array_value {
-                let content_dat =  ContentData::deserialize(val)?;
-                self.read_manifest_content(content_dat)?;
-            } else if let Err(e) = array_value {
-                return Err(std::io::Error::new(ErrorKind::Other, e.to_string()));
-            }
+        let arr = val.as_array();
+
+        if let None = arr {
+            return Err(Error::new(ErrorKind::Other, format!("Could not read {val} as an array.")))
+        }
+
+        let arr = arr.unwrap();
+        for val in arr {
+            let dat = ContentData::deserialize(val.clone())?;
+            self.read_manifest_content(dat)?;
         }
 
         Ok(())
