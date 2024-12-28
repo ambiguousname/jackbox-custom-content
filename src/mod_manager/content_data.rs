@@ -99,6 +99,7 @@ impl ContentData {
         data_inner.id = id;
         data_inner.full_id = full_id;
         data_inner.relative_path = relative_path;
+        data_inner.enabled = true;
         
         this
     }
