@@ -1,4 +1,5 @@
-use std::cell::RefCell;
+use std::borrow::BorrowMut;
+use std::cell::{RefCell, RefMut};
 use std::io::BufWriter;
 use std::path::PathBuf;
 
@@ -7,40 +8,38 @@ use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 
 use glib::Object;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
-use crate::content::subcontent::manifest::ManifestItem;
-use crate::content::subcontent::Subcontent;
 use crate::content::SubcontentBox;
 
 mod imp {
     use super::*;
+
+    #[derive(Default, Serialize, Deserialize, Clone)]
+    pub(super) struct ContentDataInner {
+        pub enabled : bool,
+        /// The ID for this particular piece of content.
+        pub full_id : String,
+
+        /// The number for this piece of content.
+        #[serde(rename="num_id")]
+        pub id : u32,
+
+        /// The particular type of this content, set in the xml definition for a ContentWindow.
+        pub content_type: String,
+    }
 
     /// Data for how to write a given [`crate::content::Content`] type to disk.
     /// Serialized mostly for `manifest.json` that [`crate::mod_manager::mod_store::ModStore`] writes to.
     #[derive(Default, Serialize, Deserialize, Properties)]
     #[properties(wrapper_type=super::ContentData)]
     pub struct ContentData {
-        #[property(get, set)]
-        pub enabled: RefCell<bool>,
-
-        /// The ID for this particular piece of content.
-        #[property(get, set)]
-        pub full_id: RefCell<String>,
-
-        /// The number for this piece of content.
-        #[property(get, set)]
-        #[serde(rename="num_id")]
-        pub id: RefCell<u32>,
+        pub(super) data_inner : RefCell<ContentDataInner>,
 
         #[property(get, set)]
         #[serde(skip)]
         /// The relative path where this content is stored.
         pub relative_path: RefCell<PathBuf>,
-
-        /// The particular type of this content, set in the xml definition for a ContentWindow.
-        #[property(get, set)]
-        pub content_type: RefCell<String>,
 
         /// Store for [`crate::content::Subcontent`], used to invoke various Subcontent functions for writing to and loading from disk.
         #[serde(skip)]
@@ -68,12 +67,35 @@ glib::wrapper! {
 impl ContentData {
     // TODO: Write ContentData on creation or modification to a manifest.
     pub fn new(id: u32, full_id: String, relative_path: PathBuf) -> Self {
-        Object::builder()
-            .property("enabled", true)
-            .property("id", id)
-            .property("full-id", full_id)
+        let this : Self = Object::builder()
             .property("relative-path", relative_path)
-            .build()
+            .build();
+
+        let obj_ref = this.clone();
+        let mut data_inner = obj_ref.imp().data_inner.borrow_mut();
+        data_inner.id = id;
+        data_inner.full_id = full_id;
+        
+        this
+    }
+
+    fn data_inner(&self) -> imp::ContentDataInner {
+        self.imp().data_inner.borrow().clone()
+    }
+
+    pub fn deserialize(val : serde_json::Value, relative_path: PathBuf) -> Result<Self, serde_json::Error> {
+        let inner : imp::ContentDataInner = serde_json::from_value(val)?;
+
+        let new : Self = Object::builder()
+        .property("relative-path", relative_path).build();
+        
+        new.imp().data_inner.replace(inner);
+
+        Ok(new)
+    }
+
+    pub fn full_id(&self) -> String {
+        self.data_inner().full_id
     }
 
     pub fn set_subcontent(&self, subcontent: Vec<SubcontentBox>, args: Vec<Vec<&'static str>>) {

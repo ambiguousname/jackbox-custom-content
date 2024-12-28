@@ -8,13 +8,13 @@ use std::{
     borrow::Borrow,
     cell::{OnceCell, RefCell},
     collections::HashMap,
-    fs::{self, DirEntry},
-    io::{Error, Write},
+    fs::{self, DirEntry, File},
+    io::{Error, ErrorKind, Write},
     path::{Path, PathBuf},
 };
 
 use super::ContentData;
-use crate::{content::{subcontent::{manifest::ManifestItem, Subcontent}, Content, SubcontentBox}, quick_template};
+use crate::{content::{subcontent::{manifest::ManifestItem, Subcontent}, Content, SubcontentBox}, quick_template, util::manifest_writer::{ManifestError, ManifestWriter}};
 
 quick_template!(ModStore, "/mod_manager/mod_store.ui", gtk::Box, (gtk::Widget), (gtk::Orientable),
     #[derive(Default, CompositeTemplate, Properties)]
@@ -32,6 +32,7 @@ quick_template!(ModStore, "/mod_manager/mod_store.ui", gtk::Box, (gtk::Widget), 
         #[property(get)]
         pub id: OnceCell<String>,
 
+        #[property(get)]
         /// The folder where this specific mod store is located.
         pub mod_folder : RefCell<PathBuf>,
     }
@@ -59,6 +60,15 @@ impl ModStore {
             .id
             .set(id)
             .or_else(|err| Err(Error::new(std::io::ErrorKind::Other, err)))?;
+
+        // Create the folder if it does not exist:
+        if !this.mod_folder().exists() {
+            fs::create_dir_all(this.mod_folder())?;
+        } else {
+            // Otherwise, load the manifest:
+            this.read_manifest()?;
+        }
+
         Ok(this)
     }
 
@@ -83,7 +93,7 @@ impl ModStore {
 
         // region: Folder creation
         let game_folder = crate::content::get_relative_folder(&xml_def_path);
-        let mod_folder = self.imp().mod_folder.borrow();
+        let mod_folder = self.mod_folder();
 
         let full_mod_path = mod_folder.join(game_folder);
         if !full_mod_path.exists() {
@@ -138,22 +148,44 @@ impl ModStore {
     pub fn new_folder(base_mods_folder: &Path, name: String) -> Result<Self, Error> {
         // Create mod folder:
         let mod_dir = base_mods_folder.join(&name);
-        if mod_dir.exists() {
-            let msg = format!("Folder {name} already exists.");
-            return Err(Error::new(std::io::ErrorKind::Other, msg));
-        }
-        fs::create_dir(&mod_dir)?;
-
         ModStore::new(name, mod_dir)
     }
 
     pub fn from_folder(store_name: String, mod_dir: PathBuf) -> Result<Self, Error> {
-        // TODO: Load subcontent.
         ModStore::new(store_name, mod_dir)
     }
 
     fn string_to_id(string: String) -> String {
         string.to_ascii_lowercase().replace(" ", "_")
+    }
+
+    pub fn read_manifest_content(&self, content_data : ContentData) -> std::io::Result<()> {
+        Ok(())
+    }
+
+    pub fn read_manifest(&self) -> std::io::Result<()> {
+        let mod_folder = self.mod_folder();
+        let manifest_path = mod_folder.join("manifest.json");
+
+        let mut manifest = ManifestWriter::<std::io::Empty>::open(&manifest_path)?;
+
+        let _ = manifest.initialize().map_err(|e| {
+            if let ManifestError::StdErr(err) = e {
+                return err;
+            }
+            std::io::Error::new(ErrorKind::Other, e.to_string())
+        });
+
+        while let (_, Some(array_value)) = manifest.read_array_item() {
+            if let Ok(val) = array_value {
+                let content_dat =  ContentData::deserialize(val)?;
+                self.read_manifest_content(content_dat)?;
+            } else if let Err(e) = array_value {
+                return Err(std::io::Error::new(ErrorKind::Other, e.to_string()));
+            }
+        }
+
+        Ok(())
     }
 
     pub fn write_to_manifest(&self, data : &ContentData) -> Result<(), Error> {

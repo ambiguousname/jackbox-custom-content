@@ -1,6 +1,7 @@
 Current priorities:
 - Finishing manifest writer utility
 - Merging JSON/manifest files together.
+- Test writing to a manifest, closing the application, then re-opening?
 - Show content summary on mod list page.
 - Add support for images/image folders.
 - Finish Quiplash3 form.
