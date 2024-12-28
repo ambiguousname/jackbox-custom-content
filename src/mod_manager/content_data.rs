@@ -13,6 +13,10 @@ use serde::{Deserialize, Serialize};
 use crate::content::SubcontentBox;
 
 mod imp {
+    use std::sync::OnceLock;
+
+    use glib::{property::PropertySet, ParamSpec, ParamSpecBoolean, ParamSpecString};
+
     use super::*;
 
     #[derive(Default, Serialize, Deserialize, Clone)]
@@ -27,19 +31,16 @@ mod imp {
 
         /// The particular type of this content, set in the xml definition for a ContentWindow.
         pub content_type: String,
+
+        /// The relative path where this content is stored.
+        pub relative_path: PathBuf,
     }
 
     /// Data for how to write a given [`crate::content::Content`] type to disk.
     /// Serialized mostly for `manifest.json` that [`crate::mod_manager::mod_store::ModStore`] writes to.
-    #[derive(Default, Serialize, Deserialize, Properties)]
-    #[properties(wrapper_type=super::ContentData)]
+    #[derive(Default, Serialize, Deserialize)]
     pub struct ContentData {
         pub(super) data_inner : RefCell<ContentDataInner>,
-
-        #[property(get, set)]
-        #[serde(skip)]
-        /// The relative path where this content is stored.
-        pub relative_path: RefCell<PathBuf>,
 
         /// Store for [`crate::content::Subcontent`], used to invoke various Subcontent functions for writing to and loading from disk.
         #[serde(skip)]
@@ -56,8 +57,36 @@ mod imp {
         type Type = super::ContentData;
     }
 
-    #[glib::derived_properties]
-    impl ObjectImpl for ContentData {}
+    impl ObjectImpl for ContentData {
+        fn properties() -> &'static [ParamSpec] {
+           static PROPERTIES : OnceLock<Vec<ParamSpec>> = OnceLock::new();
+
+           PROPERTIES.get_or_init(|| {
+                vec![
+                    ParamSpecBoolean::builder("enabled").readwrite().build(),
+                    ParamSpecString::builder("id").readwrite().build()
+                ]
+           })
+        }
+
+        fn set_property(&self, _: usize, value: &glib::Value, pspec: &glib::ParamSpec) {
+            let name = pspec.name();
+            match name {
+                "enabled" => self.data_inner.borrow_mut().enabled = value.get().unwrap(),
+                "id" => self.data_inner.borrow_mut().id = value.get().unwrap(),
+                _ => panic!("Property {name} setter not defined.")
+            }
+        }
+
+        fn property(&self, _: usize, pspec: &glib::ParamSpec) -> glib::Value {
+            let name = pspec.name();
+            match name {
+                "enabled" => self.data_inner.borrow().enabled.into(),
+                "id" => self.data_inner.borrow().id.into(),
+                _ => panic!("Property {name} getter not defined.")
+            }
+        }
+    }
 }
 
 glib::wrapper! {
@@ -67,14 +96,13 @@ glib::wrapper! {
 impl ContentData {
     // TODO: Write ContentData on creation or modification to a manifest.
     pub fn new(id: u32, full_id: String, relative_path: PathBuf) -> Self {
-        let this : Self = Object::builder()
-            .property("relative-path", relative_path)
-            .build();
+        let this : Self = Object::new();
 
         let obj_ref = this.clone();
         let mut data_inner = obj_ref.imp().data_inner.borrow_mut();
         data_inner.id = id;
         data_inner.full_id = full_id;
+        data_inner.relative_path = relative_path;
         
         this
     }
@@ -83,11 +111,10 @@ impl ContentData {
         self.imp().data_inner.borrow().clone()
     }
 
-    pub fn deserialize(val : serde_json::Value, relative_path: PathBuf) -> Result<Self, serde_json::Error> {
+    pub fn deserialize(val : serde_json::Value) -> Result<Self, serde_json::Error> {
         let inner : imp::ContentDataInner = serde_json::from_value(val)?;
 
-        let new : Self = Object::builder()
-        .property("relative-path", relative_path).build();
+        let new : Self = Object::new();
         
         new.imp().data_inner.replace(inner);
 
@@ -96,6 +123,10 @@ impl ContentData {
 
     pub fn full_id(&self) -> String {
         self.data_inner().full_id
+    }
+
+    pub fn relative_path(&self) -> PathBuf {
+        self.data_inner().relative_path
     }
 
     pub fn set_subcontent(&self, subcontent: Vec<SubcontentBox>, args: Vec<Vec<&'static str>>) {

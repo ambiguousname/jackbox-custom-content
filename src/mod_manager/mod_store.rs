@@ -167,6 +167,11 @@ impl ModStore {
         let mod_folder = self.mod_folder();
         let manifest_path = mod_folder.join("manifest.json");
 
+        // Mods are allowed to exist without a manifest, we can create one from scratch.
+        if !manifest_path.exists() {
+            return Ok(());
+        }
+
         let mut manifest = ManifestWriter::<std::io::Empty>::open(&manifest_path)?;
 
         let _ = manifest.initialize().map_err(|e| {
