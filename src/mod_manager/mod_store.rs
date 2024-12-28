@@ -95,29 +95,13 @@ impl ModStore {
         let game_folder = crate::content::get_relative_folder(&xml_def_path);
         let mod_folder = self.mod_folder();
 
-        let full_mod_path = mod_folder.join(game_folder);
-        if !full_mod_path.exists() {
-            let res = fs::create_dir_all(&full_mod_path);
-            if res.is_err() {
-                let dlg = AlertDialog::builder()
-                    .message("Could not create content.")
-                    .detail(format!(
-                        "Folder {} could not be created.",
-                        full_mod_path.display()
-                    ))
-                    .build();
-                dlg.show(None::<&gtk::Window>);
-                return;
-            }
-        }
-
         // endregion
 
         // region: Make [`ContentData`]
-        let new_content_data = ContentData::new(id, content_id.clone(), full_mod_path);
+        let new_content_data = ContentData::new(id, content_id.clone(), game_folder.into());
 
         new_content_data.set_subcontent(subcontent, subcontent_args);
-        let res = new_content_data.write_to_mod();
+        let res = new_content_data.write_to_mod(&mod_folder);
 
         if res.is_err() {
             let dlg = AlertDialog::builder()

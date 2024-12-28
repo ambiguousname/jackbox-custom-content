@@ -45,8 +45,8 @@ impl ManifestItem {
     /// `relative_path` - Relative path to the manifest file.
     /// 
     /// `file_to_write` - The file to actually write to, relative to `relative_path`.
-    pub fn write_item(&self, id : String, relative_path : &Path, file_to_write : &str) -> std::io::Result<()> {
-        let file_path_buf = relative_path.join(file_to_write);
+    pub fn write_item(&self, id : String, full_path : &Path, file_to_write : &str) -> std::io::Result<()> {
+        let file_path_buf = full_path.join(file_to_write);
         let file_path = file_path_buf.as_path();
 
         if !file_path.exists() {
@@ -125,11 +125,11 @@ impl Subcontent for ManifestItem {
     fn write_to_mod(
         &self,
         id: String,
-        relative_path: &Path,
+        full_path: &Path,
         args: Vec<&'static str>,
     ) -> std::io::Result<()> {
         let file_to_write = args[0];
-        self.write_item(id, relative_path, file_to_write)
+        self.write_item(id, full_path, file_to_write)
     }
 
     fn load_from_dir(&self) {

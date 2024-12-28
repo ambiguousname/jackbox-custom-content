@@ -15,12 +15,12 @@ pub trait Subcontent: Debug {
     /// Called when the Subcontent should be written to the mod folder.
     ///
     /// * `id` - The ID of the ContentData item to use.
-    /// * `relative_path` - The relative folder we're working from, and where the Subcontent should write from.
+    /// * `full_path` - The folder we're working from, and where the Subcontent should write to.
     /// * `args` - The args passed from the subcontent XML definition (linked to in subcontent_list.ui).
     fn write_to_mod(
         &self,
         id: String,
-        relative_path: &std::path::Path,
+        full_path: &std::path::Path,
         args: Vec<&'static str>,
     ) -> std::io::Result<()>;
     /// Called when the Subcontent should be written to the game folder.

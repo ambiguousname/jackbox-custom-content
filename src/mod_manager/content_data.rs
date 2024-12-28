@@ -1,7 +1,7 @@
 use std::borrow::BorrowMut;
 use std::cell::{RefCell, RefMut};
 use std::io::BufWriter;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use gtk::glib::{self, Properties};
 use gtk::prelude::*;
@@ -32,7 +32,7 @@ mod imp {
         /// The particular type of this content, set in the xml definition for a ContentWindow.
         pub content_type: String,
 
-        /// The relative path where this content is stored.
+        /// The relative path where this content is stored. This is relative from the mod folder, specifically.
         pub relative_path: PathBuf,
     }
 
@@ -140,13 +140,21 @@ impl ContentData {
         self.imp().subcontent_args.replace(args);
     }
 
-    pub fn write_to_mod(&self) -> std::io::Result<()> {
+    pub fn write_to_mod(&self, mod_dir_full_pth : &Path) -> std::io::Result<()> {
         // TODO: Undo previous write operations if there was an error with the current one?
         let subcontent = self.imp().subcontent.borrow();
         let args = self.imp().subcontent_args.borrow();
-        let pth = self.relative_path();
+        let relative_pth = self.relative_path();
+        
+        let full_path = mod_dir_full_pth.join(relative_pth);
+
+        
+        if !full_path.exists() {
+            std::fs::create_dir_all(&full_path)?;
+        }
+        
         for i in 0..subcontent.len() {
-            subcontent[i].write_to_mod(self.full_id(), pth.as_path(), args[i].clone())?;
+            subcontent[i].write_to_mod(self.full_id(), &full_path, args[i].clone())?;
         }
 
         Ok(())
