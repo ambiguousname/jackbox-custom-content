@@ -129,13 +129,14 @@
 										<property name="icon-name">list-remove-symbolic</property>
 										<property name="tooltip-text">Delete selected mod content</property>
 										<property name="sensitive">false</property>
+										<signal name="clicked" handler="handle_delete_content_clicked" swapped="true"/>
 									</object>
 								</child>
 								<child>
 									<object class="GtkSeparator"/>
 								</child>
 								<child>
-									<object class="GtkButton" id="save">
+									<object class="GtkButton" id="save_content">
 										<property name="label">Save</property>
 										<property name="icon-name">document-save-symbolic</property>
 										<property name="tooltip-text">Save Mod</property>

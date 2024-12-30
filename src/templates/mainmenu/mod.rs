@@ -47,6 +47,12 @@ quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::Applicat
         pub new_content : TemplateChild<Button>,
         pub content_creation_dialog: OnceLock<ContentCreationDialog>,
 
+        #[template_child(id="delete_content")]
+        pub delete_content : TemplateChild<Button>,
+
+        #[template_child(id="save_content")]
+        pub save_content : TemplateChild<Button>,
+
         pub mod_manager : OnceLock<ModManager>,
 
         pub preferences_window : OnceLock<PreferencesWindow>,
@@ -324,6 +330,12 @@ impl MainMenuWindow {
     #[template_callback]
     fn handle_create_content_clicked(&self) {
         self.content_creation_dialog().present();
+    }
+
+    #[template_callback]
+    fn handle_delete_content_clicked(&self) {
+        // TODO: Need to create a binding to enable/disable this button (same for the action) based on ModStore selection UI.
+        // self.mod_manager().delete_content();
     }
     // endregion
 

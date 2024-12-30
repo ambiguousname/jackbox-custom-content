@@ -23,8 +23,6 @@ use self::{content_data::ContentData, mod_store::ModStore};
 // This would be really nice as its own Rust structure, but Glib annoyances (like proper signal connectivity) means that this will have to do.
 
 mod imp {
-    use std::path::PathBuf;
-
     use super::*;
 
     #[derive(Default)]
@@ -54,14 +52,6 @@ impl ModManager {
         let manager: Self = Object::new();
         manager.imp().main_menu.get_or_init(|| main_menu);
         manager
-        // let manager =  ModManager {
-        // 	// Need to set up a callback before adding the window:
-        // 	mod_creation: None,
-        // 	main_menu: Some(main_menu),
-        // 	mods: HashMap::new(),
-        // };
-        // manager.setup_mod_creation_dialog();
-        // manager
     }
 
     // region: Getters
