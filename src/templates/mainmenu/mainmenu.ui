@@ -65,19 +65,6 @@
 						</accessibility>
 					</object>
 				</child>
-				<child type="end">
-					<object class="GtkBox" id="mod_management">
-						<child>
-							<object class="GtkButton" id="new_content">
-								<property name="visible">false</property>
-								<property name="label">New Content</property>
-								<property name="icon-name">list-add-symbolic</property>
-								<property name="tooltip-text">Add new content</property>
-								<signal name="clicked" handler="handle_create_content_clicked" swapped="true"/>
-							</object>
-						</child>
-					</object>
-				</child>
 			</object>
 		</child>
 		<child>
@@ -127,10 +114,28 @@
 							<object class="GtkBox" id="mod_toolbar">
 								<property name="accessible-role">toolbar</property>
 								<property name="css-classes">toolbar</property>
-								
+
 								<child>
-									<object class="GtkLabel" id="mod_toolbar_name">
-										<property name="label">Mod Name</property>
+									<object class="GtkButton" id="new_content">
+										<property name="label">New Content</property>
+										<property name="icon-name">list-add-symbolic</property>
+										<property name="tooltip-text">Add new content</property>
+										<signal name="clicked" handler="handle_create_content_clicked" swapped="true"/>
+									</object>
+								</child>
+								<child>
+									<object class="GtkButton" id="delete_content">
+										<property name="label">Delete</property>
+										<property name="icon-name">list-remove-symbolic</property>
+										<property name="tooltip-text">Delete selected mod content</property>
+									</object>
+								</child>
+								<child>
+									<object class="GtkButton" id="save">
+										<property name="label">Save</property>
+										<property name="icon-name">document-save-symbolic</property>
+										<property name="tooltip-text">Save Mod</property>
+										<!-- <signal name="clicked" handler="handle_create_content_clicked" swapped="true"/> -->
 									</object>
 								</child>
 							</object>

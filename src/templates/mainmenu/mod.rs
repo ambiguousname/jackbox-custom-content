@@ -29,9 +29,6 @@ quick_template!(MainMenuWindow, "/templates/mainmenu/mainmenu.ui", gtk::Applicat
         #[template_child(id="mod_toolbar")]
         pub mod_toolbar : TemplateChild<gtk::Box>,
 
-        #[template_child(id="mod_toolbar_name")]
-        pub mod_toolbar_name : TemplateChild<gtk::Label>,
-
         #[template_child(id="mod_stack")]
         pub mod_stack : TemplateChild<Stack>,
 
@@ -182,7 +179,6 @@ impl MainMenuWindow {
     pub fn toggle_creation_visibility(&self, visible: bool) {
         self.imp().mod_editor.set_visible(visible);
         self.imp().first_new_mod.set_visible(visible);
-        self.imp().new_content.set_visible(visible);
     }
     // endregion
 
@@ -258,22 +254,13 @@ impl MainMenuWindow {
             .expect("Could not get main menu window.");
 
         let new_name = stack.visible_child_name();
-        let mut name = "".to_string();
 
         if new_name.is_some() {
-            name = new_name.unwrap().to_string();
             window.imp().first_new_mod.set_visible(false);
             window.imp().mod_editor.set_visible(true);
-            window.imp().mod_toolbar_name.set_label(name.as_str());
         } else {
             window.imp().first_new_mod.set_visible(true);
             window.imp().mod_editor.set_visible(false);
-        }
-
-        if name != "All" && name != "" {
-            window.imp().new_content.set_visible(true);
-        } else {
-            window.imp().new_content.set_visible(false);
         }
     }
 
