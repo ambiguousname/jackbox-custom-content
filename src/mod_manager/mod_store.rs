@@ -128,6 +128,7 @@ impl ModStore {
         content_data.append(&new_content_data);
     }
 
+    // TODO: Cache this instead of looking up the bitset every time.
     pub fn has_selected(&self) -> bool {
         !self.imp().multi_select.selection().is_empty()
     }
