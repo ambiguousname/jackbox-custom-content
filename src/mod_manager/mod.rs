@@ -123,6 +123,13 @@ impl ModManager {
                 this.main_menu().selection_changed();
             }
         ));
+        mod_store.connect_dirty_notify(clone!(
+            #[weak(rename_to=this)]
+            self,
+            move |m| {
+                this.main_menu().dirty_changed(m.dirty());
+            }
+        ));
         self.imp()
             .mods
             .borrow_mut()

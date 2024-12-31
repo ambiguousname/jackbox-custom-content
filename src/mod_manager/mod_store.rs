@@ -38,7 +38,7 @@ quick_template!(ModStore, "/mod_manager/mod_store.ui", gtk::Box, (gtk::Widget), 
         #[property(get, set)]
         pub has_selected : RefCell<bool>,
         
-        #[property(get)]
+        #[property(get, set)]
         pub dirty : RefCell<bool>,
 
         pub selection_pos : RefCell<u32>,
@@ -148,24 +148,21 @@ impl ModStore {
         content_data.append(&new_content_data);
     }
 
-    pub fn selected_content(&self) -> Vec<ContentData> {
-        let bitset = self.imp().multi_select.selection();
-        
-        if bitset.is_empty() {
-            return vec![];
-        }
+    
+    pub fn delete_selected(&self) {
+        let pos = self.imp().selection_pos.borrow().clone();
+        let n = self.imp().selection_n.borrow().clone();
 
-        let model = self.imp().multi_select.model().unwrap();
+        let bitset = self.imp().multi_select.selection_in_range(pos, n);
 
-        let mut vec : Vec<ContentData> = Vec::new();
-
-        for i in 0..model.n_items() {
+        for i in pos..(n + pos) {
             if bitset.contains(i) {
-                vec.push(model.item(i).and_downcast::<ContentData>().unwrap());
+                // TODO: Create store for what sort of changes we're interested in making with ContentData (writing to disk, deleting, modifying, etc.)
+                let dat : ContentData = self.imp().store.item(i).and_downcast().unwrap();
+                self.set_dirty(true);
+                self.imp().store.remove(i);
             }
         }
-
-        vec
     }
 
     pub fn new_folder(base_mods_folder: &Path, name: String) -> Result<Self, Error> {

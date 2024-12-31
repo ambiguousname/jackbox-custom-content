@@ -291,6 +291,10 @@ impl MainMenuWindow {
         }
     }
 
+    pub fn dirty_changed(&self, dirty : bool) {
+        self.imp().save_content.set_sensitive(dirty);
+    }
+
     pub fn add_content_to_mod(&self, content: crate::content::Content) {
         let mod_name = self
             .visible_mod_stack_name()
@@ -355,8 +359,9 @@ impl MainMenuWindow {
 
     #[template_callback]
     fn handle_delete_content_clicked(&self) {
-        // TODO: Need to create a binding to enable/disable this button (same for the action) based on ModStore selection UI.
-        // self.mod_manager().delete_content();
+        if let Some(mod_store) = self.imp().mod_stack.visible_child().and_downcast::<ModStore>() {
+            mod_store.delete_selected();
+        }
     }
     // endregion
 
