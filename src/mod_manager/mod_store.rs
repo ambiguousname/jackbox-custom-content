@@ -37,6 +37,9 @@ quick_template!(ModStore, "/mod_manager/mod_store.ui", gtk::Box, (gtk::Widget), 
 
         #[property(get, set)]
         pub has_selected : RefCell<bool>,
+
+        pub selection_pos : RefCell<u32>,
+        pub selection_n : RefCell<u32>,
     }
 );
 
@@ -66,8 +69,11 @@ impl ModStore {
         this.imp().multi_select.connect_selection_changed(clone!(
             #[weak]
             this,
-            move |_, pos, _| {
-                this.set_has_selected(this.imp().multi_select.is_selected(pos));
+            move |_, pos, n| {
+                let bitset = this.imp().multi_select.selection_in_range(pos, n);
+                this.set_has_selected(!bitset.is_empty());
+                this.imp().selection_n.replace(n);
+                this.imp().selection_pos.replace(pos);
             }
         ));
 

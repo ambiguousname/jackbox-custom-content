@@ -116,6 +116,13 @@ impl ModManager {
 
     // region: Add Mods
     fn add_mod(&self, mod_store: ModStore) {
+        mod_store.imp().multi_select.connect_selection_changed(clone!(
+            #[weak(rename_to=this)]
+            self,
+            move |_, _, _| {
+                this.main_menu().selection_changed();
+            }
+        ));
         self.imp()
             .mods
             .borrow_mut()

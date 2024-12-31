@@ -252,7 +252,6 @@ impl MainMenuWindow {
         self.imp().mod_stack.visible_child_name()
     }
 
-    // TODO: Move this to the ModManager.
     fn stack_changed(stack: &Stack) {
         let window: MainMenuWindow = stack
             .ancestor(MainMenuWindow::static_type())
@@ -265,7 +264,6 @@ impl MainMenuWindow {
             window.imp().first_new_mod.set_visible(false);
             window.imp().mod_editor.set_visible(true);
 
-            // TODO: Change this in real-time.
             // Get if children are selected:
             if active_mod.has_selected() {
                 window.imp().delete_content.set_sensitive(true);
@@ -277,6 +275,14 @@ impl MainMenuWindow {
         } else {
             window.imp().first_new_mod.set_visible(true);
             window.imp().mod_editor.set_visible(false);
+        }
+    }
+
+    pub fn selection_changed(&self) {
+        if let Some(mod_store) = self.imp().mod_stack.visible_child().and_downcast::<ModStore>() {
+            let sensitive = mod_store.has_selected();
+            self.imp().delete_content.set_sensitive(sensitive);
+            self.imp().save_content.set_sensitive(sensitive);
         }
     }
 
