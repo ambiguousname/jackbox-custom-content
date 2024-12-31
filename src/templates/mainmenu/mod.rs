@@ -267,8 +267,8 @@ impl MainMenuWindow {
 
             // TODO: Change this in real-time.
             // Get if children are selected:
-            let selected = window.mod_manager().get_mod(new_name.unwrap().into()).unwrap().has_selected();
-            if selected {
+            let active_mod = window.mod_manager().get_mod(new_name.unwrap().into()).unwrap();
+            if active_mod.has_selected() {
                 window.imp().delete_content.set_sensitive(true);
                 window.imp().save_content.set_sensitive(true);
             } else {

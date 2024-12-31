@@ -1,6 +1,6 @@
 use gtk::{
     gio::ListStore,
-    glib::{derived_properties, Object, Properties},
+    glib::{clone, derived_properties, Object, Properties},
     AlertDialog
 };
 use serde_json::Value;
@@ -34,6 +34,9 @@ quick_template!(ModStore, "/mod_manager/mod_store.ui", gtk::Box, (gtk::Widget), 
         #[property(get)]
         /// The folder where this specific mod store is located.
         pub mod_folder : RefCell<PathBuf>,
+
+        #[property(get, set)]
+        pub has_selected : RefCell<bool>,
     }
 );
 
@@ -59,6 +62,14 @@ impl ModStore {
             .id
             .set(id)
             .or_else(|err| Err(Error::new(std::io::ErrorKind::Other, err)))?;
+
+        this.imp().multi_select.connect_selection_changed(clone!(
+            #[weak]
+            this,
+            move |_, pos, _| {
+                this.set_has_selected(this.imp().multi_select.is_selected(pos));
+            }
+        ));
 
         // Create the folder if it does not exist:
         if !this.mod_folder().exists() {
@@ -126,11 +137,6 @@ impl ModStore {
 
         // Finally, push it to the ModStore:
         content_data.append(&new_content_data);
-    }
-
-    // TODO: Cache this instead of looking up the bitset every time.
-    pub fn has_selected(&self) -> bool {
-        !self.imp().multi_select.selection().is_empty()
     }
 
     pub fn selected_content(&self) -> Vec<ContentData> {
