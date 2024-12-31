@@ -259,15 +259,14 @@ impl MainMenuWindow {
             .and_downcast()
             .expect("Could not get main menu window.");
 
-        let new_name = stack.visible_child_name();
+        let new_mod_store = stack.visible_child().and_downcast::<ModStore>();
 
-        if new_name.is_some() {
+        if let Some(active_mod) = new_mod_store {
             window.imp().first_new_mod.set_visible(false);
             window.imp().mod_editor.set_visible(true);
 
             // TODO: Change this in real-time.
             // Get if children are selected:
-            let active_mod = window.mod_manager().get_mod(new_name.unwrap().into()).unwrap();
             if active_mod.has_selected() {
                 window.imp().delete_content.set_sensitive(true);
                 window.imp().save_content.set_sensitive(true);
