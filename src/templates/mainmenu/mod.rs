@@ -264,10 +264,11 @@ impl MainMenuWindow {
             window.imp().first_new_mod.set_visible(false);
             window.imp().mod_editor.set_visible(true);
 
+            window.imp().save_content.set_sensitive(active_mod.dirty());
+
             // Get if children are selected:
             if active_mod.has_selected() {
                 window.imp().delete_content.set_sensitive(true);
-                window.imp().save_content.set_sensitive(true);
             } else {
                 window.imp().delete_content.set_sensitive(false);
                 window.imp().save_content.set_sensitive(false);
@@ -282,7 +283,6 @@ impl MainMenuWindow {
         if let Some(mod_store) = self.imp().mod_stack.visible_child().and_downcast::<ModStore>() {
             let sensitive = mod_store.has_selected();
             self.imp().delete_content.set_sensitive(sensitive);
-            self.imp().save_content.set_sensitive(sensitive);
         }
     }
 

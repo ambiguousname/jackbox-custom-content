@@ -37,6 +37,9 @@ quick_template!(ModStore, "/mod_manager/mod_store.ui", gtk::Box, (gtk::Widget), 
 
         #[property(get, set)]
         pub has_selected : RefCell<bool>,
+        
+        #[property(get)]
+        pub dirty : RefCell<bool>,
 
         pub selection_pos : RefCell<u32>,
         pub selection_n : RefCell<u32>,
