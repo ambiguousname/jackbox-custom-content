@@ -129,6 +129,10 @@ impl MainMenuWindow {
                 window.handle_create_content_clicked();
             })
             .build();
+            
+        let delete_content_action = ActionEntry::builder("delete_content").activate(|window : &MainMenuWindow, _, _| {
+            window.handle_delete_content_clicked();
+        }).build();
 
         let help_action = ActionEntry::builder("help")
             .activate(|window: &MainMenuWindow, _, _| {
@@ -173,6 +177,7 @@ impl MainMenuWindow {
             open_action,
             prefs_action,
             content_action,
+            delete_content_action,
             help_action,
             about_action,
         ]);
