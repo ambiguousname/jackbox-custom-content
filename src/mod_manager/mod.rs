@@ -4,7 +4,7 @@ pub mod mod_store;
 use std::{
     cell::RefCell,
     collections::HashMap,
-    fs::{self, DirEntry},
+    fs,
     path::{Path, PathBuf},
     sync::OnceLock,
 };

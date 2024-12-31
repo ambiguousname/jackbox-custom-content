@@ -5,7 +5,7 @@
         <child>
             <object class="GtkColumnView" id="column_view">
                 <property name="model">
-                    <object class="GtkMultiSelection">
+                    <object class="GtkMultiSelection" id="multi_select">
                         <property name="model">
                             <object class="GListStore" id="store">
                                 <property name="item-type">CustomBoxContentData</property>

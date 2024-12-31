@@ -264,6 +264,17 @@ impl MainMenuWindow {
         if new_name.is_some() {
             window.imp().first_new_mod.set_visible(false);
             window.imp().mod_editor.set_visible(true);
+
+            // TODO: Change this in real-time.
+            // Get if children are selected:
+            let selected = window.mod_manager().get_mod(new_name.unwrap().into()).unwrap().has_selected();
+            if selected {
+                window.imp().delete_content.set_sensitive(true);
+                window.imp().save_content.set_sensitive(true);
+            } else {
+                window.imp().delete_content.set_sensitive(false);
+                window.imp().save_content.set_sensitive(false);
+            }
         } else {
             window.imp().first_new_mod.set_visible(true);
             window.imp().mod_editor.set_visible(false);

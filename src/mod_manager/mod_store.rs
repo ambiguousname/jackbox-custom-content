@@ -1,7 +1,7 @@
 use gtk::{
     gio::ListStore,
     glib::{derived_properties, Object, Properties},
-    AlertDialog, ColumnView,
+    AlertDialog
 };
 use serde_json::Value;
 
@@ -19,8 +19,8 @@ quick_template!(ModStore, "/mod_manager/mod_store.ui", gtk::Box, (gtk::Widget), 
     #[derive(Default, CompositeTemplate, Properties)]
     #[properties(wrapper_type=super::ModStore)]
     struct {
-        #[template_child(id="column_view")]
-        pub column_view : TemplateChild<ColumnView>,
+        #[template_child(id="multi_select")]
+        pub multi_select : TemplateChild<gtk::MultiSelection>,
 
         /// Store of [`ContentData`]
         #[template_child(id="store")]
@@ -126,6 +126,30 @@ impl ModStore {
 
         // Finally, push it to the ModStore:
         content_data.append(&new_content_data);
+    }
+
+    pub fn has_selected(&self) -> bool {
+        !self.imp().multi_select.selection().is_empty()
+    }
+
+    pub fn selected_content(&self) -> Vec<ContentData> {
+        let bitset = self.imp().multi_select.selection();
+        
+        if bitset.is_empty() {
+            return vec![];
+        }
+
+        let model = self.imp().multi_select.model().unwrap();
+
+        let mut vec : Vec<ContentData> = Vec::new();
+
+        for i in 0..model.n_items() {
+            if bitset.contains(i) {
+                vec.push(model.item(i).and_downcast::<ContentData>().unwrap());
+            }
+        }
+
+        vec
     }
 
     pub fn new_folder(base_mods_folder: &Path, name: String) -> Result<Self, Error> {
