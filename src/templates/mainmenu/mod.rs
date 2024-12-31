@@ -6,7 +6,6 @@ use std::{fs, sync::OnceLock, vec::Vec};
 // Template construction:
 use gtk::{
     gio::{self, ActionEntry, Settings},
-    glib::clone,
     AboutDialog, AlertDialog, Application, Box, Button, Stack, StackSwitcher,
 };
 
@@ -253,6 +252,7 @@ impl MainMenuWindow {
         self.imp().mod_stack.visible_child_name()
     }
 
+    // TODO: Move this to the ModManager.
     fn stack_changed(stack: &Stack) {
         let window: MainMenuWindow = stack
             .ancestor(MainMenuWindow::static_type())
